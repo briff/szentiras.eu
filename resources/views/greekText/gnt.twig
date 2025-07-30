@@ -1,0 +1,29 @@
+{% extends 'layout' %}
+
+{% set pageTitle %}
+Görög Újszövetségi Szentírás
+{% endset %}
+
+{% block content %}
+
+    <h2>Görög Újszövetségi Szentírás</h2>
+
+    <div class="card mb-2">
+    <div class="card-body text-center">
+        {{ 
+            books
+                |map(b => (b == book) ? "<b>#{b.abbrev}</b>" :  "<a href=\"/GNT/#{b.abbrev}\" class=\"minilink\">#{b.abbrev}</a>")
+                |join(" ◦ ")|raw
+        }}
+    </div>
+
+</div>
+
+
+    <div class="greek">
+        {% for greekVerse in greekVerses %}
+            {{ greekVerse.text|replace({'¶': '<br>'})|raw }}
+        {% endfor %}
+    </div>
+
+{% endblock %}

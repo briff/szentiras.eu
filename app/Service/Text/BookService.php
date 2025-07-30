@@ -14,6 +14,11 @@ class BookService {
     public function __construct(protected BookRepository $bookRepository, protected VerseRepository $verseRepository, protected TranslationService $translationService) {   
     }
 
+    /**
+     * Get all books for a specific translation.
+     * @param Translation $translation
+     * @return Collection<Book>
+     */
     public function getBooksForTranslation(Translation $translation) : Collection {
         return $this->bookRepository->getBooksByTranslation($translation->id);
     }
