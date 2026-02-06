@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use SzentirasHu\Http\Controllers\Ai\AiController;
 use SzentirasHu\Http\Controllers\Auth\AnonymousIdController;
+use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
 use SzentirasHu\Http\Controllers\Home\HomeController;
 use SzentirasHu\Http\Controllers\MediaController;
@@ -86,6 +87,8 @@ Route::get('/login', [AnonymousIdController::class, 'showLoginForm']);
 
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');
 
+Route::get('/GNT/{book?}', [GreekTextController::class, 'show']);
+
 /** These should come at the end to not collide with other routes! */
 Route::get('/{TRANSLATION_ABBREV}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showTranslation')
     ->middleware(RedirectLowerCaseTranslationAbbrev::class)
@@ -102,3 +105,4 @@ Route::get('/xref/{TRANSLATION_ABBREV}/{REFERENCE}', [TextDisplayController::cla
     ->middleware(RedirectLowerCaseTranslationAbbrev::class)
     ->where(['TRANSLATION_ABBREV' => Config::get('settings.translationAbbrevRegex'),
         'REFERENCE' => '[^/]+']);
+
