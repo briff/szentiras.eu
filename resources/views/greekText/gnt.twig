@@ -19,11 +19,48 @@ Görög Újszövetségi Szentírás
 
 </div>
 
-
-    <div class="greek">
+    {% set displayedChapter = null %}
+    <div class="parsedVerses greek">
         {% for greekVerse in greekVerses %}
-            {{ greekVerse.text|replace({'¶': '<br>'})|raw }}
+            {% if displayedChapter != greekVerse.chapter and greekVerse.verse == 1 %}
+                <span class="numchapter">{{ greekVerse.chapter }}</span>
+                {% set displayedChapter = greekVerse.chapter %}
+            {% endif %}
+                <span class="numv hidden"><sup>{{ greekVerse.verse }}</sup></span>
+                {% if book %}
+                <a class="numvai" data-bs-placement="auto" tabindex="0" data-bs-custom-class="ai-tool-popover" data-link="{{ translation.abbrev }}/{{ book.abbrev }}{{ greekVerse.chapter }},{{ greekVerse.verse }}">
+                    <span class="numvai hidden">{{ greekVerse.verse }}&nbsp;</span>
+                </a>
+                {% endif %}
+                <span class="verse-text">{{ greekVerse.text|replace({'¶': '<br>'})|raw }}</span>
         {% endfor %}
     </div>
 
 {% endblock %}
+
+{% block extramenu %}
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex flex-wrap">
+                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleNumv">
+                            <i class="toggle bi-check-square active"></i>
+                            <i class="toggle bi-square inactive"></i>
+                            Versszámozás</a>
+                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleXrefs">
+                            <i class="toggle bi-check-square active"></i>
+                            <i class="toggle bi-square inactive"></i>
+                            Hivatkozások</a>
+                        <a href="javascript:void(0)" role="button"  class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleHeadings">
+                            <i class="toggle bi-check-square active"></i>
+                            <i class="toggle bi-square inactive"></i>
+                            Címsorok</a>
+                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm inactive m-1 flex-fill" id="toggleAiTools">
+                            <i class="toggle bi-check-square active"></i>
+                            <i class="toggle bi-square inactive"></i>
+                            MI eszközök</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% set js=['pages/verses'] %}

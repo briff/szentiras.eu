@@ -22,6 +22,7 @@ class GreekTextController extends Controller
         $translation = new Translation();
         $translation->abbrev = 'GNT';
         
+        $book = null;
         if ($bookAbbrev) {
             $book = collect($books)->firstWhere('abbrev', $bookAbbrev);
             $greekVerses = $book
@@ -34,6 +35,6 @@ class GreekTextController extends Controller
             $greekVerses = collect();
         }
     
-        return view('greekText.gnt', [ 'translation' => $translation, 'books' => $books, 'greekVerses' => $greekVerses ]);
+        return view('greekText.gnt', [ 'translation' => $translation, 'books' => $books, 'greekVerses' => $greekVerses, 'book' => $book ]);
     }
 }

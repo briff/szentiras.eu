@@ -66,12 +66,22 @@ class AiController extends Controller
         } else {
             $greekSimilarity = null;
         }
-        $pureTexts[] = [
-            'translationAbbrev' => $translationAbbrev,
-            'reference' => $canonicalReference->toString(),
-            'text' => $this->textService->getPureText($canonicalReference, $translation, false),
-            'greekSimilarity' => $greekSimilarity
-        ];
+        $pureTexts = [];
+        if ($translation->abbrev === 'GNT' && $greekVerse) {
+            $pureTexts[] = [
+                'translationAbbrev' => $translationAbbrev,
+                'reference' => $canonicalReference->toString(),
+                'text' => $greekVerse->text,
+                'greekSimilarity' => $greekSimilarity
+            ];
+        } else {
+            $pureTexts[] = [
+                'translationAbbrev' => $translationAbbrev,
+                'reference' => $canonicalReference->toString(),
+                'text' => $this->textService->getPureText($canonicalReference, $translation, false),
+                'greekSimilarity' => $greekSimilarity
+            ];
+        }
 
         foreach ($allTranslations as $otherTranslation) {
             if ($otherTranslation->abbrev != $translationAbbrev) {

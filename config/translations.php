@@ -134,6 +134,16 @@ return [
             'order' => 4,
             'copyright' => 'A Bencés Kiadó engedélyével. (Megújítva: 2025. február).',
             'publisher' => [ 'name' => 'Bencés Kiadó', 'url' => 'https://www.benceskiado.hu']
+        ],
+        'GNT' => [
+            'verseTypes' => [
+                'text' => [901],
+            ],
+            'textSource' => env('TEXT_SOURCE_GNT', 's3'),
+            'id' => 8,
+            'order' => 99,
+            'copyright' => 'Open Greek New Testament (OGNT) project, CC BY-SA 4.0.',
+            'publisher' => [ 'name' => 'OpenGNT Project', 'url' => 'https://github.com/eliranwong/OpenGNT']
         ]
     ],
     'ids' => [
@@ -143,6 +153,7 @@ return [
         4 => 'KG',
         5 => 'BD',
         6 => 'RUF',
-        7 => 'STL'
+        7 => 'STL',
+        8 => 'GNT'
     ]
 ];

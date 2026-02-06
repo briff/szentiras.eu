@@ -28,19 +28,32 @@
   <!-- Tab panes -->
   <div class="tab-content">
     <div class="tab-pane active parallel-tab scrollable-content" id="parallel{{ gepi }}" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+      {% if pureTexts[0].translationAbbrev == 'GNT' and greekText %}
+        <div class="greek greekSection mb-2" lang="grc">
+          {% for piece in greekText %}
+            <span class="greekWord" data-usx="{{ piece.usx_code }}" data-chapter="{{ piece.chapter }}" data-verse="{{ piece.verse }}" data-i="{{ piece.i }}" title="{{ piece.strong }} ({{ piece.translit }})">{{ piece.printed }}</span>
+          {% endfor %}
+          <div class="explanation">
+            <div class="ps-2"><i class="bi bi-lightbulb"></i> Kattints a görög szavakra a jelentésük megjelenítéséhez.</div>
+          </div>
+        </div>
+      {% endif %}
       {% for pureText in pureTexts %}
-        <div><a href="/{{ pureText.translationAbbrev }}/{{ pureText.reference }}">{{ pureText.translationAbbrev }}: {{ pureText.reference }}</a> {{ similarityCircle(pureText.similarity) }}
-        <span class="pureText">{{ pureText.text }}</span> {{ similarityCircle(pureText.greekSimilarity, 'grey', 'Becsült hasonlóság a göröghöz') }}
-    </div>
+        {% if pureText.translationAbbrev != 'GNT' %}
+          <div><a href="/{{ pureText.translationAbbrev }}/{{ pureText.reference }}">{{ pureText.translationAbbrev }}: {{ pureText.reference }}</a> {{ similarityCircle(pureText.similarity) }}
+            <span class="pureText">{{ pureText.text }}</span> {{ similarityCircle(pureText.greekSimilarity, 'grey', 'Becsült hasonlóság a göröghöz') }}
+          </div>          
+        {% endif %}
       {% endfor %}
-      {% if greekText %}
-      <div class="greek greekSection" lang="grc">
-        {% for piece in greekText %}
-          <span class="greekWord" data-usx="{{ piece.usx_code }}" data-chapter="{{ piece.chapter }}" data-verse="{{ piece.verse }}" data-i="{{ piece.i }}" title="{{ piece.strong }} ({{ piece.translit }})">{{ piece.printed }}</span>
-        {% endfor %}
-        <div class="explanation"><div class="ps-2"><i class="bi bi-lightbulb"></i> Kattints a görög szavakra a jelentésük megjelenítéséhez.</div></div>
-      </div>
-
+      {% if pureTexts[0].translationAbbrev != 'GNT' and greekText %}
+        <div class="greek greekSection" lang="grc">
+          {% for piece in greekText %}
+            <span class="greekWord" data-usx="{{ piece.usx_code }}" data-chapter="{{ piece.chapter }}" data-verse="{{ piece.verse }}" data-i="{{ piece.i }}" title="{{ piece.strong }} ({{ piece.translit }})">{{ piece.printed }}</span>
+          {% endfor %}
+          <div class="explanation">
+            <div class="ps-2"><i class="bi bi-lightbulb"></i> Kattints a görög szavakra a jelentésük megjelenítéséhez.</div>
+          </div>
+        </div>      
       {% endif %}
     </div>
     <div class="tab-pane scrollable-content" id="similar{{ gepi }}" role="tabpanel" aria-labelledby="similar-tab" tabindex="0">
