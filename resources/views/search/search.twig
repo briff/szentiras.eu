@@ -207,6 +207,7 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
             </div>                   
             {% endif %}                 
         {% endfor %}
+        {{ _self.pagination(form, results, greekSearch ? 'greekSearch' : 'anySearch') }}
     {% endif %}
     
         </div>                   

@@ -72,7 +72,7 @@
     {% if nextDay %}
         <a href="/tervek/{{ nextDay.plan_id }}/{{ nextDay.day_number }}" class="btn btn-primary btn-default">Következő nap <i class="bi bi-chevron-right"></i></a>
     {% endif %}
-    {% if fullChaptersIncluded and not fullContext %}
+    {% if fullChaptersIncluded and not fullContext and not readingPlanDay %}
     <div class="card bg-light mb-2">
         <div class="card-header collapsible" data-bs-toggle="collapse" data-bs-target="#cardContent">
             <i class="bi bi-chevron-down"></i>
