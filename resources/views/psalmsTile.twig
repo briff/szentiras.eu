@@ -135,6 +135,50 @@
 </div>
 
 <style>
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 .category-btn {
     transition: all 0.2s ease;
     min-height: 85px;
@@ -152,6 +196,23 @@
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
+#psalmCategories.fade-out {
+    animation: slideOutLeft 0.4s ease forwards;
+}
+
+#psalmsContainer.fade-in {
+    animation: slideInRight 0.4s ease forwards;
+}
+
+#psalmsContainer.fade-out {
+    animation: slideOutLeft 0.4s ease forwards;
+}
+
+#psalmCategories.fade-in {
+    animation: slideInRight 0.4s ease forwards;
+}
+
 .psalm-btn {
     padding: 0.75rem 0.5rem;
     text-align: center;
@@ -330,15 +391,31 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store last selected category in session storage
             sessionStorage.setItem('lastPsalmCategory', category);
             
-            // Show psalms for selected category
-            showPsalms(category);
+            // Animate transition
+            categoriesContainer.classList.add('fade-out');
+            
+            // Show psalms after animation starts
+            setTimeout(() => {
+                showPsalms(category);
+            }, 200);
         });
     });
     
     // Back to categories
     backToCategories.addEventListener('click', function() {
-        categoriesContainer.classList.remove('d-none');
-        psalmsContainer.classList.add('d-none');
+        psalmsContainer.classList.add('fade-out');
+        
+        setTimeout(() => {
+            categoriesContainer.classList.remove('d-none');
+            psalmsContainer.classList.add('d-none');
+            categoriesContainer.classList.remove('fade-out');
+            categoriesContainer.classList.add('fade-in');
+            
+            // Remove animation classes after animation completes
+            setTimeout(() => {
+                categoriesContainer.classList.remove('fade-in');
+            }, 400);
+        }, 200);
     });
     
     // Quick psalm search
@@ -367,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // showPsalms(lastCategory);
     }
     
-    // Add smooth scroll to top when showing psalms
+    // Show psalms for selected category
     function showPsalms(category) {
         const data = psalmData[category];
         if (!data) return;
@@ -397,15 +474,16 @@ document.addEventListener('DOMContentLoaded', function() {
             psalmsGrid.appendChild(col);
         });
         
-        // Switch views
+        // Switch views with animation
         categoriesContainer.classList.add('d-none');
         psalmsContainer.classList.remove('d-none');
+        psalmsContainer.classList.remove('fade-out');
+        psalmsContainer.classList.add('fade-in');
         
-        // Smooth scroll to top of the tile
-        const cardBody = document.querySelector('.card-body');
-        if (cardBody) {
-            cardBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            psalmsContainer.classList.remove('fade-in');
+        }, 400);
     }
 });
 </script>
