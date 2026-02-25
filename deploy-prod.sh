@@ -124,16 +124,16 @@ fi
 
 # 6. Stop and remove existing containers
 echo "6. Stopping existing containers..."
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose down --remove-orphans 2>/dev/null || true"
 echo "   ✅ Existing containers stopped"
 
 # 7. Start new containers with .env.prod
 echo "7. Starting new containers with .env.prod..."
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d"
 
 if [ $? -ne 0 ]; then
     echo "❌ Docker compose up failed!"
-    echo "   Check logs with: ssh -p $DEPLOY_PORT $SSH_TARGET 'cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml logs'"
+    echo "   Check logs with: ssh -p $DEPLOY_PORT $SSH_TARGET 'cd $DEPLOY_REMOTE_PATH && docker compose logs'"
     exit 1
 fi
 echo "   ✅ Containers started successfully"
@@ -141,10 +141,10 @@ echo "   ✅ Containers started successfully"
 # 8. Verify services are running
 echo "8. Verifying services..."
 sleep 5
-SERVICES=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml ps --services")
+SERVICES=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose ps --services")
 echo "   Running services:"
 for service in $SERVICES; do
-    STATUS=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml ps $service --format '{{.Status}}'")
+    STATUS=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose ps $service --format '{{.Status}}'")
     echo "   - $service: $STATUS"
 done
 
