@@ -303,9 +303,12 @@ class ImportScriptureXml extends ImportScripture
                 $text = (string) $strofa->Alapszoveg;
                 // Determine tip based on style
                 $tip = ($style === 'q') ? 902 : 901;
-                // Add <br> for paragraph ending if style pf
-                if ($style === 'pf') {
-                    $text .= '<br>';
+                // If style pk, add <br> to the end of previous verse if it's normal text (tip 901)
+                if ($style === 'pk' && !empty($verseInserts)) {
+                    $lastIndex = count($verseInserts) - 1;
+                    if ($verseInserts[$lastIndex]['tip'] === 901) {
+                        $verseInserts[$lastIndex]['verse'] .= '<br>';
+                    }
                 }
                 $verseroot = null;
                 if ($this->hunspellEnabled && in_array($tip, [60, 6, 901, 5, 10, 20, 30, 1, 2, 3, 401, 501, 601, 701, 703, 704])) {
