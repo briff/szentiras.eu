@@ -1,9 +1,26 @@
 class QuickChapterSelector {
 
     translation = null;
+    preloadedBooks = null;
+    preloadPromise = null;
 
     constructor(translation = null) {
         this.translation = translation;
+    }
+
+    preloadBooks() {
+        console.log('QuickChapterSelector: preloading books data for translation', this.translation || 'default');
+        const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
+        this.preloadPromise = fetch(apiLink)
+            .then(response => response.json())
+            .then(bookResponse => {
+                this.preloadedBooks = bookResponse.books;
+                console.log('QuickChapterSelector: books preloaded, count:', this.preloadedBooks.length);
+                return bookResponse;
+            })
+            .catch(error => {
+                console.error('Failed to preload books:', error);
+            });
     }
 
     init() {
@@ -23,6 +40,8 @@ class QuickChapterSelector {
 
         function showSpinner(show = true) { show ? spinner.classList.remove('hideSpinner') : spinner.classList.add('hideSpinner'); }
 
+        this.preloadBooks();
+
         const dropdownItems = document.querySelectorAll('#corpusSelector .dropdown-item');
         dropdownItems.forEach(item => {
             item.addEventListener('click', async (event) => {
@@ -36,10 +55,19 @@ class QuickChapterSelector {
                 corpusSelectorButton.innerHTML = `<strong>${itemHtmlValue}</strong>`;
                 corpusSelector.classList.add('hidden');
                 corpusUndo.classList.remove('hidden');
-                const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
-                const response = await fetch(apiLink);
-                const bookResponse = await response.json();
-                books = bookResponse.books;
+                let bookResponse;
+                if (this.preloadedBooks) {
+                    books = this.preloadedBooks;
+                } else if (this.preloadPromise) {
+                    bookResponse = await this.preloadPromise;
+                    books = bookResponse.books;
+                } else {
+                    const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
+                    const response = await fetch(apiLink);
+                    bookResponse = await response.json();
+                    books = bookResponse.books;
+                    this.preloadedBooks = books;
+                }
                 const filteredBooks = books.filter(book => book.corpus == value);
                 while (bookSelectorList.firstChild) {
                     bookSelectorList.removeChild(bookSelectorList.firstChild);
