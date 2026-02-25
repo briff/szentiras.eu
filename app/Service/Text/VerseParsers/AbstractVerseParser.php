@@ -8,6 +8,8 @@ namespace SzentirasHu\Service\Text\VerseParsers;
 
 use Log;
 use SzentirasHu\Http\Controllers\Display\VerseParsers\VerseData;
+use SzentirasHu\Http\Controllers\Display\VerseParsers\VersePart;
+use SzentirasHu\Http\Controllers\Display\VerseParsers\VersePartType;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\Verse;
 
@@ -43,7 +45,37 @@ abstract class AbstractVerseParser implements VerseParser {
                 unset($verseData->xrefs[$key]);
             }
         }
+        $this->sortVerseParts($verseData);
         return $verseData;
+    }
+
+    /**
+     * Sort verse parts so that headings appear first, sorted by heading level,
+     * followed by other parts in their original order.
+     */
+    protected function sortVerseParts(VerseData $verseData): void
+    {
+        $parts = $verseData->verseParts;
+        usort($parts, function (VersePart $a, VersePart $b) {
+            // Both headings: compare headingLevel ascending, then order ascending
+            if ($a->isHeading() && $b->isHeading()) {
+                if ($a->headingLevel !== $b->headingLevel) {
+                    return $a->headingLevel <=> $b->headingLevel;
+                }
+                return $a->order <=> $b->order;
+            }
+            // Only $a is heading: $a comes before $b
+            if ($a->isHeading()) {
+                return -1;
+            }
+            // Only $b is heading: $b comes before $a
+            if ($b->isHeading()) {
+                return 1;
+            }
+            // Neither is heading: keep original order
+            return $a->order <=> $b->order;
+        });
+        $verseData->verseParts = $parts;
     }
 
     /**
