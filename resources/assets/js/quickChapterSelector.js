@@ -8,7 +8,10 @@ class QuickChapterSelector {
 
     init() {
         let books;
+        const corpusSelector = document.getElementById("corpusSelector");
         const corpusSelectorButton = document.getElementById("corpusSelectorButton");
+        const corpusUndo = document.getElementById("corpusUndo");
+        const corpusUndoButton = document.getElementById("corpusUndoButton");
         const bookSelectorButton = document.getElementById('bookSelectorButton');
         const bookSelector = document.getElementById('bookSelector');
         const bookSelectorList = document.getElementById("bookSelectorList");
@@ -31,6 +34,8 @@ class QuickChapterSelector {
                 const value = item.getAttribute("data-value");
                 const itemHtmlValue = item.innerHTML;
                 corpusSelectorButton.innerHTML = `<strong>${itemHtmlValue}</strong>`;
+                corpusSelector.classList.add('hidden');
+                corpusUndo.classList.remove('hidden');
                 const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
                 const response = await fetch(apiLink);
                 const bookResponse = await response.json();
@@ -78,6 +83,17 @@ class QuickChapterSelector {
             });
         }
         );
+
+        // Undo button to reset corpus selection
+        corpusUndoButton.addEventListener('click', () => {
+            corpusSelector.classList.remove('hidden');
+            corpusUndo.classList.add('hidden');
+            bookSelector.classList.add('hidden');
+            chapterSelector.classList.add('hidden');
+            corpusSelectorButton.innerHTML = 'Gyors fejezetválasztás <span class="caret"></span>';
+            bookSelectorButton.innerHTML = "Könyv <span class=\"caret\"></span>";
+            chapterSelectorButton.innerHTML = "Fejezet <span class=\"caret\"></span>";
+        });
 
     }
 }
