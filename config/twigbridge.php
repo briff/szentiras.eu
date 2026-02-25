@@ -197,6 +197,7 @@ return [
             'head',
             'last',
             'mix',
+            'isEditor',
         ],
 
         /*

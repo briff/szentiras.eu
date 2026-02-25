@@ -3,6 +3,7 @@
 namespace SzentirasHu\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use SzentirasHu\Service\Editor\EditorService;
 use Twig\Environment;
 use Twig\Extra\Markdown\DefaultMarkdown;
 use Twig\Extra\Markdown\MarkdownExtension;
@@ -16,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot(Environment $twig) 
+    public function boot(Environment $twig)
     {
         $twig->addExtension(new MarkdownExtension());
         $twig->addRuntimeLoader(new class implements RuntimeLoaderInterface {
@@ -28,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         });
+        
+        // Add isEditor function to Twig
+        $twig->addFunction(new \Twig\TwigFunction('isEditor', function () {
+            return app(EditorService::class)->currentIsEditor();
+        }));
     }
 
     /**
@@ -37,6 +43,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(EditorService::class, function ($app) {
+            return new EditorService();
+        });
+        
+        $this->app->alias(EditorService::class, 'editor');
     }
 }
