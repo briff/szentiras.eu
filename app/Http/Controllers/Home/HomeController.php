@@ -24,7 +24,8 @@ class HomeController extends Controller
             'pageTitle' => 'Szentírás - A Biblia teljes szövege, katolikus és protestáns fordításokban',
             'cathBibles' => $this->translationRepository->getByDenom('katolikus'),
             'otherBibles' => $this->translationRepository->getByDenom('protestáns'),
-            'fullQuickSearch' => true
+            'fullQuickSearch' => true,
+            'hideLeftColumn' => true
         ]);
     }
 

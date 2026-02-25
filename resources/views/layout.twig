@@ -36,6 +36,7 @@
         <div class="container">
             {% include 'navbar' %}
             <div class="row">
+                {% if hideLeftColumn is not defined or not hideLeftColumn %}
                 <div class="col-lg-3 col-md-4">
                      {% include 'menu' %}
                      {% block extramenu %}{% endblock %}
@@ -43,9 +44,10 @@
                         <div class="d-none d-md-block">{# Only show on medium and up #}
                             {% include 'RUFAd.twig' %}
                         </div>
-                     {% endif %}  
+                     {% endif %}
                 </div>
-                <div class="col-lg-9 col-md-8">
+                {% endif %}
+                <div class="{% if hideLeftColumn is defined and hideLeftColumn %}col-lg-12 col-md-12{% else %}col-lg-9 col-md-8{% endif %}">
                    
                     {% block pageHeader %}{% endblock %}
                     <div class="mt-1">
