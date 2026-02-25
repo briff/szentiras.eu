@@ -388,11 +388,24 @@ class TextDisplayController extends Controller
     {
         $chapters = [];
         $groupedVerses = [];
+
+        // Determine heading levels for TOC based on translation config
+        $abbrev = $translation->abbrev;
+        $headingLevelsRange = Config::get("translations.definitions.{$abbrev}.toc_heading_levels", '5-9');
+        if (preg_match('/^(\d)-(\d)$/', $headingLevelsRange, $matches)) {
+            $min = $matches[1];
+            $max = $matches[2];
+            $headingPattern = '/^heading[' . $min . '-' . $max . ']{1}/';
+        } else {
+            // Fallback to default
+            $headingPattern = '/^heading[5-9]{1}/';
+        }
+
         foreach ($verseContainers as $verseContainer) {
             foreach ($verseContainer->rawVerses as $verses) {
                 foreach ($verses as $verse) {
                     $type = $verse->getType();
-                    if (preg_match('/^heading[5-9]{1}/', $type)) {
+                    if (preg_match($headingPattern, $type)) {
                         $gepi = $verse->gepi;
                         if (!isset($groupedVerses[$gepi])) {
                             $groupedVerses[$gepi] = [];
