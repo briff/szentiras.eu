@@ -14,6 +14,12 @@ $('#searchButton').on('click', function (event) {
 
 $("#greekTranslit").autocomplete({
     source: '/kereses/suggestStrong',
+    autoFocus: false,
+    position: {
+        my: "left top",
+        at: "left bottom",
+        collision: "none"
+    }
 });
 
 $('#greekTextSearchButton').on('click', function (event) {
@@ -36,6 +42,12 @@ $("#greekText").autocomplete({
         });
     },
     minLength: 2,
+    autoFocus: false,
+    position: {
+        my: "left top",
+        at: "left bottom",
+        collision: "none"
+    },
     search: (event, ui) => {
         $("#greekTextSearchHitsButtonContent").html('<span class="spinner-border-sm spinner-border"></span> Keresés');
     },
@@ -76,20 +88,40 @@ $('#searchInput').autocomplete({
 
     },
     minLength: 2,
+    autoFocus: false,
+    position: {
+        my: "left top",
+        at: "left bottom",
+        collision: "none"
+    },
     search: (event, ui) => {
-        $("#searchHitsButtonContent").html('<span class="spinner-border-sm spinner-border"></span> Keresés');
+        const input = $(event.target);
+        const form = input.closest('form');
+        form.find("#searchResultsBadge").addClass("d-none");
+        form.find("#searchHitsButtonContent").html('<span class="spinner-border-sm spinner-border"></span> Keresés');
     },
     select: (event, ui) => {
         window.location = ui.item.link;
         return false;
     },
     response: (event, ui) => {
+        // Find the badge and count span within the same form as the input
+        const input = $(event.target);
+        const form = input.closest('form');
+        const badge = form.find("#searchResultsBadge");
+        const countSpan = form.find("#searchResultsCount");
+        const buttonContent = form.find("#searchHitsButtonContent");
+        
         if (ui.content[0]) {
             const hitCount = ui.content[0].hitCount;
-            $("#searchHitsButtonContent").html(`${hitCount} találat <i class="bi bi-caret-right"></i>`);
+            countSpan.text(hitCount);
+            badge.removeClass("d-none");
+            // Keep button content as just the search icon and text
+            buttonContent.html('<i class="bi-search"></i> Keresés');
             $("#noResultAutocomplete").addClass("hidden");
         } else {
-            $("#searchHitsButtonContent").html("Nincs találat");
+            badge.addClass("d-none");
+            buttonContent.html('<i class="bi-search"></i> Keresés');
             if ($("#noResult").length == 0) {
                 $("#noResultAutocomplete").removeClass("hidden");
                 $("#aiSearchLink").attr('href', '/ai-search?textToSearchAi=' + $("#searchInput").val());
@@ -103,7 +135,10 @@ $('#searchInput').autocomplete({
 
 $('#searchInput').on('input', (event) => {
     if (!event.target.value) {
-        $("#searchHitsButtonContent").html('<i class="bi bi-search"></i> Keresés');
+        const input = $(event.target);
+        const form = input.closest('form');
+        form.find("#searchResultsBadge").addClass("d-none");
+        form.find("#searchHitsButtonContent").html('<i class="bi-search"></i> Keresés');
     }
 });
 

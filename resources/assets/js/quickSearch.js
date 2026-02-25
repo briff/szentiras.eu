@@ -11,6 +11,12 @@ function quickSearch() {
   $('#quickSearch').autocomplete({
     source: '/kereses/suggest',
     minLength: 2,
+    autoFocus: false,
+    position: {
+      my: "left top",
+      at: "left bottom",
+      collision: "none"
+    },
     messages: {
       noResults: '',
       results: () => { }
@@ -23,11 +29,22 @@ function quickSearch() {
       $("#quickSearchHitsButtonContent").html('<span class="spinner-border-sm spinner-border"></span>');
     },
     response: (event, ui) => {
+      // Find the badge and count span within the same form as the input
+      const input = $(event.target);
+      const form = input.closest('form');
+      const badge = form.find("#quickSearchResultsBadge");
+      const countSpan = form.find("#quickSearchResultsCount");
+      const buttonContent = form.find("#quickSearchHitsButtonContent");
+      
       if (ui.content[0]) {
         const hitCount = ui.content[0].hitCount;
-        $("#quickSearchHitsButtonContent").html(`${hitCount} találat <i class="bi bi-caret-right"></i>`);
+        countSpan.text(hitCount);
+        badge.removeClass("d-none");
+        // Keep button content as just the search icon
+        buttonContent.html('<i class="bi-search"></i>');
       } else {
-        $("#quickSearchHitsButtonContent").html("Nincs találat");
+        badge.addClass("d-none");
+        buttonContent.html('<i class="bi-search"></i>');
       }
     }
 
@@ -38,7 +55,10 @@ function quickSearch() {
 
   $('#quickSearch').on('input', (event) => {
     if (!event.target.value) {
-      $("#quickSearchHitsButtonContent").html('<i class="bi bi-search"></i>');
+      const input = $(event.target);
+      const form = input.closest('form');
+      form.find("#quickSearchResultsBadge").addClass("d-none");
+      form.find("#quickSearchHitsButtonContent").html('<i class="bi-search"></i>');
     }
   });
 

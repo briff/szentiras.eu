@@ -12,8 +12,14 @@
                     <input id="quickSearch" autocomplete="off" type="text" class="form-control" name="textToSearch" value="{{ form.textToSearch }}" placeholder="Gyorskeresés" style="border-color: #d4cfc9; background-color: #fdfcfb;">
                     <input id="grouping" type="hidden" class="form-control" name="grouping" value="verse">
                     {{ csrf_field() }}
-                    <div class="input-group-append">
-                        <a href="javascript:void(0)" class="quickSearchButton btn btn-default" style="color: #fff; background-color: #7a9e87; border-color: #7a9e87;"><span id="quickSearchHitsButtonContent"><i class="bi-search"></i></span></a>
+                    <div class="input-group-append position-relative">
+                        <a href="javascript:void(0)" class="quickSearchButton btn btn-default" style="color: #fff; background-color: #7a9e87; border-color: #7a9e87;">
+                            <span id="quickSearchHitsButtonContent"><i class="bi-search"></i></span>
+                            <span id="quickSearchResultsBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none z-3">
+                                <span id="quickSearchResultsCount">0</span>
+                                <span class="visually-hidden">találat</span>
+                            </span>
+                        </a>
                     </div>
                     <div class="input-group-append">
                         <a href="javascript:void(0)" title="Részletes keresés" class="quickSearchButton {{ fullQuickSearch ? 'd-none' : 'd-md-none d-lg-none' }} btn btn-default" style="color: #6b6560; background-color: #ede9e4; border-color: #d4cfc9;"><i class="bi-gear"></i></a></span>

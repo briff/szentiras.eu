@@ -46,7 +46,15 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
                 {{ csrf_field() }}                
                 <div class="input-group mb-2">
                 <input type="text" autocomplete="off" name="textToSearch" id="searchInput" value="{{ form.textToSearch }}" placeholder="Keresendő szöveg" class="form-control"/>
-                <a href="javascript:void(0)" id="searchButton" class="btn btn-default btn-primary"><span id="searchHitsButtonContent"><i class="bi-search"></i> Keresés</span></a>
+                <div class="input-group-append position-relative">
+                    <a href="javascript:void(0)" id="searchButton" class="btn btn-default btn-primary">
+                        <span id="searchHitsButtonContent"><i class="bi-search"></i> Keresés</span>
+                        <span id="searchResultsBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none z-3">
+                            <span id="searchResultsCount">0</span>
+                            <span class="visually-hidden">találat</span>
+                        </span>
+                    </a>
+                </div>
                 </div>
                 {{ _self.filterRow(form, books, translations, 'text-search-') }}
             </form>
