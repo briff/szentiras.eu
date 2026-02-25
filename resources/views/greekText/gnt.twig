@@ -50,7 +50,7 @@ Görög Újszövetségi Szentírás
                 <span class="numv hidden"><sup>{{ greekVerse.verse }}</sup></span>
                 {% if book %}
                 <a class="numvai" data-bs-placement="auto" tabindex="0" data-bs-custom-class="ai-tool-popover" data-link="{{ translation.abbrev }}/{{ book.abbrev }}{{ greekVerse.chapter }},{{ greekVerse.verse }}">
-                    <span class="numvai hidden">{{ greekVerse.verse }}&nbsp;</span>
+                    <span class="numvai">{{ greekVerse.verse }}&nbsp;</span>
                 </a>
                 {% endif %}
                 <span class="verse-text">{{ greekVerse.text|replace({'¶': '<br>'})|raw }}</span>
@@ -75,7 +75,7 @@ Görög Újszövetségi Szentírás
                             <i class="toggle bi-check-square active"></i>
                             <i class="toggle bi-square inactive"></i>
                             Címsorok</a>
-                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm inactive m-1 flex-fill" id="toggleAiTools">
+                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleAiTools">
                             <i class="toggle bi-check-square active"></i>
                             <i class="toggle bi-square inactive"></i>
                             MI eszközök</a>

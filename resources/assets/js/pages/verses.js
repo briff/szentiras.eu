@@ -51,20 +51,38 @@ const initToggler = function () {
         });
     });
 
-    var aiState = localStorage.getItem('aiToolsState');
-    if (aiState === 'true') {
+    // Check if we're on the Greek New Testament page
+    var isGreekPage = $('.parsedVerses.greek').length > 0;
+    
+    if (isGreekPage) {
+        // Always enable AI tools for Greek New Testament page
         ai(true);
+        localStorage.setItem('aiToolsState', 'true');
+        
+        // Disable the toggle functionality on Greek page only
+        $('#toggleAiTools').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Keep AI tools always on - do nothing when clicked
+            return false;
+        });
     } else {
-        ai(false);
-    }
-
-    $('#toggleAiTools').click(function () {
-        if ($('#toggleAiTools').hasClass('active')) {
-            ai(false);
-        } else {
+        // Normal behavior for other pages
+        var aiState = localStorage.getItem('aiToolsState');
+        if (aiState === 'true') {
             ai(true);
+        } else {
+            ai(false);
         }
-    });
+
+        $('#toggleAiTools').click(function () {
+            if ($('#toggleAiTools').hasClass('active')) {
+                ai(false);
+            } else {
+                ai(true);
+            }
+        });
+    }
 
     function ai(turnOn) {
         async function getPopoverContent(aiTrigger) {
