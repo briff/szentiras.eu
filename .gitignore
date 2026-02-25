@@ -25,3 +25,4 @@ PROVISIONED
 .phpunit.cache
 .vscode
 generated
+.env.deploy
