@@ -49,13 +49,13 @@ class ImportScripture extends Command
      */
     protected $description = 'Update texts from external source (xls)';
 
-    private $translationRepository;
-    private $hunspellEnabled = false;
-    private $newStems = 0;
-    private $sourceDirectory;
-    private $importableTranslations = ['BD', 'KG', 'KNB', 'RUF', 'UF', 'SZIT', 'STL'];
+    protected $translationRepository;
+    protected $hunspellEnabled = false;
+    protected $newStems = 0;
+    protected $sourceDirectory;
+    protected $importableTranslations = ['BD', 'KG', 'KNB', 'RUF', 'UF', 'SZIT', 'STL'];
     // Mapping: Database columns to Books Sheet header column numbers
-    private $headerNameToColNum = [
+    protected $headerNameToColNum = [
         'SZIT' => [BOOKCODE => 0, BOOKABBREV => 5, BOOKNAME => 2],
         'KNB' => [BOOKCODE => 0, BOOKABBREV => 3, BOOKNAME => 1],
         'UF' => [BOOKCODE => 0, BOOKABBREV => 4, BOOKNAME => 1],
@@ -65,14 +65,14 @@ class ImportScripture extends Command
         'STL' => [BOOKCODE => 0, BOOKABBREV => 2, BOOKNAME => 1],
     ];
     // Mapping: Database columns to Verses Sheet headers
-    private $defaultDbToHeaderMap = ['did' => 'Ssz', BOOKCODE => 'hiv', 'tip' => 'jelstatusz', 'verse' => 'jel'];
-    private $descriptorspec = [
+    protected $defaultDbToHeaderMap = ['did' => 'Ssz', BOOKCODE => 'hiv', 'tip' => 'jelstatusz', 'verse' => 'jel'];
+    protected $descriptorspec = [
         0 => ["pipe", "r"], // stdin
         1 => ["pipe", "w"], // stdout
         2 => ["pipe", "w"]  // stderr
     ];
 
-    private array $processedStems = ["_stems" => []];
+    protected array $processedStems = ["_stems" => []];
     const STEM_FILE = "database/preload/stems.json";
 
     /**
@@ -138,7 +138,7 @@ class ImportScripture extends Command
         ];
     }
 
-    private function storeInDb(Translation $translation, array $bookInserts, array $verseInserts): void
+    protected function storeInDb(Translation $translation, array $bookInserts, array $verseInserts): void
     {
         $this->info("Adatok mentése az adatbázisba...");
         Artisan::call('down');
@@ -161,7 +161,7 @@ class ImportScripture extends Command
         $this->info("Adatok sikeresen elmentve.");
     }
 
-    private function storeBooks(Translation $translation, array $bookInserts): void
+    protected function storeBooks(Translation $translation, array $bookInserts): void
     {
         foreach ($bookInserts as $bookInsert) {
             $book = Book::where('usx_code', $bookInsert['usx_code'])->where('translation_id', $translation->id)->first();
@@ -196,7 +196,7 @@ class ImportScripture extends Command
         }
     }
 
-    private function storeVerses(Translation $translation, array $verseInserts): void
+    protected function storeVerses(Translation $translation, array $verseInserts): void
     {
         $existingUsxCodes = [];
         $progressBar = $this->createProgressBar(count($verseInserts));
@@ -242,19 +242,19 @@ class ImportScripture extends Command
         $progressBar->finish();
     }
 
-    private function fetchBook($order, Translation $translation): ?Book
+    protected function fetchBook($order, Translation $translation): ?Book
     {
         return Book::where('order', $order)
             ->where('translation_id', $translation->id)
             ->first();
     }
 
-    private function getBookCacheKey(int $order, string $translation): string
+    protected function getBookCacheKey(int $order, string $translation): string
     {
         return "book_{$order}_{$translation}";
     }
 
-    private function readInserts(Translation $translation, string $transAbbrevToImport, string $filePath): array
+    protected function readInserts(Translation $translation, string $transAbbrevToImport, string $filePath): array
     {
         $this->info("A $filePath fájl betöltése...");
         $reader = new Reader();
@@ -314,7 +314,7 @@ class ImportScripture extends Command
         return [$bookInserts, $verseInserts];
     }
 
-    private function downloadTranslation(string $transAbbrev, string $url): string
+    protected function downloadTranslation(string $transAbbrev, string $url): string
     {
         try {
             $filePath = $this->sourceDirectory . "/{$transAbbrev}";
@@ -339,7 +339,7 @@ class ImportScripture extends Command
         return $filePath;
     }
 
-    private function runIndexer(): void
+    protected function runIndexer(): void
     {
         $indexerTrigger = Config::get('settings.sphinxIndexerTrigger');
         // touch file
@@ -351,7 +351,7 @@ class ImportScripture extends Command
         }
     }
 
-    private function testHunspell()
+    protected function testHunspell()
     {
         $hunspellInstalledReturnVal = shell_exec("which hunspell");
         if (empty($hunspellInstalledReturnVal)) {
@@ -364,7 +364,7 @@ class ImportScripture extends Command
         $this->hunspellEnabled = true;
     }
 
-    private function getSheets(Reader $reader): array
+    protected function getSheets(Reader $reader): array
     {
         $sheets = [];
         foreach ($reader->getSheetIterator() as $sheet) {
@@ -376,7 +376,7 @@ class ImportScripture extends Command
         return $sheets;
     }
 
-    private function readVerseSheetInserts(Sheet $versesSheet, array $pipes): array
+    protected function readVerseSheetInserts(Sheet $versesSheet, array $pipes): array
     {
         $verseInserts = [];
         $verseRowIterator = $versesSheet->getRowIterator();
@@ -428,7 +428,7 @@ class ImportScripture extends Command
         return $verseInserts;
     }
 
-    private function toVerseInsert(
+    protected function toVerseInsert(
         Row $row,
         array $verseSheetHeaders,
         string $originalBookCode,
@@ -452,7 +452,7 @@ class ImportScripture extends Command
         return $result;
     }
 
-    private function readBookSheetInserts(
+    protected function readBookSheetInserts(
         string $translationAbbrev,
         Sheet $bookSheet
     ): array {
@@ -485,7 +485,7 @@ class ImportScripture extends Command
         return $bookInserts;
     }
 
-    private function toBookInsert(
+    protected function toBookInsert(
         Row $bookRow,
         string $translationAbbrev
     ): array {
@@ -509,7 +509,7 @@ class ImportScripture extends Command
     }
 
 
-    private function mapVerseSheetHeadersToDbColumns(array $headers): array
+    protected function mapVerseSheetHeadersToDbColumns(array $headers): array
     {
         $this->info("Oszlopok ellenőrzése...");
         $errors = [];
@@ -549,7 +549,7 @@ class ImportScripture extends Command
         return $dbToHeaderMap;
     }
 
-    private function executeStemming(string $verse, array $pipes): string
+    protected function executeStemming(string $verse, array $pipes): string
     {
         // actually replace the tags with a space
         $processedVerse = str_replace('<', ' <', $verse);
@@ -599,7 +599,7 @@ class ImportScripture extends Command
         return join(' ', $verseroots->toArray());
     }
 
-    private function bookAbbrevToUsxCode(string $bookAbbrev, string $translation): string
+    protected function bookAbbrevToUsxCode(string $bookAbbrev, string $translation): string
     {
         $result = UsxCodes::getUsxFromBookAbbrevAndTranslation(
             $bookAbbrev,
@@ -616,14 +616,14 @@ class ImportScripture extends Command
         return in_array($usxCode, UsxCodes::oldTestamentUsx()) ? 1 : 0;
     }
 
-    private function verifyTranslationAbbrev(string $abbrev): void
+    protected function verifyTranslationAbbrev(string $abbrev): void
     {
         if (!preg_match("/^(" . Config::get('settings.translationAbbrevRegex') . ")$/", $abbrev)) {
             App::abort(500, 'Hibás fordítás rövidítés!');
         }
     }
 
-    private function verifyTranslationBookColumns(string $translationAbbrev): void
+    protected function verifyTranslationBookColumns(string $translationAbbrev): void
     {
         if (!isset($this->headerNameToColNum[$translationAbbrev])) {
             App::abort(
@@ -634,7 +634,7 @@ class ImportScripture extends Command
         }
     }
 
-    private function getHeaders(RowIterator $verseRowIterator): array
+    protected function getHeaders(RowIterator $verseRowIterator): array
     {
         $cols = [];
         $i = 0;
@@ -650,7 +650,7 @@ class ImportScripture extends Command
         return $cols;
     }
 
-    private function isVerseHeaderRow(Row $row): bool
+    protected function isVerseHeaderRow(Row $row): bool
     {
         $firstCellValue = $row->getCellAtIndex(0)?->getValue();
         $secondCellValue = $row->getCellAtIndex(1)?->getValue();
@@ -659,7 +659,7 @@ class ImportScripture extends Command
             && !is_numeric($secondCellValue);
     }
 
-    private function ensureProperFile(string $originalFilePath): string
+    protected function ensureProperFile(string $originalFilePath): string
     {
         if (!file_exists($originalFilePath)) {
             App::abort(500, "A fájl nem található: $originalFilePath");
@@ -682,7 +682,7 @@ class ImportScripture extends Command
         App::abort(500, "A fájl nem Excel Sheet: $originalFilePath ($fileExtension)");
     }
 
-    private function createProgressBar(int $max): ProgressBar
+    protected function createProgressBar(int $max): ProgressBar
     {
         $progressBar = $this->output->createProgressBar($max);
         $progressBar->setRedrawFrequency(25);
@@ -691,14 +691,14 @@ class ImportScripture extends Command
         return $progressBar;
     }
 
-    private function removeAccents($string): string
+    protected function removeAccents($string): string
     {
         $accents = ['á', 'é', 'í', 'ó', 'ö', 'ő', 'ú', 'ü', 'ű', 'Á', 'É', 'Í', 'Ó', 'Ö', 'Ő', 'Ú', 'Ü', 'Ű'];
         $replacements = ['a', 'e', 'i', 'o', 'o', 'o', 'u', 'u', 'u', 'A', 'E', 'I', 'O', 'O', 'O', 'U', 'U', 'U'];
         return str_replace($accents, $replacements, $string);
     }
 
-    private function checkFilterMatch(string $originalBookCode): bool
+    protected function checkFilterMatch(string $originalBookCode): bool
     {
         return (bool) preg_match(
             '/' . $this->option('filter') . '/i',

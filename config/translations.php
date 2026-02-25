@@ -62,7 +62,8 @@ return [
             [
                 'text' => [901],
                 'heading' => [1=>1, 2=>2, 3=>3],
-                'xref' => [2017]
+                'xref' => [2017],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_KG', 's3'),
             'id' => 4,
@@ -71,12 +72,14 @@ return [
             'publisher' => [ 'name' => '', 'url' => 'https//theword.net']
 
         ],
+        // based on xml sources from 2026-02-25
         'SZIT' => [
             'verseTypes' =>
             [
                 'text' => [901],
-                'heading' => [401=>2, 501=>4, 601=>4, 701=>5, 704=>6],
-                'footnote' => []
+                'heading' => [3000 => 0, 3001=>1, 3002=>2, 3003=>3, 3004=>4, 3005=>5, 3006=>6],
+                'footnote' => [2001],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_SZIT', 's3'),
             'id' => 1,
@@ -88,7 +91,8 @@ return [
             'verseTypes' =>
             [
                 'text' => [901],
-                'heading' => [703 => 3]
+                'heading' => [703 => 3],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_UF', 's3'),
             'publisher' => [ 'name' => 'Magyar Bibliatársulat', 'url' => 'https://bibliatarsulat.hu'],
@@ -99,7 +103,8 @@ return [
             'verseTypes' =>
             [
                 'text' => [901],
-                'heading' => [701=>4, 704=>5]
+                'heading' => [701=>4, 704=>5],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_BD', 's3'),
             'id' => 5,
@@ -114,7 +119,8 @@ return [
                 'text' => [901],
                 'heading' => [701=>3],
                 'footnote' => [2001],
-                'xref' => [2021]
+                'xref' => [2021],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_RUF', 's3'),
             'id' => 6,
@@ -127,7 +133,8 @@ return [
             'verseTypes' =>
             [
                 'text' => [901],
-                'footnote' => [2001, 2004, 2023]
+                'footnote' => [2001, 2004, 2023],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_STL', 's3'),
             'id' => 7,
@@ -138,6 +145,7 @@ return [
         'GNT' => [
             'verseTypes' => [
                 'text' => [901],
+                'poemLine' => [902]
             ],
             'textSource' => env('TEXT_SOURCE_GNT', 's3'),
             'id' => 8,
