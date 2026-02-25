@@ -31,11 +31,13 @@
 <div class="parsedVerses">
 {# In some sources the same verse (verse number 1) appears more than once, so we only display a chapter number if we haven't displayed that one. This handles references like Jer 5;6#}
 {% set lastChapterNumber = 0 %}
+{% set lastWrittenWasInline = false %}
 {%- for verse in verseContainer.parsedVerses -%}
     {%- set mark= verse.gepi in highlightedGepis -%}
     {%- for headingLevel in 0..4 -%}
     {%- if verse.headings[headingLevel] is defined -%}
         {% set tag = 'h' ~ (headingLevel+1) %}
+        {% set lastWrittenWasInline = false %}
         <{{ tag }} id="heading_{{ verse.gepi }}_{{ headingLevel }}">
             {{ verse.headings[headingLevel]|raw }}
             <br>
@@ -48,10 +50,10 @@
     {%- set verseNumberWritten = false -%}
     {%- for versePart in verse.verseParts -%}
         {% if versePart.poem %}
-            {% if (lastChapterNumber != verse.chapter) and verse.numv == 1 %}    {% set lastChapterNumber = verse.chapter %}<span class="numchapter">{{ verse.chapter }}</span>{% endif %}
+            {% if (lastChapterNumber != verse.chapter) and verse.numv == 1 %}{% if lastWrittenWasInline %}<br>{% endif %}{% set lastChapterNumber = verse.chapter %}<span class="numchapter">{{ verse.chapter }}</span>{% endif %}
             {% if not inPoem %}<p class="poem {{ mark ? 'mark' : '' }}">{% set inPoem = true %}{%endif%}
             {%- if not verseNumberWritten %}{{ _self.numv(verse, mark) }}{% set verseNumberWritten = true %}{% endif %}
-            {{ versePart.content|raw }}{% if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}</p>{%else%}<br>{%endif%}
+            {% set lastWrittenWasInline = true %}{{ versePart.content|raw }}{% if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}</p>{%else%}<br>{%endif%}
         {% elseif  versePart.heading %}
             {%- if inPoem %}</p>{% set inPoem =false %}{% endif -%}
             {%- if versePart.headingLevel < 6 -%}
@@ -59,13 +61,13 @@
             {%- else -%}
                 {%- set tag = 'span' %}{% set extraclass = 'heading' ~ (versePart.headingLevel + 1) ~ (mark ? ' mark' : '') -%}
             {%- endif -%}
-            <{{ tag|raw }} class="heading {{ extraclass }}" id="heading_{{ verse.gepi }}_{{ versePart.headingLevel }}">{{ versePart.content|striptags('<br><a>')|raw }}</{{ tag }}>
+            {% set lastWrittenWasInline = false %}<{{ tag|raw }} class="heading {{ extraclass }}" id="heading_{{ verse.gepi }}_{{ versePart.headingLevel }}">{{ versePart.content|striptags('<br><a>')|raw }}</{{ tag }}>
         {%- else -%}
-            {% if (lastChapterNumber != verse.chapter) and verse.numv == 1 %}{% set lastChapterNumber = verse.chapter %}
+            {% if (lastChapterNumber != verse.chapter) and verse.numv == 1 %}{% if lastWrittenWasInline %}<br>{% endif %}{% set lastChapterNumber = verse.chapter %}
             <span class="numchapter">{{ verse.chapter }}</span>{% endif -%}
             {%- if inPoem %}</p>{% set inPoem =false %}{% endif -%}
             {%- if not verseNumberWritten %}{{ _self.numv(verse, mark) }}{% set verseNumberWritten=true %}{% endif -%}
-            <span class="{{ mark ? 'mark' : '' }}">{{ versePart.content|raw }} </span>
+            {% set lastWrittenWasInline = true %}<span class="{{ mark ? 'mark' : '' }}">{{ versePart.content|raw }} </span>
             {%- if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}{% endif -%}
             {%- if versePart.newline %}<br>{% endif -%}
         {%- endif -%}                
