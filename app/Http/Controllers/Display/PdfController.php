@@ -11,6 +11,7 @@ use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Data\Repository\TranslationRepository;
 use \View;
 use SzentirasHu\Service\Reference\CanonicalReference;
+use SzentirasHu\Service\Reference\NumberingSchemeService;
 use SzentirasHu\Service\Text\TextService;
 
 class PdfOptions {
@@ -41,10 +42,16 @@ class PdfController extends Controller {
      */
     private $translationRepository;
 
-    function __construct(TextService $textService, TranslationRepository $translationRepository)
+    /**
+     * @var \SzentirasHu\Service\Reference\NumberingSchemeService
+     */
+    private $numberingSchemeService;
+
+    function __construct(TextService $textService, TranslationRepository $translationRepository, NumberingSchemeService $numberingSchemeService)
     {
         $this->textService = $textService;
         $this->translationRepository = $translationRepository;
+        $this->numberingSchemeService = $numberingSchemeService;
     }
 
     public function getDialog($translationAbbrev, $refString) {
@@ -54,7 +61,11 @@ class PdfController extends Controller {
     public function getRef($translationId, $refString)
     {
         $options = new PdfOptions(request());
-        $ref = CanonicalReference::fromString($refString);
+        $ref = CanonicalReference::fromString($refString, $translationId);
+        $scheme = request()->query('scheme', 'default');
+        if ($scheme === 'vulgata') {
+            $ref = $this->numberingSchemeService->convertReference($ref, 'vulgata', 'default');
+        }
         $translation = $this->translationRepository->getById($translationId);
         $verseContainers = $this->textService->getTranslatedVerses($ref, $translation);        
         // XXX: Duplicate code from TextDisplayController

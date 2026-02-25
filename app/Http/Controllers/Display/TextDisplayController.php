@@ -23,6 +23,7 @@ use SzentirasHu\Models\Media;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
 use View;
+use SzentirasHu\Service\Reference\NumberingSchemeService;
 
 
 /**
@@ -56,7 +57,11 @@ class TextDisplayController extends Controller
      */
     private $textService;
 
-    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, protected BookService $bookService, protected TranslationService $translationService)
+    /**
+     * @var \SzentirasHu\Service\Reference\NumberingSchemeService
+     */
+    private $numberingSchemeService;
+    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, NumberingSchemeService $numberingSchemeService, protected BookService $bookService, protected TranslationService $translationService)
     {
         $this->translationRepository = $translationRepository;
         $this->bookRepository = $bookRepository;
@@ -64,6 +69,7 @@ class TextDisplayController extends Controller
         $this->readingPlanRepository = $readingPlanRepository;
         $this->referenceService = $referenceService;
         $this->textService = $textService;
+        $this->numberingSchemeService = $numberingSchemeService;
     }
 
     public function showTranslationList()
@@ -133,6 +139,10 @@ class TextDisplayController extends Controller
                 return $this->handleDisabledTranslations($translation);
             }
             $canonicalRef = CanonicalReference::fromString($reference, $translation->id);
+            $scheme = request()->query('scheme', 'default');
+            if ($scheme === 'vulgata') {
+                $canonicalRef = $this->numberingSchemeService->convertReference($canonicalRef, 'vulgata', 'default');
+            }
             if ($canonicalRef->isBookLevel()) {
                 return $this->bookView($translationAbbrev, $canonicalRef);
             }

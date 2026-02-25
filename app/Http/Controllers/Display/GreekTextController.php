@@ -11,6 +11,7 @@ use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ParsingException;
+use SzentirasHu\Service\Reference\NumberingSchemeService;
 use SzentirasHu\Service\Reference\ReferenceService;
 
 class GreekTextController extends Controller
@@ -19,7 +20,8 @@ class GreekTextController extends Controller
         protected BookService $bookService,
         protected TranslationService $translationService,
         protected TranslationRepository $translationRepository,
-        protected ReferenceService $referenceService
+        protected ReferenceService $referenceService,
+        protected NumberingSchemeService $numberingSchemeService
     )
     {
     }
@@ -39,6 +41,10 @@ class GreekTextController extends Controller
         if ($reference) {
             try {
                 $canonicalRef = CanonicalReference::fromString($reference, $templateTranslation);
+                $scheme = request()->query('scheme', 'default');
+                if ($scheme === 'vulgata') {
+                    $canonicalRef = $this->numberingSchemeService->convertReference($canonicalRef, 'vulgata', 'default');
+                }
                 
                 // Get the first book reference (GNT references should only have one book)
                 if (count($canonicalRef->bookRefs) > 0) {
