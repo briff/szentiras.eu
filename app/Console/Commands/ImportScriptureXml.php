@@ -13,6 +13,7 @@ use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Data\Entity\Verse;
 use SzentirasHu\Data\UsxCodes;
+use Illuminate\Support\Facades\Storage;
 
 class ImportScriptureXml extends ImportScripture
 {
@@ -350,10 +351,15 @@ class ImportScriptureXml extends ImportScripture
         array &$verseInserts,
         array $pipes = []
     ): void {
-        // Collect text from LabjSzoveg -> Sz -> T
+        // Collect text from LabjSzoveg children (Sz and K)
         $text = '';
-        foreach ($footnote->LabjSzoveg->Sz as $sz) {
-            $text .= (string) $sz->T;
+        foreach ($footnote->LabjSzoveg->children() as $child) {
+            if ($child->getName() === 'Sz') {
+                $text .= (string) $child->T;
+            } elseif ($child->getName() === 'K') {
+                // Use the F attribute (Hungarian abbreviated reference)
+                $text .= (string) $child['F'];
+            }
         }
 
         $verseroot = null;
@@ -415,5 +421,30 @@ class ImportScriptureXml extends ImportScripture
     protected function verifyTranslationBookColumns(string $translationAbbrev): void
     {
         // No-op: XML import does not need Excel column mapping
+    }
+
+    protected function downloadTranslation(string $transAbbrev, string $url): string
+    {
+        try {
+            $filePath = $this->sourceDirectory . '/' . $transAbbrev . '.xml';
+            $this->info("A fájl letöltése a $url címről...: $filePath");
+            if ($url == 's3') {
+                $file = Storage::disk('s3')->get("xml/{$transAbbrev}.xml");
+                file_put_contents($filePath, $file);
+            } else {
+                $fp = fopen($filePath, 'w+');
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_FILE, $fp);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+                curl_exec($ch);
+                curl_close($ch);
+                fclose($fp);
+            }
+        } catch (Exception $ex) {
+            App::abort(500, "Nem sikerült fáljt letölteni a megadott url-ről.");
+        }
+        return $filePath;
     }
 }
