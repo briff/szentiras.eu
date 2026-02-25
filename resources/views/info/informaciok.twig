@@ -5,32 +5,21 @@
 <div class="container-fluid">
     <h1>Információk</h1>
     
-    <div class="row">
-        <div class="col-lg-6">
             <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Újdonságaink</h2>
-                </div>
-                <div class="card-body">
-                    {% apply markdown_to_html %}
-                    {% include 'info.news' %}
-                    {% endapply %}
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Impresszum</h2>
-                </div>
                 <div class="card-body">
                     {% apply markdown_to_html %}
                     {% include 'info.mission' %}
                     {% endapply %}
                 </div>
             </div>
-        </div>
-    </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% apply markdown_to_html %}
+                    {% include 'info.news' %}
+                    {% endapply %}
+                </div>
+            </div>
+    
 </div>
 {% endblock %}
