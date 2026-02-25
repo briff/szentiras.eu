@@ -124,8 +124,8 @@ return [
                 'text' => [901],
                 'heading' => [701=>3],
                 'footnote' => [2001],
-                'xref' => [2021],
-                'poemLine' => [902]
+                'xref' => [2003],
+                'poemLine' => [904]
             ],
             'textSource' => env('TEXT_SOURCE_RUF', 's3'),
             'id' => 6,
