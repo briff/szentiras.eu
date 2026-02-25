@@ -26,5 +26,12 @@ class InfoController extends Controller
         return view("info.mission");
     }
 
+    public function informaciok()
+    {
+        return \View::make("info.informaciok", [
+            'news' => Article::where('frontpage', true)->orderBy('publish_date', 'desc')->get(),
+        ]);
+    }
+
 
 }

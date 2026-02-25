@@ -42,7 +42,7 @@ Route::get("/ai-tool/{translationAbbrev}/{refString}", [AiController::class, 'ge
 Route::get("/ai-greek/find-all/{strongNumber}/{offset?}", [AiController::class, 'getAllInstancesOfGreekWord']);
 Route::get("/ai-greek/{usx_code}/{chapter}/{verse}/{i}", [AiController::class, 'getGreekWordPanel']);
 
-Route::post('/searchbible.php', ' \SzentirasHu\Http\Controllers\Search\SearchController@postLegacy');
+Route::post('/searchbible.php', '\SzentirasHu\Http\Controllers\Search\SearchController@postLegacy');
 
 /** API */
 Route::get("/api", '\SzentirasHu\Http\Controllers\Api\ApiController@getIndex')
@@ -50,6 +50,7 @@ Route::get("/api", '\SzentirasHu\Http\Controllers\Api\ApiController@getIndex')
 
 Route::get('/info', '\SzentirasHu\Http\Controllers\Home\InfoController@getIndex');
 Route::get('/impresszum', '\SzentirasHu\Http\Controllers\Home\InfoController@mission');
+Route::get('/informaciok', '\SzentirasHu\Http\Controllers\Home\InfoController@informaciok');
 
 Route::get('/pdf/dialog/{translationAbbrev}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getDialog');
 Route::get('/pdf/ref/{translationId}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getRef');
