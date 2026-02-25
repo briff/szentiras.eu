@@ -7,34 +7,98 @@
 {%  endblock %}
 
 {% block content %}
+    <div class="container-fluid px-0">
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-lg-6">
+                {% include 'readTile' %}
+            </div>
+            
+            <div class="col-12 col-lg-6">
+                {% include 'searchTile' %}
+            </div>
+        </div>
 
-    {% include 'quickChapterSelector' %}
+        <div class="row g-3 mb-4">
+            <!-- Translation select tile (1 wide) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                {% include 'translationTile' with { cathBibles: cathBibles, otherBibles: otherBibles } %}
+            </div>
+            
+            <!-- New Testament tile (1 wide) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                {% include 'newTestamentTile' %}
+            </div>
+            
+            <!-- Old Testament tile (1 wide) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                {% include 'oldTestamentTile' %}
+            </div>
+            
+            <!-- Psalms tile (1 wide) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                {% include 'psalmsTile' %}
+            </div>
+        </div>
 
-    <div class="card mt-1">
-        <div class="card-header">Katolikus fordítások</div>        
-        <div class="card-body">
-        {% for row in cathBibles %}
-            <h4 class="card-title"> <a href='/{{ row.abbrev }}'>{{ row.name }}</a></h4>
-        {% endfor %}
+        <!-- Additional tiles section (for future expansion) -->
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi-grid-3x3-gap me-2"></i>
+                        További lehetőségek
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi-headphones display-4 text-primary mb-3"></i>
+                                        <h5 class="card-title">Hangoskönyv</h5>
+                                        <p class="card-text">Hallgasd a Bibliát hangoskönyvként</p>
+                                        <a href="/hangoskonyv" class="btn btn-outline-primary">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi-calendar-week display-4 text-success mb-3"></i>
+                                        <h5 class="card-title">Olvasási tervek</h5>
+                                        <p class="card-text">Napi olvasási tervek a Bibliából</p>
+                                        <a href="/olvasasi-tervek" class="btn btn-outline-success">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi-search-heart display-4 text-warning mb-3"></i>
+                                        <h5 class="card-title">MI Keresés</h5>
+                                        <p class="card-text">Keresés mesterséges intelligenciával</p>
+                                        <a href="/ai-search" class="btn btn-outline-warning">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi-info-circle display-4 text-info mb-3"></i>
+                                        <h5 class="card-title">Információk</h5>
+                                        <p class="card-text">A projektről és használati útmutató</p>
+                                        <a href="/informaciok" class="btn btn-outline-info">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="card mt-1">
-        <div class="card-header">További fordítások</div>        
-        <div class="card-body">
-            {% for row in otherBibles %}
-                <h4 class="card-title"><a href='/{{ row.abbrev }}'>{{ row.name }}</a></h4>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="card mt-1">
-        <div class="card-header">Nem magyar nyelvű Szentírások</div>        
-        <div class="card-body">
-            <h4 class="card-title"><a href='/GNT'>Görög Újszövetségi Szentírás</a></h4>
-        </div>
-    </div>
-
 {% endblock %}
 
 {% block abbrevlist %}

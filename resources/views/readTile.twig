@@ -1,0 +1,24 @@
+<div class="card h-100">
+    <div class="card-body text-center">
+        <i class="bi-book display-4 text-primary mb-3"></i>
+        <h5 class="card-title">Olvasás</h5>
+        <p class="card-text text-muted mb-3">Válassz könyvet, fejezetet és verset a gyors olvasáshoz</p>
+        
+        <div class="mt-4 text-start">
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="referenceInput" placeholder="pl. 1 Kor 13 (Pál szeretét éneke)">
+                        <button class="btn btn-outline-primary" id="goToReferenceButton" type="button">
+                            <i class="bi-arrow-right"></i> Ugrás
+                        </button>
+                    </div>
+                    <small class="text-muted">Írd be a könyv, fejezet és vers számát</small>
+                </div>
+            </div>
+
+            {% include 'quickChapterSelector' %}
+
+        </div>
+    </div>
+</div>
