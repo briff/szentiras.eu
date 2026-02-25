@@ -1,25 +1,25 @@
-<div class="card h-100">
+<div class="card h-100 border-0" style="background-color: #f8f7f4;">
     <div class="card-body text-center">
-        <i class="bi-search display-4 text-success mb-3"></i>
-        <h5 class="card-title">Keresés</h5>
-        <p class="card-text text-muted mb-3">Keress szavakat, kifejezéseket a teljes Bibliában</p>
+        <i class="bi-search display-4 mb-3" style="color: #7a9e87;"></i>
+        <h5 class="card-title" style="color: #4a5568;">Keresés</h5>
+        <p class="card-text mb-3" style="color: #718096;">Keress szavakat, kifejezéseket a teljes Bibliában</p>
         
         <div class="mt-4 text-start">
         <form id="quickSearchForm" role="form" method="post" class="form-inline"
                 action="/kereses/quicksearch" id="quickSearchForm">
             <div class="form-group">
                 <div class="input-group">
-                    <input id="quickSearch" autocomplete="off" type="text" class="form-control" name="textToSearch" value="{{ form.textToSearch }}" placeholder="Gyorskeresés">
+                    <input id="quickSearch" autocomplete="off" type="text" class="form-control" name="textToSearch" value="{{ form.textToSearch }}" placeholder="Gyorskeresés" style="border-color: #d4cfc9; background-color: #fdfcfb;">
                     <input id="grouping" type="hidden" class="form-control" name="grouping" value="verse">
                     {{ csrf_field() }}
                     <div class="input-group-append">
-                        <a href="javascript:void(0)" class="quickSearchButton btn btn-default btn-primary"><span id="quickSearchHitsButtonContent"><i class="bi-search"></i></span></a>
+                        <a href="javascript:void(0)" class="quickSearchButton btn btn-default" style="color: #fff; background-color: #7a9e87; border-color: #7a9e87;"><span id="quickSearchHitsButtonContent"><i class="bi-search"></i></span></a>
                     </div>
                     <div class="input-group-append">
-                        <a href="javascript:void(0)" title="Részletes keresés" class="quickSearchButton btn-secondary {{ fullQuickSearch ? 'd-none' : 'd-md-none d-lg-none' }} btn btn-default"><i class="bi-gear"></i></a></span>
+                        <a href="javascript:void(0)" title="Részletes keresés" class="quickSearchButton {{ fullQuickSearch ? 'd-none' : 'd-md-none d-lg-none' }} btn btn-default" style="color: #6b6560; background-color: #ede9e4; border-color: #d4cfc9;"><i class="bi-gear"></i></a></span>
                     </div>
                     <div class="input-group-append">
-                        <a href="/ai-search" title="MI keresés" class="btn-secondary {{ fullQuickSearch ? 'd-none' : 'd-md-none d-lg-none' }} btn btn-default"><i class="bi-robot"></i></a></span>                            
+                        <a href="/ai-search" title="MI keresés" class="{{ fullQuickSearch ? 'd-none' : 'd-md-none d-lg-none' }} btn btn-default" style="color: #6b6560; background-color: #ede9e4; border-color: #d4cfc9;"><i class="bi-robot"></i></a></span>
                     </div>
 
                 </div>
@@ -27,10 +27,10 @@
         </form>
         <div class="d-flex flex-wrap">
         <div class="{{ fullQuickSearch ? '' : 'd-none d-md-block' }} text-center mt-2 flex-fill">
-            <a href="javascript:void(0)" role="button" class="quickSearchButton btn btn-secondary btn-default"><i class="bi-gear"></i> Részletes keresés</a>
+            <a href="javascript:void(0)" role="button" class="quickSearchButton btn btn-default" style="color: #6b6560; background-color: #ede9e4; border-color: #d4cfc9;"><i class="bi-gear"></i> Részletes keresés</a>
         </div>
         <div class="{{ fullQuickSearch ? '' : 'd-none d-md-block' }} text-center mt-2 flex-fill">
-            <a href="/ai-search" role="button" class="btn btn-secondary btn-default"><i class="bi-robot"></i> MI keresés</a>
+            <a href="/ai-search" role="button" class="btn btn-default" style="color: #6b6560; background-color: #ede9e4; border-color: #d4cfc9;"><i class="bi-robot"></i> MI keresés</a>
         </div>
     </div>
         </div>
