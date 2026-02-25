@@ -18,7 +18,20 @@ class DefaultVerseParser extends AbstractVerseParser
 
     protected function parseTextVerse($rawVerse, VerseData $verse)
     {
-        $verse->verseParts[] = new VersePart($verse, $rawVerse->verse, VersePartType::SIMPLE_TEXT, count($verse->verseParts));
+        $rawText = $rawVerse->verse;
+        $containsBr = false;
+        
+        // Strip trailing <br> tag (with optional slash and optional whitespace)
+        if (preg_match('/\s*<br\s*\/?>\s*$/i', $rawText)) {
+            $containsBr = true;
+            $rawText = preg_replace('/\s*<br\s*\/?>\s*$/i', '', $rawText);
+        }
+        
+        $rawText = $this->replaceTags($rawText);
+        $rawText = $this->fixEmTags($rawText);
+        $versePart = new VersePart($verse, $rawText, VersePartType::SIMPLE_TEXT, count($verse->verseParts));
+        $versePart->newline = $containsBr;
+        $verse->verseParts[] = $versePart;
     }
 
     protected function parseXrefverse($book, $rawVerse, VerseData $verse)
@@ -112,6 +125,8 @@ class DefaultVerseParser extends AbstractVerseParser
         return $fixedText;
     }
     protected function replaceTags($rawVerse) {
+        // Strip <br> tags (with optional slash and whitespace)
+        $rawVerse = preg_replace('/<br\s*\/?>/i', '', $rawVerse);
         return $rawVerse;
     }
 
