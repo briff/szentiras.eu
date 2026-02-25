@@ -18,6 +18,22 @@ DEPLOY_USER=${DEPLOY_USER:-deploy}
 DEPLOY_REMOTE_PATH=${DEPLOY_REMOTE_PATH:-/tmp/}
 SSH_KEY_PATH=${SSH_KEY_PATH:-~/.ssh/deploy}
 
+# Parse command line arguments
+EXEC=0
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -e|--exec)
+            EXEC=1
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [-e|--exec]"
+            exit 1
+            ;;
+    esac
+done
+
 # Get git short hash for filename
 if git rev-parse --git-dir > /dev/null 2>&1; then
     GIT_SHORT_HASH=$(git rev-parse --short HEAD)
@@ -147,6 +163,13 @@ for service in $SERVICES; do
     STATUS=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose ps $service --format '{{.Status}}'")
     echo "   - $service: $STATUS"
 done
+
+if [ $EXEC -eq 1 ]; then
+    echo
+    echo "=== Executing into container app ==="
+    SSH_TTY_CMD="$SSH_CMD -t"
+    $SSH_TTY_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose exec app bash"
+fi
 
 echo
 echo "=== Deployment Complete ==="
