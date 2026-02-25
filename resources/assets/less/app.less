@@ -310,6 +310,14 @@ p.footnote {
 .poem {
     text-align: left;
     margin: 10px 0 10px 10px;
+
+    & + & {
+        margin-top: 0;
+    }
+
+    &:has(+ &) {
+        margin-bottom: 0;
+    }
 }
 
 .xref-popover {
