@@ -87,7 +87,7 @@ Route::get('/login', [AnonymousIdController::class, 'showLoginForm']);
 
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');
 
-Route::get('/GNT/{book?}', [GreekTextController::class, 'show']);
+Route::get('/GNT/{reference?}', [GreekTextController::class, 'show'])->where('reference', '[^/]+');
 
 /** These should come at the end to not collide with other routes! */
 Route::get('/{TRANSLATION_ABBREV}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showTranslation')
@@ -105,4 +105,3 @@ Route::get('/xref/{TRANSLATION_ABBREV}/{REFERENCE}', [TextDisplayController::cla
     ->middleware(RedirectLowerCaseTranslationAbbrev::class)
     ->where(['TRANSLATION_ABBREV' => Config::get('settings.translationAbbrevRegex'),
         'REFERENCE' => '[^/]+']);
-

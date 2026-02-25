@@ -1,4 +1,4 @@
-{% extends 'layout' %}
+{% extends "layout" %}
 
 {% set pageTitle %}
 Görög Újszövetségi Szentírás
@@ -8,9 +8,30 @@ Görög Újszövetségi Szentírás
 
     <h2>Görög Újszövetségi Szentírás</h2>
 
+    {# Translation switcher #}
+    {% if translationLinks is defined %}
+    <div class="card mb-2">
+        <div class="card-body text-center">
+            <div class="d-flex flex-wrap justify-content-center gap-1">
+                {% for otherTranslation in translationLinks %}
+                    {% if otherTranslation.abbrev != 'GNT' %}
+                        {% if otherTranslation.enabled %}
+                            <a class="btn btn-sm btn-outline-primary" role="button" href="{{ otherTranslation.link starts with '/' ? otherTranslation.link : '/' ~ otherTranslation.link }}">{{ otherTranslation.abbrev }}</a>
+                        {% else %}
+                            <a class="btn btn-sm btn-outline-primary disabled"  role="button" title="A hivatkozás {{ otherTranslation.abbrev }} fordításban nem elérhető.">{{ otherTranslation.abbrev }}</a>
+                        {% endif %}
+                    {% else %}
+                        <a href="#" class="btn btn-sm btn-secondary disabled"  >{{ otherTranslation.abbrev }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="card mb-2">
     <div class="card-body text-center">
-        {{ 
+        {{
             books
                 |map(b => (b == book) ? "<b>#{b.abbrev}</b>" :  "<a href=\"/GNT/#{b.abbrev}\" class=\"minilink\">#{b.abbrev}</a>")
                 |join(" ◦ ")|raw

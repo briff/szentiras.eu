@@ -18,6 +18,7 @@ use SzentirasHu\Data\Repository\BookRepository;
 use SzentirasHu\Data\Repository\TranslationRepository;
 use SzentirasHu\Data\Repository\VerseRepository;
 use SzentirasHu\Data\Repository\ReadingPlanRepository;
+use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Models\Media;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
@@ -284,14 +285,25 @@ class TextDisplayController extends Controller
                                 break;
                             }
                         }
+                        
+                        // Special handling for GNT translation
+                        $link = $this->referenceService->getCanonicalUrl($canonicalRef, $otherTranslation->id);
+                        if ($otherTranslation->abbrev === 'GNT' && $allBooksExistInTranslation) {
+                            // For GNT, we need to link to the GreekTextController with the full reference
+                            $link = "/GNT/{$canonicalRef->toString()}";
+                        }
+                        
                         return [
                             'id' => $otherTranslation->id,
-                            'link' => $this->referenceService->getCanonicalUrl($canonicalRef, $otherTranslation->id, $translation->id),
+                            'link' => $link,
                             'abbrev' => $otherTranslation->abbrev,
                             'enabled' => $allBooksExistInTranslation
                         ];
                     }
-                )
+                )->sortBy(function ($translationLink) {
+                    // Put GNT at the end
+                    return $translationLink['abbrev'] === 'GNT' ? 1 : 0;
+                })->values()
             ]);
         } catch (ParsingException $e) {
             // as this doesn't look like a valid reference
@@ -424,14 +436,25 @@ class TextDisplayController extends Controller
             'translationLinks' => $allTranslations->map(
                 function ($translation) use ($canonicalRef, $bookTranslations) {
                     $bookExistsInTranslation = $bookTranslations->contains($translation->id);
+                    
+                    $link = $this->referenceService->getCanonicalUrl($canonicalRef, $translation->id);
+                    // Special handling for GNT translation
+                    if ($translation->abbrev === 'GNT' && $bookExistsInTranslation) {
+                        // For GNT, link to the GreekTextController with the full reference
+                        $link = "/GNT/{$canonicalRef->toString()}";
+                    }
+                    
                     return [
                         'id' => $translation->id,
-                        'link' => $this->referenceService->getCanonicalUrl($canonicalRef, $translation->id),
+                        'link' => $link,
                         'abbrev' => $translation->abbrev,
                         'enabled' => $bookExistsInTranslation
                     ];
                 }
-            )
+            )->sortBy(function ($translationLink) {
+                // Put GNT at the end
+                return $translationLink['abbrev'] === 'GNT' ? 1 : 0;
+            })->values()
         ];
         return $bookViewArray;
     }
@@ -479,6 +502,18 @@ class TextDisplayController extends Controller
             ->getAllOrderedByDenom()
             ->filter(
                 function ($translation) use ($usxCode) {
+                    // For GNT translation, check if it's a New Testament book
+                    if ($translation->abbrev === 'GNT') {
+                        // Check if this is a New Testament book
+                        // USX codes for NT books are in UsxCodes::NEW_TESTAMENT
+                        $isNewTestament = in_array($usxCode, \SzentirasHu\Data\UsxCodes::newTestamentUsx());
+                        if (!$isNewTestament) {
+                            return false;
+                        }
+                        // Check if Greek verses exist for this book
+                        return \SzentirasHu\Models\GreekVerse::where('usx_code', $usxCode)->exists();
+                    }
+                    
                     return $this->bookRepository
                         ->getByUsxCodeForTranslation(
                             $usxCode,
