@@ -1,122 +1,358 @@
 <div class="card h-100">
-    <div class="card-body text-center">
-        <i class="bi-music-note-beamed display-4 text-warning mb-3"></i>
-        <h5 class="card-title">Zsoltárok</h5>
-        <p class="card-text text-muted mb-3">150 zsoltár imádságokban, dicsőítésekben és bánatban</p>
-        
-        <div class="mt-4 text-start">
-            <div class="mb-3">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <a href="/Zsolt1" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-1-circle me-1"></i> 1. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt23" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-2-circle me-1"></i> 23. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt51" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-3-circle me-1"></i> 51. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt91" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-4-circle me-1"></i> 91. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt100" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-5-circle me-1"></i> 100. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt121" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-6-circle me-1"></i> 121. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt139" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-7-circle me-1"></i> 139. zsoltár
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="/Zsolt150" class="btn btn-outline-warning w-100 text-dark">
-                            <i class="bi-8-circle me-1"></i> 150. zsoltár
-                        </a>
-                    </div>
-                </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+            <i class="bi-heart-pulse display-6 text-warning me-3"></i>
+            <div>
+                <h5 class="card-title mb-1">Zsoltárok</h5>                
             </div>
+        </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Gyors keresés zsoltár szerint</label>
-                <div class="input-group">
-                    <input type="number" class="form-control" id="psalmNumberInput" placeholder="1-150" min="1" max="150" value="1">
-                    <button class="btn btn-warning" id="goToPsalmButton" type="button">
-                        <i class="bi-arrow-right"></i> Ugrás
+        <div class="mb-4 pt-3 border-top">
+            <div class="input-group input-group-sm">
+                <input type="number" class="form-control" id="psalmNumberInput" placeholder="1-150" min="1" max="150">
+                <button class="btn btn-warning" id="goToPsalmButton" type="button">
+                    <i class="bi-arrow-right"></i> Ugrás
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Selection - Mobile Optimized -->
+        <div class="mb-4">
+            <div class="row g-2" id="psalmCategories">
+                <!-- Category 1: Fear/Anxiety -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-primary w-100 h-100 py-3 category-btn" data-category="fear">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🌿</span>
+                            <span class="fw-semibold">Amikor félek</span>
+                            <small class="text-muted mt-1">6 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 2: Repentance -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-success w-100 h-100 py-3 category-btn" data-category="repentance">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🙏</span>
+                            <span class="fw-semibold">Bűnbánat</span>
+                            <small class="text-muted mt-1">6 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 3: Gratitude -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-warning w-100 h-100 py-3 category-btn" data-category="gratitude">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🌅</span>
+                            <span class="fw-semibold">Hála</span>
+                            <small class="text-muted mt-1">7 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 4: Trust/Strength -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-info w-100 h-100 py-3 category-btn" data-category="trust">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🛡</span>
+                            <span class="fw-semibold">Bizalom</span>
+                            <small class="text-muted mt-1">5 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 5: Praise -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-danger w-100 h-100 py-3 category-btn" data-category="praise">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">👑</span>
+                            <span class="fw-semibold">Dicsőítés</span>
+                            <small class="text-muted mt-1">8 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 6: Suffering -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-secondary w-100 h-100 py-3 category-btn" data-category="suffering">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">😢</span>
+                            <span class="fw-semibold">Szenvedés</span>
+                            <small class="text-muted mt-1">6 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 7: Guidance -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-purple w-100 h-100 py-3 category-btn" data-category="guidance">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🧭</span>
+                            <span class="fw-semibold">Útmutatás</span>
+                            <small class="text-muted mt-1">7 zsoltár</small>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Category 8: Evening/Travel -->
+<div class="col-6 col-xl-4">
+                    <button class="btn btn-outline-dark w-100 h-100 py-3 category-btn" data-category="evening">
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="fs-4 mb-1">🏔</span>
+                            <span class="fw-semibold">Esti imák</span>
+                            <small class="text-muted mt-1">6 zsoltár</small>
+                        </div>
                     </button>
                 </div>
             </div>
-
-            <div class="accordion mb-3" id="psalmsCategoriesAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePsalmsCategories" aria-expanded="false" aria-controls="collapsePsalmsCategories">
-                            <i class="bi-tags me-2"></i> Zsoltárok kategóriák szerint
-                        </button>
-                    </h2>
-                    <div id="collapsePsalmsCategories" class="accordion-collapse collapse" data-bs-parent="#psalmsCategoriesAccordion">
-                        <div class="accordion-body p-0">
-                            <div class="list-group list-group-flush">
-                                <a href="/Zsolt1" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Boldogság (1-2)</span>
-                                    <small class="text-muted">2 zsoltár</small>
-                                </a>
-                                <a href="/Zsolt3" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Könyörgés (3-41)</span>
-                                    <small class="text-muted">39 zsoltár</small>
-                                </a>
-                                <a href="/Zsolt42" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Válasz (42-72)</span>
-                                    <small class="text-muted">31 zsoltár</small>
-                                </a>
-                                <a href="/Zsolt73" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Bizonytalanság (73-89)</span>
-                                    <small class="text-muted">17 zsoltár</small>
-                                </a>
-                                <a href="/Zsolt90" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Királyság (90-106)</span>
-                                    <small class="text-muted">17 zsoltár</small>
-                                </a>
-                                <a href="/Zsolt107" class="list-group-item list-group-item-action d-flex justify-content-between">
-                                    <span>Hálaadás (107-150)</span>
-                                    <small class="text-muted">44 zsoltár</small>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        
+        <!-- Selected Category Psalms (Initially hidden) -->
+        <div id="psalmsContainer" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" id="categoryTitle">Kiválasztott kategória</h6>
+                <button class="btn btn-sm btn-outline-secondary" id="backToCategories">
+                    <i class="bi-arrow-left me-1"></i> Vissza
+                </button>
             </div>
-
+            
+            <div class="row g-2" id="psalmsGrid">
+                <!-- Psalms will be dynamically loaded here -->
+            </div>
+        </div>
             <div class="mt-3">
                 <div class="d-grid gap-2">
-                    <a href="/Zsolt1" class="btn btn-warning text-dark">
-                        <i class="bi-play-circle me-1"></i> Olvasás kezdése
+                    <a href="/Zsolt1" class="btn btn-primary">
+                        <i class="bi-play-circle me-1"></i>Olvasás
                     </a>
                 </div>
             </div>
 
-        </div>
     </div>
+
 </div>
+
+<style>
+.btn-outline-purple {
+    color: #6f42c1;
+    border-color: #6f42c1;
+}
+.btn-outline-purple:hover {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+.btn-outline-purple.active {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+.category-btn {
+    transition: all 0.2s ease;
+    min-height: 85px;
+    border-width: 2px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+.category-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+.category-btn.active {
+    border-width: 3px;
+    font-weight: bold;
+}
+.psalm-btn {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+.psalm-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.1);
+}
+.psalm-motto {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-style: italic;
+}
+#categoryTitle {
+    font-weight: 600;
+    color: #495057;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid #f0f0f0;
+}
+@media (max-width: 768px) {
+    .category-btn {
+        min-height: 85px;
+        padding: 0.5rem 0.25rem !important;
+        border-radius: 10px;
+    }
+    .category-btn .fs-4 {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    .category-btn .fw-semibold {
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+    .category-btn small {
+        font-size: 0.7rem;
+    }
+    .psalm-btn {
+        padding: 0.5rem 0.25rem;
+    }
+    .psalm-motto {
+        font-size: 0.7rem;
+    }
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Psalm data by category
+    const psalmData = {
+        fear: {
+            title: "🌿 Amikor félek vagy szorongok",
+            psalms: [
+                { number: 23, motto: "Az Úr pásztorként vezet a legsötétebb völgyben is." },
+                { number: 27, motto: "Nem kell félnem, mert az Úr az erősségem." },
+                { number: 46, motto: "Isten a menedékünk, még ha megrendül is a világ." },
+                { number: 56, motto: "Amikor félek, Istenben bízom." },
+                { number: 91, motto: "A Magasságos oltalma alatt biztonságban vagyok." },
+                { number: 121, motto: "Segítségem az Úrtól jön, aki az eget és földet alkotta." }
+            ]
+        },
+        repentance: {
+            title: "🙏 Amikor bűnbánatra van szükségem",
+            psalms: [
+                { number: 6, motto: "A szenvedő ember irgalomért kiált." },
+                { number: 32, motto: "Boldog, akinek bűne megbocsáttatott." },
+                { number: 38, motto: "A bűn súlya alatt Istenhez fordulok." },
+                { number: 51, motto: "Tiszta szívet kér az, aki elesett." },
+                { number: 130, motto: "A mélységből is meghall Isten." },
+                { number: 143, motto: "Isten kegyelmére szorulok, nem a saját igazságomra." }
+            ]
+        },
+        gratitude: {
+            title: "🌅 Amikor hálás vagyok",
+            psalms: [
+                { number: 30, motto: "A sírás örömre fordul." },
+                { number: 34, motto: "Áldom az Urat minden időben." },
+                { number: 65, motto: "Isten bőséggel és áldással koronázza meg az évet." },
+                { number: 103, motto: "Ne feledd el, mennyi jót tett veled az Úr." },
+                { number: 107, motto: "Adjanak hálát az Úr szeretetéért és csodáiért." },
+                { number: 116, motto: "Szeretem az Urat, mert meghallgatta imámat." },
+                { number: 118, motto: "Az Úr szeretete örökké tart." }
+            ]
+        },
+        trust: {
+            title: "🛡 Amikor bizalomra és megerősítésre vágyom",
+            psalms: [
+                { number: 16, motto: "Isten az örökségem és biztos részem." },
+                { number: 62, motto: "Lelkem csendben Istenre vár." },
+                { number: 91, motto: "Az Úr a menedékem és váram." },
+                { number: 125, motto: "Aki az Úrban bízik, rendíthetetlen." },
+                { number: 131, motto: "Lelkem elcsendesedett, mint az anyja mellett nyugvó gyermek." }
+            ]
+        },
+        praise: {
+            title: "👑 Amikor dicsőíteni szeretném Istent",
+            psalms: [
+                { number: 8, motto: "Mily felséges az Úr neve az egész földön!" },
+                { number: 19, motto: "Az egek hirdetik Isten dicsőségét." },
+                { number: 29, motto: "Az Úr hangja erő és fenség." },
+                { number: 95, motto: "Jöjjetek, örvendezzünk az Úrnak!" },
+                { number: 96, motto: "Hirdessétek dicsőségét a népek között!" },
+                { number: 100, motto: "Szolgáljatok az Úrnak örömmel!" },
+                { number: 145, motto: "Az Úr nagy és igen dicséretes." },
+                { number: 150, motto: "Mindent, ami él, dicsérje az Urat!" }
+            ]
+        },
+        suffering: {
+            title: "😢 Amikor szenvedek vagy nem értem, mi történik",
+            psalms: [
+                { number: 3, motto: "Sok ellenség közt is Istenhez kiáltok." },
+                { number: 13, motto: "Meddig feledkezel meg rólam, Uram?" },
+                { number: 22, motto: "A szenvedés mélyéről Istenhez kiáltok." },
+                { number: 42, motto: "Miért csüggedsz el, lelkem? Bízz Istenben!" },
+                { number: 69, motto: "Elborítanak a vizek, mégis Istenhez fordulok." },
+                { number: 88, motto: "A legsötétebb panasz is imádság lehet." }
+            ]
+        },
+        guidance: {
+            title: "🧭 Amikor útmutatást és bölcsességet keresek",
+            psalms: [
+                { number: 1, motto: "Az boldog, aki Isten útján jár." },
+                { number: 25, motto: "Taníts meg utaidra, Uram!" },
+                { number: 37, motto: "Ne irigykedj a gonoszokra; bízz az Úrban." },
+                { number: 73, motto: "Isten jelenlétében értem meg az élet titkát." },
+                { number: 119, motto: "Isten igéje világosság az utamon." },
+                { number: 127, motto: "Hiába építünk, ha az Úr nem építi." },
+                { number: 128, motto: "Áldott az, aki az Urat féli." }
+            ]
+        },
+        evening: {
+            title: "🏔 Esti, utazó és zarándok imák",
+            psalms: [
+                { number: 4, motto: "Békességben fekszem le, mert az Úr vigyáz rám." },
+                { number: 23, motto: "Az Úr vezet egész életemen át." },
+                { number: 84, motto: "Boldog, aki Isten házába vágyik." },
+                { number: 91, motto: "Isten oltalmaz minden úton." },
+                { number: 121, motto: "Őriz az Úr jártomban-keltemben." },
+                { number: 134, motto: "Áldjátok az Urat éjszaka is!" }
+            ]
+        }
+    };
+
+    // Category selection
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const categoriesContainer = document.getElementById('psalmCategories');
+    const psalmsContainer = document.getElementById('psalmsContainer');
+    const psalmsGrid = document.getElementById('psalmsGrid');
+    const categoryTitle = document.getElementById('categoryTitle');
+    const backToCategories = document.getElementById('backToCategories');
+    
+    // Quick psalm search elements
     const psalmInput = document.getElementById('psalmNumberInput');
     const goToPsalmButton = document.getElementById('goToPsalmButton');
     
+    // Handle category selection
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // Update active state
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Store last selected category in session storage
+            sessionStorage.setItem('lastPsalmCategory', category);
+            
+            // Show psalms for selected category
+            showPsalms(category);
+        });
+    });
+    
+    // Back to categories
+    backToCategories.addEventListener('click', function() {
+        categoriesContainer.classList.remove('d-none');
+        psalmsContainer.classList.add('d-none');
+    });
+    
+    // Quick psalm search
     if (psalmInput && goToPsalmButton) {
         goToPsalmButton.addEventListener('click', function() {
             const psalmNumber = parseInt(psalmInput.value);
@@ -133,6 +369,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 goToPsalmButton.click();
             }
         });
+    }
+    
+    // Check if there's a last selected category (for future enhancements)
+    const lastCategory = sessionStorage.getItem('lastPsalmCategory');
+    if (lastCategory && psalmData[lastCategory]) {
+        // Optional: Auto-select last category on page load
+        // showPsalms(lastCategory);
+    }
+    
+    // Add smooth scroll to top when showing psalms
+    function showPsalms(category) {
+        const data = psalmData[category];
+        if (!data) return;
+        
+        // Update title
+        categoryTitle.textContent = data.title;
+        
+        // Clear previous psalms
+        psalmsGrid.innerHTML = '';
+        
+        // Add psalm buttons
+        data.psalms.forEach(psalm => {
+            const col = document.createElement('div');
+            col.className = 'col-6 ';
+            
+            const button = document.createElement('a');
+            button.href = `/Zsolt${psalm.number}`;
+            button.className = 'btn btn-light w-100 h-100 psalm-btn d-flex flex-column justify-content-center';
+            button.innerHTML = `
+                <span class="d-flex flex-row align-items-start mb-1 w-100">
+                    <span class="fs-6 fw-bold text-primary me-2 flex-shrink-0" style="min-width:1.8em;">${psalm.number}</span>
+                    <span class="psalm-motto text-wrap flex-grow-1" style="white-space:normal;-webkit-line-clamp:unset;overflow:visible;">${psalm.motto}</span>
+                </span>
+            `;
+            
+            col.appendChild(button);
+            psalmsGrid.appendChild(col);
+        });
+        
+        // Switch views
+        categoriesContainer.classList.add('d-none');
+        psalmsContainer.classList.remove('d-none');
+        
+        // Smooth scroll to top of the tile
+        const cardBody = document.querySelector('.card-body');
+        if (cardBody) {
+            cardBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 });
 </script>
