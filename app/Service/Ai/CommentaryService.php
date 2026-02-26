@@ -3,6 +3,7 @@
 namespace SzentirasHu\Service\Ai;
 
 use Illuminate\Support\Collection;
+use SzentirasHu\Data\UsxCodes;
 use SzentirasHu\Models\Commentary;
 use SzentirasHu\Models\CommentaryRange;
 use SzentirasHu\Data\Entity\Translation;
@@ -18,6 +19,7 @@ class CommentaryService
 
     /**
      * Find commentaries that cover a specific verse.
+     * Uses the same range-matching algorithm as CommentaryRange creation.
      *
      * @param string $usxCode
      * @param int $chapter
@@ -27,45 +29,65 @@ class CommentaryService
      */
     public function findForVerse(string $usxCode, int $chapter, int $verse, Translation $translation): Collection
     {
-        return Commentary::query()
+        // Create a single-verse range to search for
+        $searchRange = [
+            'start_chapter' => $chapter,
+            'start_verse' => $verse,
+            'end_chapter' => $chapter,
+            'end_verse' => $verse,
+        ];
+
+        // Get all commentaries for this book and translation
+        $commentaries = Commentary::query()
             ->where('translation_id', $translation->id)
             ->where('usx_code', $usxCode)
-            ->whereHas('ranges', function ($query) use ($chapter, $verse) {
-                $query->where(function ($q) use ($chapter, $verse) {
-                    // Single verse
-                    $q->where('start_chapter', $chapter)
-                        ->where('start_verse', $verse)
-                        ->where('end_chapter', $chapter)
-                        ->where('end_verse', $verse);
-                })->orWhere(function ($q) use ($chapter, $verse) {
-                    // Within same chapter range
-                    $q->where('start_chapter', $chapter)
-                        ->where('end_chapter', $chapter)
-                        ->where('start_verse', '<=', $verse)
-                        ->where('end_verse', '>=', $verse);
-                })->orWhere(function ($q) use ($chapter) {
-                    // Cross-chapter range
-                    $q->where('start_chapter', '<', $chapter)
-                        ->where('end_chapter', '>', $chapter);
-                })->orWhere(function ($q) use ($chapter, $verse) {
-                    // Start chapter matches
-                    $q->where('start_chapter', $chapter)
-                        ->where('end_chapter', '>', $chapter)
-                        ->where('start_verse', '<=', $verse);
-                })->orWhere(function ($q) use ($chapter, $verse) {
-                    // End chapter matches
-                    $q->where('start_chapter', '<', $chapter)
-                        ->where('end_chapter', $chapter)
-                        ->where('end_verse', '>=', $verse);
-                });
-            })
             ->with('ranges')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Filter commentaries that have overlapping ranges
+        return $commentaries->filter(function (Commentary $commentary) use ($searchRange) {
+            return $commentary->ranges->some(function (CommentaryRange $range) use ($searchRange) {
+                return $this->rangesOverlap($range, $searchRange);
+            });
+        });
+    }
+
+    /**
+     * Check if two ranges overlap.
+     * Uses the same logic as range creation to ensure consistency.
+     *
+     * @param CommentaryRange $existingRange
+     * @param array $searchRange Array with keys: start_chapter, start_verse, end_chapter, end_verse
+     * @return bool
+     */
+    private function rangesOverlap(CommentaryRange $existingRange, array $searchRange): bool
+    {
+        $existing = [
+            'start_chapter' => $existingRange->start_chapter,
+            'start_verse' => $existingRange->start_verse,
+            'end_chapter' => $existingRange->end_chapter,
+            'end_verse' => $existingRange->end_verse,
+        ];
+
+        // Two ranges overlap if:
+        // - They don't end before the other starts
+        // - They don't start after the other ends
+        // Using chapter:verse as a comparable unit
+
+        // Convert to linear verse numbers for easier comparison
+        $existingStart = $existing['start_chapter'] * 1000 + $existing['start_verse'];
+        $existingEnd = $existing['end_chapter'] * 1000 + $existing['end_verse'];
+        $searchStart = $searchRange['start_chapter'] * 1000 + $searchRange['start_verse'];
+        $searchEnd = $searchRange['end_chapter'] * 1000 + $searchRange['end_verse'];
+
+        // Ranges overlap if: existingStart <= searchEnd AND existingEnd >= searchStart
+        return $existingStart <= $searchEnd && $existingEnd >= $searchStart;
     }
 
     /**
      * Find commentaries that cover any verse in a given reference.
+     * Uses the same range-matching algorithm as CommentaryRange creation.
      *
      * @param CanonicalReference $reference
      * @param Translation $translation
@@ -73,33 +95,98 @@ class CommentaryService
      */
     public function findForReference(CanonicalReference $reference, Translation $translation): Collection
     {
-        // For simplicity, we'll find commentaries for each book in the reference.
-        // Since commentaries are per book, we can query per book.
         $commentaries = collect();
 
         foreach ($reference->bookRefs as $bookRef) {
-            $usxCode = $bookRef->bookId;
-            foreach ($bookRef->chapterRanges as $chapterRange) {
-                // We'll query for any commentary that overlaps with the chapter range.
-                // This is a simplified approach; for production you might want to check verse-level overlap.
-                $commentaries = $commentaries->merge(
-                    Commentary::query()
-                        ->where('translation_id', $translation->id)
-                        ->where('usx_code', $usxCode)
-                        ->whereHas('ranges', function ($query) use ($chapterRange) {
-                            $query->where(function ($q) use ($chapterRange) {
-                                // Overlap condition: start <= range.end AND end >= range.start
-                                $q->where('start_chapter', '<=', $chapterRange->untilChapterRef->chapterId ?? $chapterRange->chapterRef->chapterId)
-                                    ->where('end_chapter', '>=', $chapterRange->chapterRef->chapterId);
-                            });
-                        })
-                        ->with('ranges')
-                        ->get()
-                );
+            // Determine if bookId is already a USX code or needs conversion
+            $usxCode = $this->resolveUsxCode($bookRef->bookId, $translation);
+            if (!$usxCode) {
+                continue;
             }
+            
+            // Convert reference ranges to search ranges
+            $searchRanges = $this->convertBookRefToSearchRanges($bookRef);
+
+            // Get all commentaries for this book and translation
+            $bookCommentaries = Commentary::query()
+                ->where('translation_id', $translation->id)
+                ->where('usx_code', $usxCode)
+                ->with('ranges')
+                ->get();
+
+            // Filter commentaries that have overlapping ranges with any search range
+            $filtered = $bookCommentaries->filter(function (Commentary $commentary) use ($searchRanges) {
+                return $commentary->ranges->some(function (CommentaryRange $range) use ($searchRanges) {
+                    return collect($searchRanges)->some(function (array $searchRange) use ($range) {
+                        return $this->rangesOverlap($range, $searchRange);
+                    });
+                });
+            });
+
+            $commentaries = $commentaries->merge($filtered);
         }
 
         return $commentaries->unique('id');
+    }
+
+    /**
+     * Resolve a book identifier to a USX code.
+     * Handles both book abbreviations and USX codes.
+     *
+     * @param string $bookId Book abbreviation or USX code
+     * @param Translation $translation
+     * @return string|null
+     */
+    private function resolveUsxCode(string $bookId, Translation $translation): ?string
+    {
+        // Check if it's already a valid USX code
+        if (in_array($bookId, UsxCodes::allUsx())) {
+            return $bookId;
+        }
+
+        // Try to convert from book abbreviation to USX code
+        return UsxCodes::getUsxFromBookAbbrevAndTranslation($bookId, $translation->abbrev);
+    }
+
+    /**
+     * Convert a BookRef with chapter ranges to search ranges.
+     *
+     * @param mixed $bookRef
+     * @return array<array{start_chapter: int, start_verse: int, end_chapter: int, end_verse: int}>
+     */
+    private function convertBookRefToSearchRanges($bookRef): array
+    {
+        $ranges = [];
+
+        foreach ($bookRef->chapterRanges as $chapterRange) {
+            $startChapter = $chapterRange->chapterRef->chapterId;
+            $endChapter = $chapterRange->untilChapterRef->chapterId ?? $startChapter;
+
+            // If no verse ranges specified, use full chapter range
+            if (empty($chapterRange->chapterRef->verseRanges)) {
+                $ranges[] = [
+                    'start_chapter' => $startChapter,
+                    'start_verse' => 1,
+                    'end_chapter' => $endChapter,
+                    'end_verse' => 999, // Arbitrary high number for end of chapter
+                ];
+            } else {
+                // Process each verse range
+                foreach ($chapterRange->chapterRef->verseRanges as $verseRange) {
+                    $startVerse = $verseRange->verseRef ? $verseRange->verseRef->verseId : 1;
+                    $endVerse = $verseRange->untilVerseRef ? $verseRange->untilVerseRef->verseId : $startVerse;
+
+                    $ranges[] = [
+                        'start_chapter' => $startChapter,
+                        'start_verse' => $startVerse,
+                        'end_chapter' => $endChapter,
+                        'end_verse' => $endVerse,
+                    ];
+                }
+            }
+        }
+
+        return $ranges;
     }
 
     /**
