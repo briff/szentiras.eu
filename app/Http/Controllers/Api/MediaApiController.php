@@ -62,6 +62,33 @@ class MediaApiController extends Controller
         }
     }
 
+        /**
+         * Delete a media item.
+         *
+         * @param int $id
+         * @return JsonResponse
+         */
+        public function delete(int $id): JsonResponse
+        {
+            try {
+                $media = Media::findOrFail($id);
+                
+                // Delete media
+                $media->delete();
+    
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Media deleted successfully',
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete media: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+
     /**
      * Get media item details.
      *

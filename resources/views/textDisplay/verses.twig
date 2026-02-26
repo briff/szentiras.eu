@@ -137,11 +137,12 @@
     </div>
 {% endblock %}
 
-{% set js=['pages/verses'] %}
+{% if isEditor and mediaEnabled %}
+    {% set js=['pages/verses', 'editor-media-move'] %}
+{% else %}
+    {% set js=['pages/verses'] %}
+{% endif %}
 
 {% block script %}
     {{ parent() }}
-    {% if isEditor and mediaEnabled %}
-    <script src="{{ asset('js/editor-media-move.js') }}"></script>
-    {% endif %}
 {% endblock %}

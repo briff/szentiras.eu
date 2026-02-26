@@ -92,6 +92,7 @@ Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show'
 Route::prefix('api/media')->middleware('editor')->group(function () {
     Route::get('/{id}', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'show']);
     Route::post('/move', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'move']);
+    Route::delete('/{id}', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'delete']);
     Route::get('/{usxCode}/{chapter}/{verse}/next', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getNextVerse']);
     Route::get('/{usxCode}/{chapter}/{verse}/previous', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getPreviousVerse']);
 });
