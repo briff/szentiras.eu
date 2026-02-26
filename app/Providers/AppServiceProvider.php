@@ -2,6 +2,7 @@
 
 namespace SzentirasHu\Providers;
 
+use SzentirasHu\Service\Ai\AiPromptService;
 use Illuminate\Support\ServiceProvider;
 use SzentirasHu\Service\Editor\EditorService;
 use Twig\Environment;
@@ -48,5 +49,12 @@ class AppServiceProvider extends ServiceProvider
         });
         
         $this->app->alias(EditorService::class, 'editor');
+
+        // Register AI Prompt Service
+        $this->app->singleton(AiPromptService::class, function ($app) {
+            return new AiPromptService($app['config']);
+        });
+        
+        $this->app->alias(AiPromptService::class, 'ai-prompt');
     }
 }
