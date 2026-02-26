@@ -6,14 +6,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Models\Media;
-use SzentirasHu\Service\Editor\EditorService;
 use Illuminate\Support\Facades\Validator;
 
 class MediaApiController extends Controller
 {
-    public function __construct(
-        protected EditorService $editorService
-    ) {}
 
     /**
      * Move a media item to a new verse location.
@@ -23,14 +19,6 @@ class MediaApiController extends Controller
      */
     public function move(Request $request): JsonResponse
     {
-        // Check if user is an editor
-        if (!$this->editorService->currentIsEditor()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Editor privileges required.'
-            ], 403);
-        }
-
         // Validate input
         $validator = Validator::make($request->all(), [
             'media_id' => 'required|integer|exists:media,id',
@@ -82,14 +70,6 @@ class MediaApiController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        // Check if user is an editor
-        if (!$this->editorService->currentIsEditor()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Editor privileges required.'
-            ], 403);
-        }
-
         try {
             $media = Media::with('mediaType')->findOrFail($id);
 
@@ -123,14 +103,6 @@ class MediaApiController extends Controller
      */
     public function getNextVerse(string $usxCode, int $chapter, int $verse): JsonResponse
     {
-        // Check if user is an editor
-        if (!$this->editorService->currentIsEditor()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Editor privileges required.'
-            ], 403);
-        }
-
         // In a real implementation, we would query the database to get the next verse
         // For now, we'll just return the next verse number
         $nextVerse = $verse + 1;
@@ -155,14 +127,6 @@ class MediaApiController extends Controller
      */
     public function getPreviousVerse(string $usxCode, int $chapter, int $verse): JsonResponse
     {
-        // Check if user is an editor
-        if (!$this->editorService->currentIsEditor()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Editor privileges required.'
-            ], 403);
-        }
-
         // In a real implementation, we would query the database to get the previous verse
         // For now, we'll just return the previous verse number (minimum 1)
         $previousVerse = max(1, $verse - 1);
