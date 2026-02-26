@@ -11,14 +11,16 @@ use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ReferenceService;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TextService;
+use SzentirasHu\Jobs\GenerateCommentaryJob;
 
 class GenerateAiCommentary extends Command
 {
-    protected $signature = 'ai:generate-commentary
+    protected $signature = 'szentiras:generate-commentary
                             {reference : Bible reference (e.g., "MAT_1_2-MAT_1_6,MAT_1_12,MAT_1_23-MAT_2_5")}
                             {translation : Translation abbreviation (e.g., "KNB")}
                             {--dry-run : Generate commentary but do not save to database}
                             {--force : Overwrite existing commentary for the same reference}
+                            {--sync : Generate commentary synchronously (skip queue)}
                             {--metadata= : JSON metadata to attach (e.g., \'{"model":"gpt-4","temperature":0.7}\')}';
 
     protected $description = 'Generate AI commentary for a Bible reference and store it.';
@@ -39,6 +41,7 @@ class GenerateAiCommentary extends Command
         $translationAbbrev = $this->argument('translation');
         $dryRun = $this->option('dry-run');
         $force = $this->option('force');
+        $sync = $this->option('sync');
 
         // Parse translation
         $translation = Translation::where('abbrev', $translationAbbrev)->first();
@@ -74,52 +77,82 @@ class GenerateAiCommentary extends Command
 
         $this->info("Generating commentary for {$referenceString} ({$translationAbbrev})...");
 
-        // Generate canonical reference for AI prompt
-        // If input is already canonical, use it directly; otherwise convert from USX
-        $canonicalRefString = str_contains($referenceString, '_')
-            ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
-            : $referenceString;
-        $canonicalRef = CanonicalReference::fromString($canonicalRefString);
+        // Determine if we should generate synchronously
+        $generateSync = $sync || $dryRun;
 
-        // Generate commentary text
-        $commentaryText = $this->commentaryService->generateCommentaryText(
-            $canonicalRef,
-            $translation,
-            $this->aiPromptService,
-            $this->getAdditionalPlaceholders()
-        );
+        if ($generateSync) {
+            // Generate canonical reference for AI prompt
+            // If input is already canonical, use it directly; otherwise convert from USX
+            $canonicalRefString = str_contains($referenceString, '_')
+                ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
+                : $referenceString;
+            $canonicalRef = CanonicalReference::fromString($canonicalRefString);
 
-        if (empty($commentaryText)) {
-            $this->error('Failed to generate commentary text.');
-            return self::FAILURE;
-        }
+            // Generate commentary text
+            $commentaryText = $this->commentaryService->generateCommentaryText(
+                $canonicalRef,
+                $translation,
+                $this->aiPromptService,
+                $this->getAdditionalPlaceholders()
+            );
 
-        $this->info("Commentary generated (" . strlen($commentaryText) . " characters).");
-
-        if ($dryRun) {
-            $this->info("Dry run - commentary text preview:");
-            $this->line(substr($commentaryText, 0, 500) . (strlen($commentaryText) > 500 ? '...' : ''));
-            $this->info("Ranges:");
-            foreach ($ranges as $range) {
-                $this->line("  {$range['start_chapter']}:{$range['start_verse']} - {$range['end_chapter']}:{$range['end_verse']}");
+            if (empty($commentaryText)) {
+                $this->error('Failed to generate commentary text.');
+                return self::FAILURE;
             }
+
+            $this->info("Commentary generated (" . strlen($commentaryText) . " characters).");
+
+            if ($dryRun) {
+                $this->info("Dry run - commentary text preview:");
+                $this->line(substr($commentaryText, 0, 500) . (strlen($commentaryText) > 500 ? '...' : ''));
+                $this->info("Ranges:");
+                foreach ($ranges as $range) {
+                    $this->line("  {$range['start_chapter']}:{$range['start_verse']} - {$range['end_chapter']}:{$range['end_verse']}");
+                }
+                return self::SUCCESS;
+            }
+
+            // Prepare metadata
+            $metadata = $this->getMetadata();
+
+            // Store commentary
+            $commentary = $this->commentaryService->store(
+                $translation,
+                $usxCode,
+                $commentaryText,
+                $ranges,
+                $metadata
+            );
+
+            $this->info("Commentary saved with ID {$commentary->id}.");
+            $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
+
+            return self::SUCCESS;
+        } else {
+            // Asynchronous generation: create pending commentary and dispatch job
+            $this->info("Creating pending commentary and dispatching job...");
+
+            // Prepare metadata (includes reference)
+            $metadata = $this->getMetadata();
+
+            // Create pending commentary
+            $commentary = $this->commentaryService->createPendingCommentary(
+                $translation,
+                $usxCode,
+                $ranges,
+                $metadata
+            );
+
+            // Dispatch job
+            GenerateCommentaryJob::dispatch($commentary);
+
+            $this->info("Pending commentary created with ID {$commentary->id}. Job dispatched.");
+            $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
+            $this->info("The commentary will be generated in the background. Use the queue worker to process jobs.");
+
             return self::SUCCESS;
         }
-
-        // Prepare metadata
-        $metadata = $this->getMetadata();
-
-        // Store commentary
-        $commentary = $this->commentaryService->store(
-            $translation,
-            $usxCode,
-            $commentaryText,
-            $ranges,
-            $metadata
-        );
-
-        $this->info("Commentary saved with ID {$commentary->id}.");
-        $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
 
         return self::SUCCESS;
     }

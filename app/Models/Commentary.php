@@ -33,6 +33,11 @@ use SzentirasHu\Data\Entity\Translation;
  */
 class Commentary extends Model
 {
+    const STATUS_PENDING = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_FAILED = 'failed';
+
     protected $table = 'commentaries';
 
     protected $fillable = [
@@ -40,10 +45,17 @@ class Commentary extends Model
         'usx_code',
         'commentary_text',
         'metadata',
+        'status',
+        'job_id',
+        'error_message',
+        'started_at',
+        'completed_at',
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function translation(): BelongsTo

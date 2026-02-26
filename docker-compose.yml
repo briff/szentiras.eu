@@ -159,8 +159,35 @@ services:
     command:
       - --memory-limit=32
     networks:
-      - szeu-network    
-  # Hunspell is inside the container for now, this is preparation for the future
+      - szeu-network
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    networks:
+      - szeu-network
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  queue_worker:
+    image: szeu-app-dev
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - path: ./.env.docker
+        required: false
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    networks:
+      - szeu-network
+    command: php artisan queue:work --sleep=3 --timeout=120 --tries=3
+    # Hunspell is inside the container for now, this is preparation for the future
   # hunspell:
   #   image: szeu-hunspell
   #   build:
@@ -182,6 +209,7 @@ volumes:
   db-data:
   sphinx_data:  
   sphinx_trigger:
+  redis-data:
   # hunspellpipe:
 networks:
   szeu-network:

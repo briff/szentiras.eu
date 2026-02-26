@@ -96,6 +96,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3      
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    env_file:
+      - path: ./.env.prod
+        required: false
+    networks:
+      - szeu-network
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  queue_worker:
+    image: szeu-app-dev
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - path: ./.env.prod
+        required: false
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    networks:
+      - szeu-network
+    command: php artisan queue:work --sleep=3 --timeout=120 --tries=3
   memcached:
     image: memcached:1.6
     command:

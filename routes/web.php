@@ -95,6 +95,7 @@ Route::middleware('editor')->group(function () {
     Route::prefix('editor/commentaries')->name('editor.commentaries.')->group(function () {
         Route::get('/', [CommentaryEditorController::class, 'index'])->name('index');
         Route::get('/{commentary}', [CommentaryEditorController::class, 'show'])->name('show');
+        Route::get('/{commentary}/status', [CommentaryEditorController::class, 'status'])->name('status');
         Route::post('/generate', [CommentaryEditorController::class, 'generate'])->name('generate');
     });
 });

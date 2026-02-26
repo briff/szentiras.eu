@@ -89,4 +89,19 @@ class CommentaryEditorController extends Controller
 
         return redirect()->back()->with('success', 'Kommentár generálva.');
     }
+
+    /**
+     * Get the status of a commentary.
+     */
+    public function status(Commentary $commentary)
+    {
+        return response()->json([
+            'id' => $commentary->id,
+            'status' => $commentary->status,
+            'commentary_text' => $commentary->commentary_text,
+            'started_at' => $commentary->started_at,
+            'completed_at' => $commentary->completed_at,
+            'error_message' => $commentary->error_message,
+        ]);
+    }
 }

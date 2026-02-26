@@ -255,4 +255,31 @@ class AiCommentaryServiceTest extends TestCase
         $this->assertFalse($range->coversVerse(2, 6));
         $this->assertFalse($range->coversVerse(3, 1));
     }
+
+    public function test_create_pending_commentary(): void
+    {
+        $commentary = $this->service->createPendingCommentary(
+            $this->translation,
+            'MAT',
+            [
+                ['start_chapter' => 1, 'start_verse' => 1, 'end_chapter' => 1, 'end_verse' => 1],
+            ],
+            ['model' => 'gpt-4']
+        );
+
+        $this->assertDatabaseHas('commentaries', [
+            'id' => $commentary->id,
+            'status' => 'pending',
+            'commentary_text' => null,
+            'translation_id' => $this->translation->id,
+            'usx_code' => 'MAT',
+        ]);
+
+        $this->assertCount(1, $commentary->ranges);
+        $range = $commentary->ranges->first();
+        $this->assertEquals(1, $range->start_chapter);
+        $this->assertEquals(1, $range->start_verse);
+        $this->assertEquals(1, $range->end_chapter);
+        $this->assertEquals(1, $range->end_verse);
+    }
 }

@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Config;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Translation wherePublisherUrl($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Translation whereReference($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Translation whereUpdatedAt($value)
+ * @method static \Database\Factories\Data\Entity\TranslationFactory factory($count = null, $state = [])
  * @mixin Eloquent
  */
 class Translation extends Eloquent {

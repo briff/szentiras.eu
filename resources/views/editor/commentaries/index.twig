@@ -7,6 +7,99 @@
 </div>
 {% endblock %}
 
+{% block script %}
+<script>
+(function() {
+    const POLL_INTERVAL = 5000; // 5 seconds
+    const STATUS_PENDING = 'pending';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_FAILED = 'failed';
+
+    function getBadgeClass(status) {
+        switch (status) {
+            case STATUS_PENDING: return 'bg-warning';
+            case STATUS_PROCESSING: return 'bg-info';
+            case STATUS_COMPLETED: return 'bg-success';
+            case STATUS_FAILED: return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+
+    function updateRow(row, data) {
+        // Update status attribute
+        row.dataset.status = data.status;
+        
+        // Find the badge element (third column)
+        const badge = row.querySelector('td:nth-child(3) .badge');
+        if (badge) {
+            badge.className = 'badge ' + getBadgeClass(data.status);
+            badge.textContent = data.status;
+        }
+
+        // If status changed to completed or failed, stop polling for this row
+        if (data.status === STATUS_COMPLETED || data.status === STATUS_FAILED) {
+            row.dataset.polling = 'stopped';
+            // Optionally show a small notification
+            console.log('Commentary ' + row.dataset.commentaryId + ' finished with status ' + data.status);
+        }
+    }
+
+    function pollRow(row) {
+        const url = row.dataset.statusUrl;
+        const commentaryId = row.dataset.commentaryId;
+        
+        fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status !== row.dataset.status) {
+                updateRow(row, data);
+            }
+        })
+        .catch(error => {
+            console.error('Failed to poll commentary ' + commentaryId, error);
+        });
+    }
+
+    function startPolling() {
+        const rows = document.querySelectorAll('tr[data-commentary-id]');
+        rows.forEach(row => {
+            const status = row.dataset.status;
+            if (status === STATUS_PENDING || status === STATUS_PROCESSING) {
+                // Poll immediately, then set interval
+                pollRow(row);
+                const intervalId = setInterval(() => {
+                    if (row.dataset.polling === 'stopped') {
+                        clearInterval(intervalId);
+                        return;
+                    }
+                    pollRow(row);
+                }, POLL_INTERVAL);
+                row.dataset.intervalId = intervalId;
+            }
+        });
+    }
+
+    // Start polling when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startPolling);
+    } else {
+        startPolling();
+    }
+})();
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="commentaries-editor">
     {% if commentaries.count() > 0 %}
@@ -16,6 +109,7 @@
                     <tr>
                         <th>Fordítás</th>
                         <th>Könyv</th>
+                        <th>Státusz</th>
                         <th>Versek</th>
                         <th>Létrehozva</th>
                         <th>Műveletek</th>
@@ -23,12 +117,25 @@
                 </thead>
                 <tbody>
                     {% for commentary in commentaries %}
-                    <tr>
+                    <tr data-commentary-id="{{ commentary.id }}" data-status="{{ commentary.status }}" data-status-url="{{ route('editor.commentaries.status', commentary.id) }}">
                         <td>
                             <span class="badge bg-primary">{{ commentary.translation.abbrev }}</span>
                         </td>
                         <td>
                             <strong>{{ commentary.usx_code }}</strong>
+                        </td>
+                        <td>
+                            {% set statusBadgeClass = 'bg-secondary' %}
+                            {% if commentary.status == 'pending' %}
+                                {% set statusBadgeClass = 'bg-warning' %}
+                            {% elseif commentary.status == 'processing' %}
+                                {% set statusBadgeClass = 'bg-info' %}
+                            {% elseif commentary.status == 'completed' %}
+                                {% set statusBadgeClass = 'bg-success' %}
+                            {% elseif commentary.status == 'failed' %}
+                                {% set statusBadgeClass = 'bg-danger' %}
+                            {% endif %}
+                            <span class="badge {{ statusBadgeClass }}">{{ commentary.status }}</span>
                         </td>
                         <td>
                             <small class="text-muted">

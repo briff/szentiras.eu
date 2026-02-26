@@ -17,7 +17,7 @@
         "openspout/openspout": "^4.28",
         "pgvector/pgvector": "^0.2.1",
         "phpoffice/phpspreadsheet": "^3.9",
-        "predis/predis": "^1.0",
+        "predis/predis": "^2.0",
         "rcrowe/twigbridge": "^0.14.3",
         "twig/markdown-extra": "^3.20",
         "twig/twig": "~3.9"

@@ -342,6 +342,45 @@ class CommentaryService
             'usx_code' => $usxCode,
             'commentary_text' => $commentaryText,
             'metadata' => $metadata,
+            'status' => Commentary::STATUS_COMPLETED,
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        foreach ($ranges as $range) {
+            $commentary->ranges()->create([
+                'start_chapter' => $range['start_chapter'],
+                'start_verse' => $range['start_verse'],
+                'end_chapter' => $range['end_chapter'],
+                'end_verse' => $range['end_verse'],
+            ]);
+        }
+
+        return $commentary->load('ranges');
+    }
+
+    /**
+     * Create a pending commentary record (without generated text).
+     *
+     * @param Translation $translation
+     * @param string $usxCode
+     * @param array $ranges
+     * @param array $metadata
+     * @return Commentary
+     */
+    public function createPendingCommentary(
+        Translation $translation,
+        string $usxCode,
+        array $ranges,
+        array $metadata = []
+    ): Commentary {
+        $commentary = Commentary::create([
+            'translation_id' => $translation->id,
+            'usx_code' => $usxCode,
+            'commentary_text' => null,
+            'metadata' => $metadata,
+            'status' => Commentary::STATUS_PENDING,
+            // started_at and completed_at remain null
         ]);
 
         foreach ($ranges as $range) {
