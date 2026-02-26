@@ -17,14 +17,58 @@
     {%- endif -%}
 {% endmacro %}
 
-{% macro image(image) %}
-    <div class="d-flex justify-content-center illustration">
+{% macro image(image, isEditor = false) %}
+    <div class="d-flex justify-content-center illustration" id="media-{{ image.id }}">
         <div class="card ">
             <div class="card-body">
                 <figure class="figure">
                     <img src="/media/{{ image.uuid }}" class="figure-img img-fluid rounded" data-id="{{ image.id }}">
                     <figcaption class="figure-caption text-end"><small>Forrás: {{ image.mediaType.website }} ({{ image.mediaType.license }})</small></figcaption>
                 </figure>
+                
+                {% if isEditor %}
+                <div class="editor-media-controls mt-3" data-media-id="{{ image.id }}" data-usx-code="{{ image.usx_code }}" data-chapter="{{ image.chapter }}" data-verse="{{ image.verse }}">
+                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-editor-controls">
+                        <i class="bi-pencil"></i> Szerkesztés
+                    </button>
+                    
+                    <div class="editor-controls-container mt-2" style="display: none;">
+                        <div class="card border-primary">
+                            <div class="card-body p-2">
+                                <div class="d-flex align-items-center mb-2">
+                                    <small class="text-muted me-2">Jelenlegi hely:</small>
+                                    <code class="current-location">{{ image.usx_code }} {{ image.chapter }}:{{ image.verse }}</code>
+                                </div>
+                                
+                                <div class="d-flex align-items-center mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary move-prev-verse" title="Előző vers">
+                                        <i class="bi-chevron-left"></i>
+                                    </button>
+                                    
+                                    <div class="input-group input-group-sm mx-2" style="width: 200px;">
+                                        <input type="text" class="form-control form-control-sm usx-target"
+                                               value="{{ image.usx_code }} {{ image.chapter }}:{{ image.verse }}"
+                                               placeholder="USX_CODE CHAPTER:VERSE">
+                                        <button class="btn btn-outline-primary move-to-target" type="button" title="Áthelyezés">
+                                            <i class="bi-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-primary move-next-verse" title="Következő vers">
+                                        <i class="bi-chevron-right"></i>
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2 cancel-edit" title="Mégse">
+                                        <i class="bi-x"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="status-message alert" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

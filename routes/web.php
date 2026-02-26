@@ -88,6 +88,14 @@ Route::get('/login', [AnonymousIdController::class, 'showLoginForm']);
 
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');
 
+// Media API endpoints for editors
+Route::prefix('api/media')->group(function () {
+    Route::get('/{id}', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'show']);
+    Route::post('/move', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'move']);
+    Route::get('/{usxCode}/{chapter}/{verse}/next', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getNextVerse']);
+    Route::get('/{usxCode}/{chapter}/{verse}/previous', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getPreviousVerse']);
+});
+
 Route::get('/GNT/{reference?}', [GreekTextController::class, 'show'])->where('reference', '[^/]+');
 
 /** These should come at the end to not collide with other routes! */

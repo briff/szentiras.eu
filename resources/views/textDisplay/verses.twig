@@ -92,7 +92,7 @@
         <h5>További illusztrációk</h5>
         {% for otherMediaItem in otherMedia %}
             {% for image in otherMediaItem %}
-                {{ image(image) }}
+                {{ image(image, isEditor) }}
             {% endfor  %}
         {% endfor %}
         <hr>
@@ -135,6 +135,13 @@
             </div>
         </div>
     </div>
-{% endblock %}    
+{% endblock %}
 
 {% set js=['pages/verses'] %}
+
+{% block script %}
+    {{ parent() }}
+    {% if isEditor and mediaEnabled %}
+    <script src="{{ asset('js/editor-media-move.js') }}"></script>
+    {% endif %}
+{% endblock %}

@@ -24,6 +24,7 @@ use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
 use View;
 use SzentirasHu\Service\Reference\NumberingSchemeService;
+use SzentirasHu\Service\Editor\EditorService;
 
 
 /**
@@ -61,7 +62,7 @@ class TextDisplayController extends Controller
      * @var \SzentirasHu\Service\Reference\NumberingSchemeService
      */
     private $numberingSchemeService;
-    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, NumberingSchemeService $numberingSchemeService, protected BookService $bookService, protected TranslationService $translationService)
+    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, NumberingSchemeService $numberingSchemeService, protected BookService $bookService, protected TranslationService $translationService, protected EditorService $editorService)
     {
         $this->translationRepository = $translationRepository;
         $this->bookRepository = $bookRepository;
@@ -285,6 +286,7 @@ class TextDisplayController extends Controller
                 'chapterLinks' => $chapterLinks,
                 'media' => $mediaVerses ?? [],
                 'otherMedia' => $otherMedia ?? [],
+                'isEditor' => $this->editorService->currentIsEditor(),
                 'translationLinks' => $translations->map(
                     function ($otherTranslation) use ($canonicalRef, $translation) {
                         $allBooksExistInTranslation = true;

@@ -76,7 +76,7 @@
     {% if  medias %}
         {% from 'macros' import image %}
         {% for image in medias %}
-            {{ image(image) }}
+            {{ image(image, isEditor) }}
         {% endfor  %}
     {% endif %}
 {%- endfor -%}
