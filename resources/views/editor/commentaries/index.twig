@@ -1,0 +1,102 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Kommentárok szerkesztése</h1>
+    <p class="text-muted">Generált AI kommentárok kezelése</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="commentaries-editor">
+    {% if commentaries.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fordítás</th>
+                        <th>Könyv</th>
+                        <th>Versek</th>
+                        <th>Létrehozva</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for commentary in commentaries %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary">{{ commentary.translation.abbrev }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ commentary.usx_code }}</strong>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {% set rangeStrings = [] %}
+                                {% for range in commentary.ranges %}
+                                    {% set rangeStrings = rangeStrings|merge([range.start_chapter ~ ':' ~ range.start_verse ~ '-' ~ range.end_chapter ~ ':' ~ range.end_verse]) %}
+                                {% endfor %}
+                                {{ rangeStrings|join(', ') }}
+                            </small>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ commentary.created_at.format('Y-m-d H:i') }}</small>
+                        </td>
+                        <td>
+                            <a href="{{ route('editor.commentaries.show', commentary.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Megtekintés
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if commentaries.hasPages() %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if commentaries.onFirstPage() %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Előző</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ commentaries.previousPageUrl() }}">Előző</a>
+                    </li>
+                {% endif %}
+
+                {% for page in commentaries.getUrlRange(1, commentaries.lastPage()) %}
+                    {% if page == commentaries.currentPage() %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ commentaries.url(page) }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if commentaries.hasMorePages() %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ commentaries.nextPageUrl() }}">Következő</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Következő</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>Nincs kommentár</strong>
+            <p class="mb-0">Még nem lett generálva AI kommentár. Használja az <code>ai:generate-commentary</code> parancsot kommentárok létrehozásához.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

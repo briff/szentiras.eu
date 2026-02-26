@@ -4,10 +4,12 @@ namespace SzentirasHu\Console\Commands;
 
 use Illuminate\Console\Command;
 use SzentirasHu\Data\Entity\Translation;
+use SzentirasHu\Models\Commentary;
 use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Service\Ai\CommentaryService;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ReferenceService;
+use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TextService;
 
 class GenerateAiCommentary extends Command
@@ -24,6 +26,7 @@ class GenerateAiCommentary extends Command
     public function __construct(
         private readonly ReferenceService $referenceService,
         private readonly TextService $textService,
+        private readonly BookService $bookService,
         private readonly AiPromptService $aiPromptService,
         private readonly CommentaryService $commentaryService,
     ) {
@@ -48,26 +51,6 @@ class GenerateAiCommentary extends Command
         // Detect format and extract USX code
         $usxCode = $this->extractUsxCodeFromReference($referenceString, $translationAbbrev);
 
-        // Check for existing commentary if not forcing
-        if (!$force && !$dryRun) {
-            // Convert USX format to canonical format for reference lookup
-            // If input is already canonical, use it directly; otherwise convert from USX
-            $canonicalRefString = str_contains($referenceString, '_')
-                ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
-                : $referenceString;
-            $existing = $this->commentaryService->findForReference(
-                CanonicalReference::fromString($canonicalRefString),
-                $translation
-            );
-            if ($existing->isNotEmpty()) {
-                $this->warn("Commentary already exists for {$referenceString} in {$translationAbbrev}.");
-                if (!$this->confirm('Overwrite?', false)) {
-                    $this->info('Aborted.');
-                    return self::SUCCESS;
-                }
-            }
-        }
-
         // Parse ranges - convert to USX format if needed
         try {
             $usxReferenceString = $this->convertToUsxFormatIfNeeded($referenceString, $translationAbbrev);
@@ -75,6 +58,18 @@ class GenerateAiCommentary extends Command
         } catch (\InvalidArgumentException $e) {
             $this->error($e->getMessage());
             return self::FAILURE;
+        }
+
+        // Check for existing commentary with exact same coverage if not forcing
+        if (!$force && !$dryRun) {
+            $existing = $this->findExistingCommentaryWithExactCoverage($translation, $usxCode, $ranges);
+            if ($existing) {
+                $this->warn("Commentary already exists for {$referenceString} in {$translationAbbrev}.");
+                if (!$this->confirm('Overwrite?', false)) {
+                    $this->info('Aborted.');
+                    return self::SUCCESS;
+                }
+            }
         }
 
         $this->info("Generating commentary for {$referenceString} ({$translationAbbrev})...");
@@ -127,6 +122,87 @@ class GenerateAiCommentary extends Command
         $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Find an existing commentary with the exact same coverage (ranges).
+     *
+     * @param Translation $translation
+     * @param string $usxCode
+     * @param array $ranges Array of ranges to match
+     * @return Commentary|null
+     */
+    private function findExistingCommentaryWithExactCoverage(Translation $translation, string $usxCode, array $ranges): ?Commentary
+    {
+        // Get all commentaries for this book and translation
+        $commentaries = Commentary::query()
+            ->where('translation_id', $translation->id)
+            ->where('usx_code', $usxCode)
+            ->with('ranges')
+            ->get();
+
+        // Check each commentary to see if it has the exact same ranges
+        foreach ($commentaries as $commentary) {
+            if ($this->rangesMatch($commentary->ranges->toArray(), $ranges)) {
+                return $commentary;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if two sets of ranges are identical.
+     *
+     * @param array $existingRanges
+     * @param array $newRanges
+     * @return bool
+     */
+    private function rangesMatch(array $existingRanges, array $newRanges): bool
+    {
+        if (count($existingRanges) !== count($newRanges)) {
+            return false;
+        }
+
+        // Normalize ranges for comparison (remove database-specific fields)
+        $normalizeRange = function (array $range): array {
+            return [
+                'start_chapter' => (int) $range['start_chapter'],
+                'start_verse' => (int) $range['start_verse'],
+                'end_chapter' => (int) $range['end_chapter'],
+                'end_verse' => (int) $range['end_verse'],
+            ];
+        };
+
+        $existingNormalized = array_map($normalizeRange, $existingRanges);
+        $newNormalized = array_map($normalizeRange, $newRanges);
+
+        // Sort both arrays for comparison
+        usort($existingNormalized, fn ($a, $b) => [
+            $a['start_chapter'],
+            $a['start_verse'],
+            $a['end_chapter'],
+            $a['end_verse'],
+        ] <=> [
+            $b['start_chapter'],
+            $b['start_verse'],
+            $b['end_chapter'],
+            $b['end_verse'],
+        ]);
+
+        usort($newNormalized, fn ($a, $b) => [
+            $a['start_chapter'],
+            $a['start_verse'],
+            $a['end_chapter'],
+            $a['end_verse'],
+        ] <=> [
+            $b['start_chapter'],
+            $b['start_verse'],
+            $b['end_chapter'],
+            $b['end_verse'],
+        ]);
+
+        return $existingNormalized === $newNormalized;
     }
 
     private function getAdditionalPlaceholders(): array
@@ -255,15 +331,38 @@ class GenerateAiCommentary extends Command
         $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($referenceString);
         $usxParts = [];
         
+        // Get translation object for verse count lookup
+        $translation = \SzentirasHu\Data\Entity\Translation::where('abbrev', $translationAbbrev)->first();
+        if (!$translation) {
+            throw new \InvalidArgumentException("Translation '{$translationAbbrev}' not found.");
+        }
+        
         foreach ($canonicalRef->bookRefs as $bookRef) {
             $bookUsxCode = \SzentirasHu\Data\UsxCodes::getUsxFromBookAbbrevAndTranslation($bookRef->bookId, $translationAbbrev);
             if (!$bookUsxCode) {
                 throw new \InvalidArgumentException("Could not find USX code for book: {$bookRef->bookId}");
             }
             
+            // If no chapter ranges specified (book-level reference), treat as full book
+            if (empty($bookRef->chapterRanges)) {
+                // For a full book reference, we'll use chapter 1, verse 1 to end
+                // This will be handled by the parseRangesFromReference method
+                $usxParts[] = "{$bookUsxCode}_1_1";
+                continue;
+            }
+            
             foreach ($bookRef->chapterRanges as $chapterRange) {
                 $chapterRef = $chapterRange->chapterRef;
                 $chapterId = $chapterRef->chapterId;
+                
+                // If no verse ranges specified (chapter-level reference), use full chapter
+                if (empty($chapterRef->verseRanges)) {
+                    // Get the last verse of this chapter
+                    $book = $this->bookService->getBookByUsxCodeTranslation($bookUsxCode, $translationAbbrev);
+                    $lastVerse = $this->bookService->getVerseCount($book, (int) $chapterId, $translation);
+                    $usxParts[] = "{$bookUsxCode}_{$chapterId}_1-{$bookUsxCode}_{$chapterId}_{$lastVerse}";
+                    continue;
+                }
                 
                 foreach ($chapterRef->verseRanges as $verseRange) {
                     $startVerse = $verseRange->verseRef ? $verseRange->verseRef->verseId : 1;

@@ -36,7 +36,17 @@
                 </li>
                 <li class="nav-item"><a class="nav-link" href="/api">Fejlesztőknek</a></li>
                 <li class="nav-item"><a class="nav-link" href="/informaciok">Információk</a></li>
-              </ul>  
+                {% if isEditor() %}
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Szerkesztés<span class="caret"></span></a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ route('editor.commentaries.index') }}">
+                            <i class="bi bi-chat-left-text"></i> Kommentárok
+                        </a>
+                    </div>
+                </li>
+                {% endif %}
+              </ul>
               <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     {% if  not session('anonymous_token') %}

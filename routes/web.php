@@ -5,6 +5,7 @@ use SzentirasHu\Http\Controllers\Ai\AiController;
 use SzentirasHu\Http\Controllers\Auth\AnonymousIdController;
 use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
+use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
 use SzentirasHu\Http\Controllers\Home\HomeController;
 use SzentirasHu\Http\Controllers\MediaController;
 use SzentirasHu\Http\Middleware\RedirectLowerCaseTranslationAbbrev;
@@ -87,6 +88,15 @@ Route::post('/login', [AnonymousIdController::class, 'login']);
 Route::get('/login', [AnonymousIdController::class, 'showLoginForm']);
 
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');
+
+// Editor routes
+Route::middleware('editor')->group(function () {
+    // Commentary editor
+    Route::prefix('editor/commentaries')->name('editor.commentaries.')->group(function () {
+        Route::get('/', [CommentaryEditorController::class, 'index'])->name('index');
+        Route::get('/{commentary}', [CommentaryEditorController::class, 'show'])->name('show');
+    });
+});
 
 // Media API endpoints for editors
 Route::prefix('api/media')->middleware('editor')->group(function () {

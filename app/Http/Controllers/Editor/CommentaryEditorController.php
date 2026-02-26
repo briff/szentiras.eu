@@ -1,0 +1,70 @@
+<?php
+
+namespace SzentirasHu\Http\Controllers\Editor;
+
+use Illuminate\Pagination\Paginator;
+use SzentirasHu\Http\Controllers\Controller;
+use SzentirasHu\Models\Commentary;
+use SzentirasHu\Service\Text\BookService;
+use SzentirasHu\Service\Text\TranslationService;
+
+class CommentaryEditorController extends Controller
+{
+    public function __construct(
+        protected TranslationService $translationService,
+        protected BookService $bookService,
+    ) {}
+
+    /**
+     * Display a listing of commentaries.
+     */
+    public function index()
+    {
+        $commentaries = Commentary::query()
+            ->with(['translation', 'ranges'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $translations = $this->translationService->getAllTranslations();
+
+        return view('editor.commentaries.index', [
+            'commentaries' => $commentaries,
+            'translations' => $translations,
+        ]);
+    }
+
+    /**
+     * Display a specific commentary for editing.
+     */
+    public function show(Commentary $commentary)
+    {
+        $commentary->load(['translation', 'ranges']);
+
+        // Get book information for display
+        $book = $this->bookService->getBookByUsxCodeTranslation(
+            $commentary->usx_code,
+            $commentary->translation->abbrev
+        );
+
+        // Format ranges for display
+        $formattedRanges = $commentary->ranges->map(function ($range) {
+            return "{$range->start_chapter}:{$range->start_verse} - {$range->end_chapter}:{$range->end_verse}";
+        })->implode(', ');
+
+        // Parse commentary text JSON
+        $commentaryData = json_decode($commentary->commentary_text, true);
+        if (!is_array($commentaryData)) {
+            $commentaryData = [
+                'commentary_text' => $commentary->commentary_text,
+                'references' => [],
+            ];
+        }
+
+        return view('editor.commentaries.show', [
+            'commentary' => $commentary,
+            'commentaryData' => $commentaryData,
+            'book' => $book,
+            'formattedRanges' => $formattedRanges,
+        ]);
+    }
+}
