@@ -81,7 +81,7 @@ class CommentaryEditorController extends Controller
         ]);
 
         // Call the Artisan command
-        Artisan::call('ai:generate-commentary', [
+        Artisan::call('szentiras:generate-commentary', [
             'reference' => $request->input('reference'),
             'translation' => $request->input('translation'),
             '--force' => true,
@@ -103,5 +103,16 @@ class CommentaryEditorController extends Controller
             'completed_at' => $commentary->completed_at,
             'error_message' => $commentary->error_message,
         ]);
+    }
+
+    /**
+     * Delete a commentary.
+     */
+    public function destroy(Commentary $commentary)
+    {
+        $commentary->delete();
+
+        return redirect()->route('editor.commentaries.index')
+            ->with('success', 'Kommentár törölve.');
     }
 }

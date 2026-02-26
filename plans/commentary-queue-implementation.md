@@ -6,7 +6,7 @@ Move the time-consuming AI commentary generation process from synchronous execut
 ## Current Flow Analysis
 
 ### Synchronous Generation
-1. **Command Line**: `php artisan ai:generate-commentary {reference} {translation}` 
+1. **Command Line**: `php artisan szentiras:generate-commentary {reference} {translation}` 
    - Parses reference, checks for existing commentaries, generates AI commentary via `CommentaryService::generateCommentaryText`, stores result.
 2. **Web UI**: `CommentaryEditorController::generate()` calls the same Artisan command synchronously via `Artisan::call`.
 3. **Frontend Display**: `TextDisplayController` uses `CommentaryService::findForReference` to retrieve existing commentaries and displays them.

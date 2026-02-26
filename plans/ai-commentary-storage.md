@@ -61,11 +61,11 @@ This document describes the database schema and services for storing AI-generate
 
 ## Artisan Command
 
-### `ai:generate-commentary`
+### `szentiras:generate-commentary`
 
 **Usage**:
 ```bash
-php artisan ai:generate-commentary "MAT_1_2-MAT_1_6,MAT_1_12,MAT_1_23-MAT_2_5" KNB
+php artisan szentiras:generate-commentary "MAT_1_2-MAT_1_6,MAT_1_12,MAT_1_23-MAT_2_5" KNB
 ```
 
 **Options**:

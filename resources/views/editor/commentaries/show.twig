@@ -156,6 +156,13 @@
                         <a href="{{ route('editor.commentaries.index') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left"></i> Vissza
                         </a>
+                        <form method="POST" action="{{ route('editor.commentaries.destroy', commentary.id) }}" onsubmit="return confirm('Biztosan törölni szeretné ezt a kommentárt?');">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-trash"></i> Kommentár törlése
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
