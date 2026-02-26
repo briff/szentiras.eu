@@ -45,13 +45,18 @@ class GenerateAiCommentary extends Command
         }
 
         // Parse reference to get book (usx_code)
-        $parts = explode('_', explode(',', $referenceString)[0]);
-        $usxCode = $parts[0];
+        // Detect format and extract USX code
+        $usxCode = $this->extractUsxCodeFromReference($referenceString, $translationAbbrev);
 
         // Check for existing commentary if not forcing
         if (!$force && !$dryRun) {
+            // Convert USX format to canonical format for reference lookup
+            // If input is already canonical, use it directly; otherwise convert from USX
+            $canonicalRefString = str_contains($referenceString, '_')
+                ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
+                : $referenceString;
             $existing = $this->commentaryService->findForReference(
-                CanonicalReference::fromString($referenceString),
+                CanonicalReference::fromString($canonicalRefString),
                 $translation
             );
             if ($existing->isNotEmpty()) {
@@ -63,9 +68,10 @@ class GenerateAiCommentary extends Command
             }
         }
 
-        // Parse ranges
+        // Parse ranges - convert to USX format if needed
         try {
-            $ranges = $this->commentaryService->parseRangesFromReference($referenceString, $usxCode);
+            $usxReferenceString = $this->convertToUsxFormatIfNeeded($referenceString, $translationAbbrev);
+            $ranges = $this->commentaryService->parseRangesFromReference($usxReferenceString, $usxCode);
         } catch (\InvalidArgumentException $e) {
             $this->error($e->getMessage());
             return self::FAILURE;
@@ -74,7 +80,11 @@ class GenerateAiCommentary extends Command
         $this->info("Generating commentary for {$referenceString} ({$translationAbbrev})...");
 
         // Generate canonical reference for AI prompt
-        $canonicalRef = CanonicalReference::fromString($referenceString);
+        // If input is already canonical, use it directly; otherwise convert from USX
+        $canonicalRefString = str_contains($referenceString, '_')
+            ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
+            : $referenceString;
+        $canonicalRef = CanonicalReference::fromString($canonicalRefString);
 
         // Generate commentary text
         $commentaryText = $this->commentaryService->generateCommentaryText(
@@ -143,5 +153,133 @@ class GenerateAiCommentary extends Command
         ];
 
         return array_merge($defaults, $metadata);
+    }
+
+    /**
+     * Convert USX format reference to canonical format.
+     *
+     * Example: "MAT_5_20-MAT_5_26" -> "Mat 5,20-26"
+     * Example: "MAT_5_20,MAT_5_21" -> "Mat 5,20.21"
+     *
+     * @param string $usxReference USX format reference
+     * @param string $translationAbbrev Translation abbreviation
+     * @return string Canonical format reference
+     */
+    private function convertUsxToCanonical(string $usxReference, string $translationAbbrev): string
+    {
+        // Parse the USX reference into ranges
+        $parts = explode(',', $usxReference);
+        $canonicalParts = [];
+        
+        foreach ($parts as $part) {
+            if (str_contains($part, '-')) {
+                // Range: MAT_5_20-MAT_5_26
+                [$start, $end] = explode('-', $part, 2);
+                $startParts = explode('_', $start);
+                $endParts = explode('_', $end);
+                
+                // Convert to canonical: "Mat 5,20-26"
+                $bookAbbrev = \SzentirasHu\Data\UsxCodes::getPreferredAbbreviation($startParts[0], $translationAbbrev) ?? $startParts[0];
+                $canonicalParts[] = "{$bookAbbrev} {$startParts[1]},{$startParts[2]}-{$endParts[2]}";
+            } else {
+                // Single verse: MAT_5_20
+                $verseParts = explode('_', $part);
+                $bookAbbrev = \SzentirasHu\Data\UsxCodes::getPreferredAbbreviation($verseParts[0], $translationAbbrev) ?? $verseParts[0];
+                $canonicalParts[] = "{$bookAbbrev} {$verseParts[1]},{$verseParts[2]}";
+            }
+        }
+        
+        // Combine parts: if same book/chapter, combine verses
+        if (count($canonicalParts) > 1) {
+            // Simple implementation: just join with semicolon for now
+            return implode('; ', $canonicalParts);
+        }
+        
+        return $canonicalParts[0] ?? '';
+    }
+
+    /**
+     * Extract USX code from reference string (supports both USX and canonical formats).
+     *
+     * @param string $referenceString Reference in either USX or canonical format
+     * @param string $translationAbbrev Translation abbreviation
+     * @return string USX code
+     */
+    private function extractUsxCodeFromReference(string $referenceString, string $translationAbbrev): string
+    {
+        // Check if input is USX format (contains underscores)
+        if (str_contains($referenceString, '_')) {
+            // USX format: MAT_5_20-MAT_5_26 or MAT_5_20,MAT_5_21
+            $firstPart = explode(',', $referenceString)[0];
+            $firstVerse = str_contains($firstPart, '-') ? explode('-', $firstPart)[0] : $firstPart;
+            return explode('_', $firstVerse)[0];
+        }
+        
+        // Canonical format: parse with CanonicalReference
+        try {
+            $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($referenceString);
+            if (empty($canonicalRef->bookRefs)) {
+                throw new \InvalidArgumentException("Could not parse reference: {$referenceString}");
+            }
+            
+            $firstBookRef = $canonicalRef->bookRefs[0];
+            $bookId = $firstBookRef->bookId;
+            
+            // Convert book abbreviation to USX code
+            $usxCode = \SzentirasHu\Data\UsxCodes::getUsxFromBookAbbrevAndTranslation($bookId, $translationAbbrev);
+            if (!$usxCode) {
+                throw new \InvalidArgumentException("Could not find USX code for book: {$bookId} in translation: {$translationAbbrev}");
+            }
+            
+            return $usxCode;
+        } catch (\SzentirasHu\Service\Reference\ParsingException $e) {
+            throw new \InvalidArgumentException("Invalid reference format: {$referenceString}. Expected canonical (e.g., Mt5,20-26) or USX (e.g., MAT_5_20-MAT_5_26) format.");
+        }
+    }
+
+    /**
+     * Convert canonical format reference to USX format if needed.
+     *
+     * @param string $referenceString Reference in either format
+     * @param string $translationAbbrev Translation abbreviation
+     * @return string Reference in USX format
+     */
+    private function convertToUsxFormatIfNeeded(string $referenceString, string $translationAbbrev): string
+    {
+        // If already USX format, return as-is
+        if (str_contains($referenceString, '_')) {
+            return $referenceString;
+        }
+        
+        // Parse canonical reference
+        $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($referenceString);
+        $usxParts = [];
+        
+        foreach ($canonicalRef->bookRefs as $bookRef) {
+            $bookUsxCode = \SzentirasHu\Data\UsxCodes::getUsxFromBookAbbrevAndTranslation($bookRef->bookId, $translationAbbrev);
+            if (!$bookUsxCode) {
+                throw new \InvalidArgumentException("Could not find USX code for book: {$bookRef->bookId}");
+            }
+            
+            foreach ($bookRef->chapterRanges as $chapterRange) {
+                $chapterRef = $chapterRange->chapterRef;
+                $chapterId = $chapterRef->chapterId;
+                
+                foreach ($chapterRef->verseRanges as $verseRange) {
+                    $startVerse = $verseRange->verseRef ? $verseRange->verseRef->verseId : 1;
+                    $endVerse = $verseRange->untilVerseRef ? $verseRange->untilVerseRef->verseId : $startVerse;
+                    
+                    if ($startVerse === $endVerse) {
+                        // Single verse
+                        $usxParts[] = "{$bookUsxCode}_{$chapterId}_{$startVerse}";
+                    } else {
+                        // Verse range
+                        $usxParts[] = "{$bookUsxCode}_{$chapterId}_{$startVerse}-{$bookUsxCode}_{$chapterId}_{$endVerse}";
+                    }
+                }
+            }
+        }
+        
+        return implode(',', $usxParts);
     }
 }

@@ -196,6 +196,14 @@ class CommentaryService
                 $startParts = explode('_', $start);
                 $endParts = explode('_', $end);
 
+                // Validate format
+                if (count($startParts) < 3) {
+                    throw new \InvalidArgumentException("Invalid USX format: '{$start}'. Expected format: BOOK_CHAPTER_VERSE (e.g., MAT_5_20)");
+                }
+                if (count($endParts) < 3) {
+                    throw new \InvalidArgumentException("Invalid USX format: '{$end}'. Expected format: BOOK_CHAPTER_VERSE (e.g., MAT_5_20)");
+                }
+
                 // Validate USX code matches
                 if ($startParts[0] !== $usxCode || $endParts[0] !== $usxCode) {
                     throw new \InvalidArgumentException("Range must be within the same book: {$usxCode}");
@@ -209,6 +217,9 @@ class CommentaryService
                 ];
             } else {
                 $verseParts = explode('_', $part);
+                if (count($verseParts) < 3) {
+                    throw new \InvalidArgumentException("Invalid USX format: '{$part}'. Expected format: BOOK_CHAPTER_VERSE (e.g., MAT_5_20)");
+                }
                 if ($verseParts[0] !== $usxCode) {
                     throw new \InvalidArgumentException("Verse must belong to book: {$usxCode}");
                 }

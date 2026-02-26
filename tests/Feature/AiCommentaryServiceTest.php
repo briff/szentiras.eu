@@ -8,7 +8,7 @@ use SzentirasHu\Models\CommentaryRange;
 use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Service\Ai\CommentaryService;
 use SzentirasHu\Service\Reference\CanonicalReference;
-use Tests\TestCase;
+use SzentirasHu\Test\Common\TestCase;
 
 class AiCommentaryServiceTest extends TestCase
 {
@@ -23,6 +23,15 @@ class AiCommentaryServiceTest extends TestCase
 
         $this->service = app(CommentaryService::class);
         $this->translation = Translation::factory()->create(['abbrev' => 'KNB']);
+    }
+
+    /**
+     * Hook called after the database is refreshed.
+     * Reset PostgreSQL sequences to prevent ID collisions.
+     */
+    protected function afterRefreshingDatabase(): void
+    {
+        $this->resetPostgresSequences();
     }
 
     public function test_store_commentary_with_single_range(): void
@@ -147,7 +156,7 @@ class AiCommentaryServiceTest extends TestCase
             ]
         );
 
-        $reference = CanonicalReference::fromString('MAT_1_5-MAT_1_8');
+        $reference = CanonicalReference::fromString('MAT 1,5-8');
         $results = $this->service->findForReference($reference, $this->translation);
 
         $this->assertCount(1, $results);

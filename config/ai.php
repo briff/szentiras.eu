@@ -13,6 +13,12 @@ return [
             'temperature' => env('OPENAI_TEMPERATURE', 0.7),
             'max_tokens'  => env('OPENAI_MAX_TOKENS', 2048),
             'timeout'     => env('OPENAI_TIMEOUT', 30),
+            // GPT-5 specific parameters
+            'verbosity'   => env('OPENAI_VERBOSITY', 'medium'),
+            'reasoning_effort' => env('OPENAI_REASONING_EFFORT', 'medium'),
+            'text_format' => env('OPENAI_TEXT_FORMAT', 'text'),
+            'summary'     => env('OPENAI_SUMMARY', false),
+            'store'       => env('OPENAI_STORE', false),
         ],
         'anthropic' => [
             'endpoint'    => env('ANTHROPIC_ENDPOINT', 'https://api.anthropic.com'),
@@ -32,12 +38,18 @@ return [
             // Override provider defaults if needed
             'api_key'     => env('AI_COMMENTARY_API_KEY'),
             'endpoint'    => env('AI_COMMENTARY_ENDPOINT'),
-            'model'       => env('AI_COMMENTARY_MODEL'),
-            'prompt'      => env('AI_COMMENTARY_PROMPT', 'Generate commentary for the following verse: {verse_text}'),
+            'model'       => env('AI_COMMENTARY_MODEL', 'gpt-5.2'),
+            'prompt'      => env('AI_COMMENTARY_PROMPT', resource_path('prompts/hungarian_biblical_commentary.md')),
             'temperature' => env('AI_COMMENTARY_TEMPERATURE'),
-            'max_tokens'  => env('AI_COMMENTARY_MAX_TOKENS'),
+            'max_tokens'  => env('AI_COMMENTARY_MAX_TOKENS', '6000'),
             'timeout'     => env('AI_COMMENTARY_TIMEOUT'),
             'version'     => env('AI_COMMENTARY_VERSION', 'v1'),
+            // GPT-5 specific overrides
+            'verbosity'   => env('AI_COMMENTARY_VERBOSITY', 'low'),
+            'reasoning_effort' => env('AI_COMMENTARY_REASONING_EFFORT', 'none'),
+            'text_format' => env('AI_COMMENTARY_TEXT_FORMAT', 'json_object'),
+            'summary'     => env('AI_COMMENTARY_SUMMARY', null),
+            'store'       => env('AI_COMMENTARY_STORE', null),
         ],
         // Example: 'summarization', 'translation', 'question_answering'
     ],

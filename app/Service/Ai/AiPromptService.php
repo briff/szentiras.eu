@@ -52,6 +52,13 @@ class AiPromptService
         $merged['max_tokens'] ??= 2048;
         $merged['timeout'] ??= 30;
         $merged['version'] ??= 'v1';
+        
+        // GPT-5 specific defaults
+        $merged['verbosity'] ??= 'low';
+        $merged['reasoning_effort'] ??= 'none';
+        $merged['text_format'] ??= 'json_object';
+        $merged['summary'] ??= null;
+        $merged['store'] ??= false;
 
         return $merged;
     }
@@ -70,9 +77,40 @@ class AiPromptService
             return '';
         }
 
+        // Check if prompt is a file path and load content if it exists
+        $prompt = $this->loadPromptFromFile($prompt);
+
         foreach ($data as $key => $value) {
             $placeholder = '{' . $key . '}';
             $prompt = str_replace($placeholder, $value, $prompt);
+        }
+
+        return $prompt;
+    }
+
+    /**
+     * Load prompt content from file if the prompt string is a valid file path.
+     *
+     * @param string $prompt Prompt string or file path
+     * @return string Prompt content
+     */
+    protected function loadPromptFromFile(string $prompt): string
+    {
+        // Check if the prompt looks like a file path (contains .md, .txt, or starts with resource_path)
+        if (str_contains($prompt, '.md') || str_contains($prompt, '.txt') || str_starts_with($prompt, 'resource_path(')) {
+            // Handle resource_path() helper syntax
+            if (str_starts_with($prompt, 'resource_path(') && str_ends_with($prompt, ')')) {
+                $path = substr($prompt, 15, -1); // Remove 'resource_path(' and ')'
+                $path = trim($path, "'\"");
+                $filePath = resource_path($path);
+            } else {
+                $filePath = $prompt;
+            }
+
+            // Check if file exists and is readable
+            if (file_exists($filePath) && is_readable($filePath)) {
+                return file_get_contents($filePath) ?: $prompt;
+            }
         }
 
         return $prompt;
@@ -154,6 +192,30 @@ class AiPromptService
             'temperature' => (float) ($config['temperature'] ?? 0.7),
             'max_tokens' => (int) ($config['max_tokens'] ?? 2048),
         ];
+
+        // Add GPT-5 specific parameters if they exist
+        $textParams = [];
+        if (isset($config['verbosity'])) {
+            $textParams['verbosity'] = $config['verbosity'];
+        }
+        if (isset($config['text_format'])) {
+            $textParams['format'] = $config['text_format'];
+        }
+        if (!empty($textParams)) {
+            $params['text'] = $textParams;
+        }
+
+        if (isset($config['reasoning_effort'])) {
+            $params['reasoning'] = ['effort' => $config['reasoning_effort']];
+        }
+        
+        if (isset($config['summary'])) {
+            $params['summary'] = (bool) $config['summary'];
+        }
+        
+        if (isset($config['store'])) {
+            $params['store'] = (bool) $config['store'];
+        }
 
         // Provider-specific request structure
         return match ($config['provider']) {

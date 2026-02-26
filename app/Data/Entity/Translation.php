@@ -2,6 +2,7 @@
 
 namespace SzentirasHu\Data\Entity;
 use Eloquent;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Config;
 
 /**
@@ -40,6 +41,7 @@ use Illuminate\Support\Facades\Config;
  * @mixin Eloquent
  */
 class Translation extends Eloquent {
+    use HasFactory;
 
     public static function byAbbrev($translationAbbrev)
     {
