@@ -7,19 +7,27 @@
             {# Commentary section #}
             {% set containerCommentaries = parsedCommentaries[loop.index0] ?? [] %}
             {% if containerCommentaries is not empty %}
-                <div class="commentaries mt-4 mb-4">
-                    <details class="border rounded p-3 bg-light">
-                        <summary class="h6 cursor-pointer">Kommentár</summary>
+                <div class="commentaries mt-4 mb-4 parsedVerses">
+                    <details class="border border-blue-200 rounded-lg bg-blue-50 overflow-hidden">
+                        <summary class="h6 cursor-pointer flex items-center px-4 py-3 bg-blue-100 hover:bg-blue-200 transition-colors">
+                            <span class="mr-2">📖</span>
+                            Kommentár
+                        </summary>
                         {% for commentaryData in containerCommentaries %}
-                            <div class="commentary mt-3">
-                                <div class="commentary-text">{{ commentaryData.commentary_text|markdown_to_html|raw }}</div>
-                                {% if commentaryData.references is defined and commentaryData.references is not empty %}
-                                    <ul class="references mt-2">
-                                        {% for ref in commentaryData.references %}
-                                            <li><a href="{{ ref.ref }}" target="_blank">{{ ref.ref }}</a> – {{ ref.reason }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
+                            <div class="p-4 space-y-4">
+                                <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
+                                    <div class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text|markdown_to_html|raw }}
+                                    </div>
+                                    {% if commentaryData.references is defined and commentaryData.references is not empty %}
+                                        <ul>
+                                            {% for ref in commentaryData.references %}
+                                                <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
+                                                    {{ ref.ref }}</a>
+                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
+                                            {% endfor %}
+                                        </ul>                                    
+                                    {% endif %}
+                                </div>
                             </div>
                         {% endfor %}
                     </details>
