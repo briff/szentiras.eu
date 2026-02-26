@@ -10,11 +10,13 @@ use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ReferenceService;
 use SzentirasHu\Service\Text\TextService;
+use SzentirasHu\Service\Text\BookService;
 
 class CommentaryService
 {
     public function __construct(
         private readonly TextService $textService,
+        private readonly BookService $bookService,
     ) {}
 
     /**
@@ -180,6 +182,7 @@ class CommentaryService
             
             // Convert reference ranges to search ranges
             $searchRanges = $this->convertBookRefToSearchRanges($bookRef);
+            $normalizedSearchRanges = $this->normalizeSearchRanges($searchRanges, $usxCode, $translation);
 
             // Get all commentaries for this book and translation
             $bookCommentaries = Commentary::query()
@@ -200,7 +203,7 @@ class CommentaryService
                     continue;
                 }
 
-                $isExact = $this->rangesSetEqual($commentary->ranges, $searchRanges);
+                $isExact = $this->rangesSetEqual($commentary->ranges, $normalizedSearchRanges);
                 $earliest = $this->getEarliestVerse($commentary->ranges);
 
                 // Store with commentary ID as key to deduplicate later
@@ -292,6 +295,29 @@ class CommentaryService
         }
 
         return $ranges;
+    }
+
+    /**
+     * Normalize search ranges by replacing placeholder end_verse 999 with actual verse count.
+     *
+     * @param array<array{start_chapter: int, start_verse: int, end_chapter: int, end_verse: int}> $searchRanges
+     * @param string $usxCode
+     * @param Translation $translation
+     * @return array<array{start_chapter: int, start_verse: int, end_chapter: int, end_verse: int}>
+     */
+    private function normalizeSearchRanges(array $searchRanges, string $usxCode, Translation $translation): array
+    {
+        $normalized = [];
+        foreach ($searchRanges as $range) {
+            // Detect full chapter placeholder (start_verse=1, end_verse=999)
+            if ($range['start_verse'] === 1 && $range['end_verse'] === 999) {
+                $book = $this->bookService->getBookByUsxCodeTranslation($usxCode, $translation->abbrev);
+                $verseCount = $this->bookService->getVerseCount($book, $range['start_chapter'], $translation);
+                $range['end_verse'] = $verseCount;
+            }
+            $normalized[] = $range;
+        }
+        return $normalized;
     }
 
     /**

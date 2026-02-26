@@ -21,7 +21,8 @@ class AiServiceProvider extends ServiceProvider
 
         $this->app->singleton(CommentaryService::class, function ($app) {
             return new CommentaryService(
-                $app->make(\SzentirasHu\Service\Text\TextService::class)
+                $app->make(\SzentirasHu\Service\Text\TextService::class),
+                $app->make(\SzentirasHu\Service\Text\BookService::class)
             );
         });
     }
