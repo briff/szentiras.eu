@@ -13,6 +13,7 @@ use SzentirasHu\Data\Entity\Translation;
  * @property string $usx_code
  * @property string $commentary_text
  * @property array|null $metadata
+ * @property bool $is_exact
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read \SzentirasHu\Data\Entity\Translation $translation

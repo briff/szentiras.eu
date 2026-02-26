@@ -86,6 +86,80 @@ class CommentaryService
     }
 
     /**
+     * Check if two ranges are exactly equal.
+     *
+     * @param array $range1 Array with keys: start_chapter, start_verse, end_chapter, end_verse
+     * @param array $range2 Array with keys: start_chapter, start_verse, end_chapter, end_verse
+     * @return bool
+     */
+    private function rangesEqual(array $range1, array $range2): bool
+    {
+        return $range1['start_chapter'] === $range2['start_chapter']
+            && $range1['start_verse'] === $range2['start_verse']
+            && $range1['end_chapter'] === $range2['end_chapter']
+            && $range1['end_verse'] === $range2['end_verse'];
+    }
+
+    /**
+     * Check if a set of commentary ranges exactly matches a set of search ranges.
+     * Order does not matter; ranges are compared after sorting.
+     *
+     * @param \Illuminate\Support\Collection<int, CommentaryRange> $commentaryRanges
+     * @param array<array{start_chapter: int, start_verse: int, end_chapter: int, end_verse: int}> $searchRanges
+     * @return bool
+     */
+    private function rangesSetEqual(\Illuminate\Support\Collection $commentaryRanges, array $searchRanges): bool
+    {
+        // Normalize commentary ranges to same format as search ranges
+        $commentaryNormalized = $commentaryRanges->map(function (CommentaryRange $range) {
+            return [
+                'start_chapter' => $range->start_chapter,
+                'start_verse' => $range->start_verse,
+                'end_chapter' => $range->end_chapter,
+                'end_verse' => $range->end_verse,
+            ];
+        })->sortBy(['start_chapter', 'start_verse', 'end_chapter', 'end_verse'])->values();
+
+        $searchNormalized = collect($searchRanges)->sortBy(['start_chapter', 'start_verse', 'end_chapter', 'end_verse'])->values();
+
+        if ($commentaryNormalized->count() !== $searchNormalized->count()) {
+            return false;
+        }
+
+        foreach ($commentaryNormalized as $i => $range) {
+            if (!$this->rangesEqual($range, $searchNormalized[$i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the earliest verse (chapter, verse) from a collection of commentary ranges.
+     *
+     * @param \Illuminate\Support\Collection<int, CommentaryRange> $commentaryRanges
+     * @return array{chapter: int, verse: int}
+     */
+    private function getEarliestVerse(\Illuminate\Support\Collection $commentaryRanges): array
+    {
+        $earliestChapter = null;
+        $earliestVerse = null;
+
+        foreach ($commentaryRanges as $range) {
+            $chapter = $range->start_chapter;
+            $verse = $range->start_verse;
+
+            if ($earliestChapter === null || $chapter < $earliestChapter || ($chapter === $earliestChapter && $verse < $earliestVerse)) {
+                $earliestChapter = $chapter;
+                $earliestVerse = $verse;
+            }
+        }
+
+        return ['chapter' => $earliestChapter ?? 0, 'verse' => $earliestVerse ?? 0];
+    }
+
+    /**
      * Find commentaries that cover any verse in a given reference.
      * Uses the same range-matching algorithm as CommentaryRange creation.
      *
@@ -95,7 +169,7 @@ class CommentaryService
      */
     public function findForReference(CanonicalReference $reference, Translation $translation): Collection
     {
-        $commentaries = collect();
+        $commentaryData = [];
 
         foreach ($reference->bookRefs as $bookRef) {
             // Determine if bookId is already a USX code or needs conversion
@@ -114,19 +188,50 @@ class CommentaryService
                 ->with('ranges')
                 ->get();
 
-            // Filter commentaries that have overlapping ranges with any search range
-            $filtered = $bookCommentaries->filter(function (Commentary $commentary) use ($searchRanges) {
-                return $commentary->ranges->some(function (CommentaryRange $range) use ($searchRanges) {
+            foreach ($bookCommentaries as $commentary) {
+                // Check if commentary overlaps with any search range
+                $overlaps = $commentary->ranges->some(function (CommentaryRange $range) use ($searchRanges) {
                     return collect($searchRanges)->some(function (array $searchRange) use ($range) {
                         return $this->rangesOverlap($range, $searchRange);
                     });
                 });
-            });
 
-            $commentaries = $commentaries->merge($filtered);
+                if (!$overlaps) {
+                    continue;
+                }
+
+                $isExact = $this->rangesSetEqual($commentary->ranges, $searchRanges);
+                $earliest = $this->getEarliestVerse($commentary->ranges);
+
+                // Store with commentary ID as key to deduplicate later
+                $commentaryData[$commentary->id] = [
+                    'commentary' => $commentary,
+                    'exact' => $isExact,
+                    'earliest_chapter' => $earliest['chapter'],
+                    'earliest_verse' => $earliest['verse'],
+                ];
+            }
         }
 
-        return $commentaries->unique('id');
+        // Sort: exact matches first, then by earliest chapter, verse
+        usort($commentaryData, function ($a, $b) {
+            if ($a['exact'] !== $b['exact']) {
+                return $a['exact'] ? -1 : 1; // true (exact) comes first
+            }
+            if ($a['earliest_chapter'] !== $b['earliest_chapter']) {
+                return $a['earliest_chapter'] - $b['earliest_chapter'];
+            }
+            return $a['earliest_verse'] - $b['earliest_verse'];
+        });
+
+        // Attach is_exact property to each commentary for easy access
+        $sortedCommentaries = collect($commentaryData)->map(function ($data) {
+            $commentary = $data['commentary'];
+            $commentary->is_exact = $data['exact'];
+            return $commentary;
+        });
+
+        return $sortedCommentaries;
     }
 
     /**

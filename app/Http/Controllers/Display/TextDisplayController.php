@@ -287,6 +287,8 @@ class TextDisplayController extends Controller
                             'references' => [],
                         ];
                     }
+                    // Add exact match flag
+                    $commentaryData['exact'] = $commentary->is_exact ?? false;
                     $parsed[] = $commentaryData;
                 }
                 $parsedCommentaries[] = $parsed;
