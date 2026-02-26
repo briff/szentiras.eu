@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Providers;
+namespace SzentirasHu\Providers;
 
-use App\Service\Ai\AiPromptService;
+use SzentirasHu\Service\Ai\AiPromptService;
+use SzentirasHu\Service\Ai\CommentaryService;
 use Illuminate\Support\ServiceProvider;
 
 class AiServiceProvider extends ServiceProvider
@@ -17,6 +18,12 @@ class AiServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(AiPromptService::class, 'ai-prompt');
+
+        $this->app->singleton(CommentaryService::class, function ($app) {
+            return new CommentaryService(
+                $app->make(\SzentirasHu\Service\Text\TextService::class)
+            );
+        });
     }
 
     /**
