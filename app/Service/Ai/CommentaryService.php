@@ -166,12 +166,11 @@ class CommentaryService
 
         $response = $aiPromptService->generate('commentary', $placeholders);
 
-        // Extract content from OpenAI response
-        if (is_object($response) && property_exists($response, 'choices')) {
-            return $response->choices[0]->message->content ?? '';
+        // Extract content from OpenAI Responses API structure
+        if (is_object($response) && property_exists($response, 'output')) {
+            return $response->output[0]->content[0]->text ?? '';
         }
 
-        // Fallback: return raw response if structure differs
         return (string) $response;
     }
 

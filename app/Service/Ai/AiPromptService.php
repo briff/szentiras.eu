@@ -3,7 +3,6 @@
 namespace SzentirasHu\Service\Ai;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
-use Illuminate\Support\Arr;
 use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory as OpenAIFactory;
 use InvalidArgumentException;
@@ -49,16 +48,11 @@ class AiPromptService
         $merged['model'] ??= null;
         $merged['prompt'] ??= '';
         $merged['temperature'] ??= 0.7;
-        $merged['max_tokens'] ??= 2048;
+        $merged['max_output_tokens'] ??= 2048;
         $merged['timeout'] ??= 30;
-        $merged['version'] ??= 'v1';
-        
-        // GPT-5 specific defaults
-        $merged['verbosity'] ??= 'low';
         $merged['reasoning_effort'] ??= 'none';
-        $merged['text_format'] ??= 'json_object';
-        $merged['summary'] ??= null;
-        $merged['store'] ??= false;
+        $merged['verbosity'] ??= 'low';
+        $merged['response_format'] ??= null;
 
         return $merged;
     }
@@ -77,7 +71,6 @@ class AiPromptService
             return '';
         }
 
-        // Check if prompt is a file path and load content if it exists
         $prompt = $this->loadPromptFromFile($prompt);
 
         foreach ($data as $key => $value) {
@@ -96,18 +89,15 @@ class AiPromptService
      */
     protected function loadPromptFromFile(string $prompt): string
     {
-        // Check if the prompt looks like a file path (contains .md, .txt, or starts with resource_path)
         if (str_contains($prompt, '.md') || str_contains($prompt, '.txt') || str_starts_with($prompt, 'resource_path(')) {
-            // Handle resource_path() helper syntax
             if (str_starts_with($prompt, 'resource_path(') && str_ends_with($prompt, ')')) {
-                $path = substr($prompt, 15, -1); // Remove 'resource_path(' and ')'
+                $path = substr($prompt, 15, -1);
                 $path = trim($path, "'\"");
                 $filePath = resource_path($path);
             } else {
                 $filePath = $prompt;
             }
 
-            // Check if file exists and is readable
             if (file_exists($filePath) && is_readable($filePath)) {
                 return file_get_contents($filePath) ?: $prompt;
             }
@@ -119,9 +109,9 @@ class AiPromptService
     /**
      * Get an authenticated client for the given provider.
      *
-     * @param string $provider Provider name (e.g., 'openai', 'anthropic')
+     * @param string $provider Provider name (e.g., 'openai')
      * @param array<string, mixed> $overrides Optional overrides for api_key, endpoint, timeout
-     * @return OpenAIClient|mixed
+     * @return OpenAIClient
      * @throws RuntimeException If the provider is not supported.
      */
     public function client(string $provider, array $overrides = []): mixed
@@ -135,7 +125,6 @@ class AiPromptService
 
         return match ($provider) {
             'openai' => $this->createOpenAIClient($settings),
-            // 'anthropic' => $this->createAnthropicClient($settings),
             default => throw new RuntimeException("Provider '{$provider}' is not supported."),
         };
     }
@@ -170,7 +159,7 @@ class AiPromptService
      * @param string $configurationName
      * @param array<string, string> $placeholders
      * @param string|null $userMessage Optional user message to append to the prompt.
-     * @return mixed Raw API response (depends on provider).
+     * @return mixed Raw API response.
      */
     public function generate(string $configurationName, array $placeholders = [], ?string $userMessage = null): mixed
     {
@@ -182,50 +171,45 @@ class AiPromptService
         }
 
         $client = $this->client($config['provider'], [
-            'api_key' => $config['api_key'] ?? null,
-            'endpoint' => $config['endpoint'] ?? null,
-            'timeout' => $config['timeout'] ?? null,
+            'api_key' => $config['api_key'],
+            'endpoint' => $config['endpoint'],
+            'timeout' => $config['timeout'],
         ]);
 
         $params = [
             'model' => $config['model'],
-            'temperature' => (float) ($config['temperature'] ?? 0.7),
-            'max_tokens' => (int) ($config['max_tokens'] ?? 2048),
+            'input' => $prompt,
+            'temperature' => (float) $config['temperature'],
+            'max_output_tokens' => (int) $config['max_output_tokens'],
+            'store' => true,
+            'parallel_tool_calls' => false,
         ];
 
-        // Add GPT-5 specific parameters if they exist
-        $textParams = [];
-        if (isset($config['verbosity'])) {
-            $textParams['verbosity'] = $config['verbosity'];
-        }
-        if (isset($config['text_format'])) {
-            $textParams['format'] = $config['text_format'];
-        }
-        if (!empty($textParams)) {
-            $params['text'] = $textParams;
+        // Configure reasoning if effort is not 'none'
+        if ($config['reasoning_effort'] !== 'none') {
+            $params['reasoning'] = [
+                'effort' => $config['reasoning_effort'],
+            ];
         }
 
-        if (isset($config['reasoning_effort'])) {
-            $params['reasoning'] = ['effort' => $config['reasoning_effort']];
-        }
-        
-        if (isset($config['summary'])) {
-            $params['summary'] = (bool) $config['summary'];
-        }
-        
-        if (isset($config['store'])) {
-            $params['store'] = (bool) $config['store'];
+        // Configure text output format
+        $textParams = [
+            'verbosity' => $config['verbosity'],
+        ];
+
+        if ($config['response_format'] !== null) {
+            // Extract json_schema from response_format if it's a full schema object
+            $format = $config['response_format'];
+            $textParams['format'] = $format;
+        } else {
+            // Default to plain text format
+            $textParams['format'] = ['type' => 'text'];
         }
 
-        // Provider-specific request structure
+        $params['text'] = $textParams;
+
         return match ($config['provider']) {
-            'openai' => $client->chat()->create([
-                ...$params,
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]),
-            // 'anthropic' => $client->messages()->create([ ... ]),
+            'openai' => $client->responses()->create($params),
             default => throw new RuntimeException("Provider '{$config['provider']}' not supported for generation."),
         };
     }

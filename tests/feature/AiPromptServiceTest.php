@@ -49,7 +49,7 @@ class AiPromptServiceTest extends TestCase
                     'api_key' => 'default-key',
                     'model' => 'gpt-4',
                     'temperature' => 0.7,
-                    'max_tokens' => 2048,
+                    'max_output_tokens' => 2048,
                     'timeout' => 30,
                 ],
             ]);
@@ -63,7 +63,7 @@ class AiPromptServiceTest extends TestCase
         $this->assertSame('default-key', $result['api_key']);
         $this->assertSame('gpt-4', $result['model']);
         $this->assertSame(0.7, $result['temperature']);
-        $this->assertSame(2048, $result['max_tokens']);
+        $this->assertSame(2048, $result['max_output_tokens']);
         $this->assertSame(30, $result['timeout']);
     }
 
@@ -90,7 +90,7 @@ class AiPromptServiceTest extends TestCase
                     'api_key' => 'default-key',
                     'model' => 'gpt-4',
                     'temperature' => 0.7,
-                    'max_tokens' => 2048,
+                    'max_output_tokens' => 2048,
                     'timeout' => 30,
                 ],
             ]);
@@ -101,7 +101,7 @@ class AiPromptServiceTest extends TestCase
         $this->assertSame('gpt-3.5-turbo', $result['model']);
         $this->assertSame(0.9, $result['temperature']);
         // Should keep provider defaults for missing keys
-        $this->assertSame(2048, $result['max_tokens']);
+        $this->assertSame(2048, $result['max_output_tokens']);
         $this->assertSame(30, $result['timeout']);
     }
 
@@ -202,5 +202,79 @@ class AiPromptServiceTest extends TestCase
         $this->expectExceptionMessage("Provider 'unknown' is not configured.");
 
         $this->service->client('unknown');
+    }
+
+    #[Test]
+    public function it_resolves_configuration_with_reasoning_effort(): void
+    {
+        $this->config->shouldReceive('get')
+            ->with('ai.configurations', [])
+            ->andReturn([
+                'commentary' => [
+                    'provider' => 'openai',
+                    'prompt' => 'Test prompt',
+                    'reasoning_effort' => 'medium',
+                ],
+            ]);
+
+        $this->config->shouldReceive('get')
+            ->with('ai.providers', [])
+            ->andReturn([
+                'openai' => [
+                    'endpoint' => 'https://api.openai.com/v1',
+                    'api_key' => 'test-key',
+                    'model' => 'gpt-4.1',
+                    'temperature' => 0.7,
+                    'max_output_tokens' => 2048,
+                    'timeout' => 30,
+                    'reasoning_effort' => 'none',
+                    'verbosity' => 'medium',
+                ],
+            ]);
+
+        $result = $this->service->resolveConfiguration('commentary');
+
+        // Configuration-specific reasoning_effort should override provider default
+        $this->assertSame('medium', $result['reasoning_effort']);
+        $this->assertSame('medium', $result['verbosity']);
+    }
+
+    #[Test]
+    public function it_resolves_configuration_with_response_format(): void
+    {
+        $responseFormat = [
+            'type' => 'json_schema',
+            'json_schema' => [
+                'name' => 'test',
+                'schema' => ['type' => 'object'],
+            ],
+        ];
+
+        $this->config->shouldReceive('get')
+            ->with('ai.configurations', [])
+            ->andReturn([
+                'commentary' => [
+                    'provider' => 'openai',
+                    'prompt' => 'Test prompt',
+                    'response_format' => $responseFormat,
+                ],
+            ]);
+
+        $this->config->shouldReceive('get')
+            ->with('ai.providers', [])
+            ->andReturn([
+                'openai' => [
+                    'endpoint' => 'https://api.openai.com/v1',
+                    'api_key' => 'test-key',
+                    'model' => 'gpt-4.1',
+                    'temperature' => 0.7,
+                    'max_output_tokens' => 2048,
+                    'timeout' => 30,
+                ],
+            ]);
+
+        $result = $this->service->resolveConfiguration('commentary');
+
+        $this->assertSame($responseFormat, $result['response_format']);
     }
 }
