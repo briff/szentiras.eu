@@ -2,6 +2,8 @@
 
 namespace SzentirasHu\Http\Controllers\Editor;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Pagination\Paginator;
 use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Models\Commentary;
@@ -66,5 +68,25 @@ class CommentaryEditorController extends Controller
             'book' => $book,
             'formattedRanges' => $formattedRanges,
         ]);
+    }
+
+    /**
+     * Generate AI commentary for a reference.
+     */
+    public function generate(Request $request)
+    {
+        $request->validate([
+            'reference' => 'required|string',
+            'translation' => 'required|string',
+        ]);
+
+        // Call the Artisan command
+        Artisan::call('ai:generate-commentary', [
+            'reference' => $request->input('reference'),
+            'translation' => $request->input('translation'),
+            '--force' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Kommentár generálva.');
     }
 }

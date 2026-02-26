@@ -25,6 +25,7 @@ use SzentirasHu\Service\Text\TranslationService;
 use View;
 use SzentirasHu\Service\Reference\NumberingSchemeService;
 use SzentirasHu\Service\Editor\EditorService;
+use SzentirasHu\Service\Ai\CommentaryService;
 
 
 /**
@@ -62,7 +63,12 @@ class TextDisplayController extends Controller
      * @var \SzentirasHu\Service\Reference\NumberingSchemeService
      */
     private $numberingSchemeService;
-    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, NumberingSchemeService $numberingSchemeService, protected BookService $bookService, protected TranslationService $translationService, protected EditorService $editorService)
+
+    /**
+     * @var \SzentirasHu\Service\Ai\CommentaryService
+     */
+    private $commentaryService;
+    function __construct(TranslationRepository $translationRepository, BookRepository $bookRepository, VerseRepository $verseRepository, ReadingPlanRepository $readingPlanRepository, ReferenceService $referenceService, TextService $textService, NumberingSchemeService $numberingSchemeService, CommentaryService $commentaryService, protected BookService $bookService, protected TranslationService $translationService, protected EditorService $editorService)
     {
         $this->translationRepository = $translationRepository;
         $this->bookRepository = $bookRepository;
@@ -71,6 +77,7 @@ class TextDisplayController extends Controller
         $this->referenceService = $referenceService;
         $this->textService = $textService;
         $this->numberingSchemeService = $numberingSchemeService;
+        $this->commentaryService = $commentaryService;
     }
 
     public function showTranslationList()
@@ -261,6 +268,30 @@ class TextDisplayController extends Controller
                 }
             }
 
+            // Fetch commentaries for each verse container
+            $displayContainers = $fullContextVerseContainers ?? $verseContainers;
+            $commentaries = [];
+            $parsedCommentaries = [];
+            foreach ($displayContainers as $verseContainer) {
+                $commentaryCollection = $this->commentaryService->findForReference(
+                    CanonicalReference::fromString($verseContainer->bookRef->toString(), $translation->id),
+                    $translation
+                );
+                $commentaries[] = $commentaryCollection;
+                $parsed = [];
+                foreach ($commentaryCollection as $commentary) {
+                    $commentaryData = json_decode($commentary->commentary_text, true);
+                    if (!is_array($commentaryData)) {
+                        $commentaryData = [
+                            'commentary_text' => $commentary->commentary_text,
+                            'references' => [],
+                        ];
+                    }
+                    $parsed[] = $commentaryData;
+                }
+                $parsedCommentaries[] = $parsed;
+            }
+
             $scrollTo = $canonicalRef->toGepi();
 
             $translations = $this->translationRepository->getAllOrderedByDenom();
@@ -277,6 +308,8 @@ class TextDisplayController extends Controller
                 'nextDay' => $nextDay,
                 'canonicalRef' => str_replace(" ", "%20", $canonicalRef->toString()),
                 'verseContainers' => $fullContextVerseContainers ?? $verseContainers,
+                'commentaries' => $commentaries,
+                'parsedCommentaries' => $parsedCommentaries,
                 'translation' => $translation,
                 'translations' => $translations,
                 'canonicalUrl' => $this->referenceService->getCanonicalUrl($canonicalRef, $translation->id),

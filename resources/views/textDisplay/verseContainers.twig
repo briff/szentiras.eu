@@ -4,6 +4,38 @@
     </div>
         <div class="mb-2">
          {% include 'textDisplay.parsedVerseContainer' with { 'verseContainer' : verseContainer, 'translation' : translation} %}
+            {# Commentary section #}
+            {% set containerCommentaries = parsedCommentaries[loop.index0] ?? [] %}
+            {% if containerCommentaries is not empty %}
+                <div class="commentaries mt-4 mb-4">
+                    <details class="border rounded p-3 bg-light">
+                        <summary class="h6 cursor-pointer">Kommentár</summary>
+                        {% for commentaryData in containerCommentaries %}
+                            <div class="commentary mt-3">
+                                <div class="commentary-text">{{ commentaryData.commentary_text|markdown_to_html|raw }}</div>
+                                {% if commentaryData.references is defined and commentaryData.references is not empty %}
+                                    <ul class="references mt-2">
+                                        {% for ref in commentaryData.references %}
+                                            <li><a href="{{ ref.ref }}" target="_blank">{{ ref.ref }}</a> – {{ ref.reason }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </details>
+                </div>
+            {% elseif isEditor %}
+                <div class="commentary-generator mt-4 mb-4">
+                    <form method="POST" action="{{ route('editor.commentaries.generate') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="reference" value="{{ verseContainer.bookRef.toString() }}">
+                        <input type="hidden" name="translation" value="{{ translation.abbrev }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            Kommentár generálása
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
             {% for verse in verseContainer.parsedVerses %}
                 {% if verse.footnotes is not empty %}
                     {% if not hasFootnote %}
