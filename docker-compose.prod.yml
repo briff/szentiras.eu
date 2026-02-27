@@ -139,5 +139,6 @@ volumes:
   letsencrypt:
   sphinx_data:
   sphinx_trigger:
+  redis-data:
 networks:
   traefik:
