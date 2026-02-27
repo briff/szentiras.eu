@@ -23,36 +23,120 @@
         <div class="col-lg-8">
             <!-- Commentary Details -->
             <div class="card mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Kommentár szövege</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-edit-text">
+                        <i class="bi bi-pencil"></i> Szerkesztés
+                    </button>
                 </div>
                 <div class="card-body">
-                    <div class="commentary-text-display">
+                    <!-- Display mode -->
+                    <div class="commentary-text-display" id="commentary-text-display">
                         {% apply markdown_to_html %}
 {{ commentaryData.commentary_text }}
                         {% endapply %}
+                    </div>
+                    
+                    <!-- Edit mode (hidden by default) -->
+                    <div class="commentary-text-edit" id="commentary-text-edit" style="display: none;">
+                        <form method="POST" action="{{ route('editor.commentaries.update', commentary.id) }}" id="commentary-text-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="_method" value="PUT">
+                            
+                            <div class="mb-3">
+                                <label for="commentary_text" class="form-label">Kommentár szöveg (Markdown formátumban)</label>
+                                <textarea class="form-control font-monospace" id="commentary_text" name="commentary_text" rows="15">{{ commentaryData.commentary_text }}</textarea>
+                                <div class="form-text">
+                                    Használhatja a Markdown formázást: **félkövér**, *dőlt*, `kód`, listák, stb.
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" id="cancel-edit-text">
+                                    <i class="bi bi-x-circle"></i> Mégse
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Mentés
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
 
             <!-- References Section -->
-            {% if commentaryData.references and commentaryData.references|length > 0 %}
             <div class="card mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Hivatkozások</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-edit-references">
+                        <i class="bi bi-pencil"></i> Szerkesztés
+                    </button>
                 </div>
                 <div class="card-body">
-                    <ul class="list-unstyled">
-                        {% for reference in commentaryData.references %}
-                            <li class="mb-3">
-                                <strong>{{ reference.ref }}</strong>
-                                <p class="mb-0 text-muted small">{{ reference.reason }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                    <!-- Display mode -->
+                    <div id="references-display">
+                        {% if commentaryData.references and commentaryData.references|length > 0 %}
+                            <ul class="list-unstyled">
+                                {% for reference in commentaryData.references %}
+                                    <li class="mb-3">
+                                        <strong>{{ reference.ref }}</strong>
+                                        <p class="mb-0 text-muted small">{{ reference.reason }}</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted mb-0">Nincsenek hivatkozások.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Edit mode (hidden by default) -->
+                    <div id="references-edit" style="display: none;">
+                        <form method="POST" action="{{ route('editor.commentaries.update', commentary.id) }}" id="references-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="_method" value="PUT">
+                            
+                            <div id="references-edit-container">
+                                {% if commentaryData.references and commentaryData.references|length > 0 %}
+                                    {% for reference in commentaryData.references %}
+                                        <div class="reference-edit-item mb-3 p-3 border rounded">
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">Hivatkozás</label>
+                                                    <input type="text" class="form-control" name="references[{{ loop.index0 }}][ref]" value="{{ reference.ref }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Leírás / Indoklás</label>
+                                                    <input type="text" class="form-control" name="references[{{ loop.index0 }}][reason]" value="{{ reference.reason }}">
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-reference" data-index="{{ loop.index0 }}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-success btn-sm" id="add-reference">
+                                    <i class="bi bi-plus-circle"></i> Új hivatkozás hozzáadása
+                                </button>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" id="cancel-edit-references">
+                                    <i class="bi bi-x-circle"></i> Mégse
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Hivatkozások mentése
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Metadata -->
             {% if commentary.metadata %}
@@ -222,6 +306,143 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Commentary text edit toggle
+    const toggleEditTextBtn = document.getElementById('toggle-edit-text');
+    const cancelEditTextBtn = document.getElementById('cancel-edit-text');
+    const commentaryTextDisplay = document.getElementById('commentary-text-display');
+    const commentaryTextEdit = document.getElementById('commentary-text-edit');
+    
+    if (toggleEditTextBtn) {
+        toggleEditTextBtn.addEventListener('click', function() {
+            commentaryTextDisplay.style.display = 'none';
+            commentaryTextEdit.style.display = 'block';
+            toggleEditTextBtn.style.display = 'none';
+        });
+    }
+    
+    if (cancelEditTextBtn) {
+        cancelEditTextBtn.addEventListener('click', function() {
+            commentaryTextDisplay.style.display = 'block';
+            commentaryTextEdit.style.display = 'none';
+            toggleEditTextBtn.style.display = 'block';
+        });
+    }
+    
+    // References edit toggle
+    const toggleEditReferencesBtn = document.getElementById('toggle-edit-references');
+    const cancelEditReferencesBtn = document.getElementById('cancel-edit-references');
+    const referencesDisplay = document.getElementById('references-display');
+    const referencesEdit = document.getElementById('references-edit');
+    
+    if (toggleEditReferencesBtn) {
+        toggleEditReferencesBtn.addEventListener('click', function() {
+            referencesDisplay.style.display = 'none';
+            referencesEdit.style.display = 'block';
+            toggleEditReferencesBtn.style.display = 'none';
+        });
+    }
+    
+    if (cancelEditReferencesBtn) {
+        cancelEditReferencesBtn.addEventListener('click', function() {
+            referencesDisplay.style.display = 'block';
+            referencesEdit.style.display = 'none';
+            toggleEditReferencesBtn.style.display = 'block';
+        });
+    }
+    
+    // Add new reference
+    const addReferenceBtn = document.getElementById('add-reference');
+    const referencesEditContainer = document.getElementById('references-edit-container');
+    
+    if (addReferenceBtn && referencesEditContainer) {
+        addReferenceBtn.addEventListener('click', function() {
+            const index = referencesEditContainer.children.length;
+            const newReferenceHtml = `
+                <div class="reference-edit-item mb-3 p-3 border rounded">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label class="form-label">Hivatkozás</label>
+                            <input type="text" class="form-control" name="references[${index}][ref]" value="" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Leírás / Indoklás</label>
+                            <input type="text" class="form-control" name="references[${index}][reason]" value="">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-reference" data-index="${index}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newReferenceHtml;
+            referencesEditContainer.appendChild(tempDiv.firstElementChild);
+            
+            // Attach event listener to the new remove button
+            const newRemoveBtn = referencesEditContainer.lastElementChild.querySelector('.remove-reference');
+            if (newRemoveBtn) {
+                newRemoveBtn.addEventListener('click', function() {
+                    this.closest('.reference-edit-item').remove();
+                    // Reindex remaining references
+                    reindexReferences();
+                });
+            }
+        });
+    }
+    
+    // Remove reference buttons
+    document.querySelectorAll('.remove-reference').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.reference-edit-item').remove();
+            // Reindex remaining references
+            reindexReferences();
+        });
+    });
+    
+    // Reindex references after removal
+    function reindexReferences() {
+        const referenceItems = referencesEditContainer.querySelectorAll('.reference-edit-item');
+        referenceItems.forEach((item, index) => {
+            // Update input names
+            const refInput = item.querySelector('input[name*="[ref]"]');
+            const reasonInput = item.querySelector('input[name*="[reason]"]');
+            const removeBtn = item.querySelector('.remove-reference');
+            
+            if (refInput) {
+                refInput.name = `references[${index}][ref]`;
+            }
+            if (reasonInput) {
+                reasonInput.name = `references[${index}][reason]`;
+            }
+            if (removeBtn) {
+                removeBtn.dataset.index = index;
+            }
+        });
+    }
+    
+    // Form submission handling
+    const commentaryTextForm = document.getElementById('commentary-text-form');
+    const referencesForm = document.getElementById('references-form');
+    
+    if (commentaryTextForm) {
+        commentaryTextForm.addEventListener('submit', function(e) {
+            // Form will submit normally
+        });
+    }
+    
+    if (referencesForm) {
+        referencesForm.addEventListener('submit', function(e) {
+            // Form will submit normally
+        });
+    }
+});
+</script>
+
 <style>
     .commentary-text-display {
         line-height: 1.8;
@@ -266,6 +487,10 @@
         padding-left: 1rem;
         margin-left: 0;
         color: #666;
+    }
+    
+    .reference-edit-item {
+        background-color: #f8f9fa;
     }
 </style>
 {% endblock %}

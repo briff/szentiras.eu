@@ -172,20 +172,77 @@ class CommentaryEditorController extends Controller
     }
 
     /**
-     * Update a commentary's verification level.
+     * Update a commentary's verification level or text content.
      */
     public function update(Request $request, Commentary $commentary)
     {
-        $request->validate([
-            'verification_level' => 'required|string|in:none,sanity,theology',
-        ]);
+        // Check what type of update is being requested
+        if ($request->has('verification_level')) {
+            $request->validate([
+                'verification_level' => 'required|string|in:none,sanity,theology',
+            ]);
 
-        $commentary->update([
-            'verification_level' => $request->input('verification_level'),
-        ]);
+            $commentary->update([
+                'verification_level' => $request->input('verification_level'),
+            ]);
 
+            return redirect()->route('editor.commentaries.show', $commentary)
+                ->with('success', 'Ellenőrzési szint frissítve.');
+        }
+        
+        // Handle commentary text and references update
+        if ($request->has('commentary_text') || $request->has('references')) {
+            $request->validate([
+                'commentary_text' => 'nullable|string',
+                'references' => 'nullable|array',
+                'references.*.ref' => 'required_with:references|string',
+                'references.*.reason' => 'nullable|string',
+            ]);
+            
+            // Parse existing commentary data
+            $commentaryData = json_decode($commentary->commentary_text, true);
+            if (!is_array($commentaryData)) {
+                $commentaryData = [
+                    'commentary_text' => $commentary->commentary_text,
+                    'references' => [],
+                ];
+            }
+            
+            // Update commentary text if provided
+            if ($request->has('commentary_text')) {
+                $commentaryData['commentary_text'] = $request->input('commentary_text');
+            }
+            
+            // Update references - handle both cases: provided array or missing (which means empty)
+            if ($request->has('references')) {
+                $commentaryData['references'] = $request->input('references');
+            } else {
+                // If references field is not present but we're in this branch (likely references form submitted),
+                // set references to empty array
+                $commentaryData['references'] = [];
+            }
+            
+            // Save updated commentary text as JSON
+            $commentary->update([
+                'commentary_text' => json_encode($commentaryData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            ]);
+            
+            // Determine appropriate success message
+            if ($request->has('commentary_text') && !$request->has('references')) {
+                $message = 'Kommentár szövege frissítve.';
+            } elseif (!$request->has('commentary_text') && $request->has('references')) {
+                $message = 'Hivatkozások frissítve.';
+            } else {
+                $message = 'Kommentár szövege és hivatkozások frissítve.';
+            }
+            
+            return redirect()->route('editor.commentaries.show', $commentary)
+                ->with('success', $message);
+        }
+        
+        // If no valid update fields provided, redirect back with error
         return redirect()->route('editor.commentaries.show', $commentary)
-            ->with('success', 'Ellenőrzési szint frissítve.');
+            ->with('error', 'Érvénytelen frissítési kérés.');
     }
 
     /**

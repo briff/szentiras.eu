@@ -1,3 +1,9 @@
+{% set verification_config = {
+    'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrizve, lehet pontatlan, téves'},
+    'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Értelmi ellenőrzésen átesett, teológiailag lehet pontatlan'},
+    'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
+} %}
+
 {% for verseContainer in verseContainers %}
     <div>
         {% include 'textDisplay.breadcrumb' with {'book': verseContainer.book, 'bookRef': verseContainer.bookRef } %}
@@ -18,7 +24,7 @@
                     <div class="commentaries mt-2 mb-2 parsedVerses">
                         <details class="overflow-hidden">
                             <summary class="h6 cursor-pointer flex items-center bg-blue-100 hover:bg-blue-200 transition-colors">
-                                <span class="mr-2"><i class="bi-robot"></i></span>
+                                <i class="bi-robot"></i>
                                 Kommentár
                             </summary>
 
@@ -31,11 +37,6 @@
                                             <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}
-                                                    {% set verification_config = {
-                                                        'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrizve, lehet pontatlan, téves'},
-                                                        'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Értelmi ellenőrzésen átesett, teológiailag lehet pontatlan'},
-                                                        'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
-                                                    } %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
                                                     <div class="mb-2 flex items-center">
                                                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
@@ -68,13 +69,13 @@
                                 <div class="commentary-status-container" id="status-0">
                                     {# Status will be loaded via AJAX #}
                                 </div>
-                                <div class="commentary-generator">
+                                <div class="commentary-generator border-top pt-1 mt-2">
                                     <form method="POST" action="{{ route('editor.commentaries.generate') }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="reference" value="{{ verseContainer.bookRef.toString() }}">
                                     <input type="hidden" name="translation" value="{{ translation.abbrev }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                        Kommentár generálása: {{ verseContainer.bookRef.toString() }}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="hyphens: none;">
+                                        <i class="bi-robot"></i> Kommentár készítése mesterséges intelligenciával: {{ verseContainer.bookRef.toString() }} (kb. 1 perc)
                                     </button>
                                     </form>
                                 </div>
@@ -90,11 +91,6 @@
                                             <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}
-                                                    {% set verification_config = {
-                                                        'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrzés'},
-                                                        'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Ésszerűségi ellenőrzés'},
-                                                        'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzés'}
-                                                    } %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
                                                     <div class="mb-2 flex items-center">
                                                         <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
@@ -142,13 +138,13 @@
                         <div class="commentary-status-container" id="status-0">
                                 {# Status will be loaded via AJAX #}
                         </div>
-                        <div class="commentary-generator">
+                        <div class="commentary-generator border-top pt-1 mt-2">
                             <form method="POST" action="{{ route('editor.commentaries.generate') }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="reference" value="{{ verseContainer.bookRef.toString() }}">
                                 <input type="hidden" name="translation" value="{{ translation.abbrev }}">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                    Kommentár generálása
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" style="hyphens: none;">
+                                    <i class="bi-robot"></i> Kommentár készítése mesterséges intelligenciával (kb. 1 perc)
                                 </button>
                             </form>
                         </div>
