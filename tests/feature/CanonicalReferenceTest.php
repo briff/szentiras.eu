@@ -3,6 +3,7 @@
 namespace SzentirasHu\Test;
 
 use App;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ChapterRange;
 use SzentirasHu\Service\Reference\ChapterRef;
@@ -11,6 +12,13 @@ use SzentirasHu\Test\Common\TestCase;
 
 class CanonicalReferenceTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+    }
 
     public function testCanonicalBookString()
     {

@@ -2,14 +2,18 @@
 
 namespace SzentirasHu\Test;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use SzentirasHu\Test\Common\TestCase;
 
 class NumberingSchemeEndpointTest extends TestCase
 {
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+        
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
         
         $currentConfig = \Config::get('translations');
         $currentConfig['definitions']['TESTTRANS'] = [

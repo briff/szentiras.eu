@@ -16,8 +16,8 @@ php artisan serve --port 1024 --env=testing
 */
 class SmokeTest extends TestCase
 {
+    use RefreshDatabase;
 
- 
     public function setUp() : void
     {
         parent::setUp();
@@ -28,6 +28,9 @@ class SmokeTest extends TestCase
         Artisan::call('config:clear');
         Artisan::call('view:clear');
         Artisan::call('cache:clear');
+
+        // Seed the database with test data
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
 
         // $textService = Mockery::mock(TextService::class);
         // $this->app->instance(TextService::class, $textService);

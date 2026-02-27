@@ -3,11 +3,13 @@
 namespace SzentirasHu\Test;
 
 use Artisan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Test\Common\TestCase;
 
 class TextServiceTest extends TestCase
 {
+    use RefreshDatabase;
 
     public function setUp(): void
     {
@@ -19,6 +21,8 @@ class TextServiceTest extends TestCase
         Artisan::call('config:clear');
         Artisan::call('view:clear');
         Artisan::call('cache:clear');
+
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
         \Config::set(
             'translations',
             array_merge_recursive(
