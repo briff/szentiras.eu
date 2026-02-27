@@ -90,7 +90,6 @@ class CommentaryEditorController extends Controller
             Artisan::call('szentiras:generate-commentary', [
                 'reference' => $request->input('reference'),
                 'translation' => $request->input('translation'),
-                '--force' => true,
             ]);
 
             return response()->json([
@@ -103,7 +102,6 @@ class CommentaryEditorController extends Controller
         Artisan::call('szentiras:generate-commentary', [
             'reference' => $request->input('reference'),
             'translation' => $request->input('translation'),
-            '--force' => true,
         ]);
 
         return redirect()->back()->with('success', 'Kommentár generálva.');

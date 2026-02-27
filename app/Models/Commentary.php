@@ -29,6 +29,20 @@ use SzentirasHu\Data\Entity\Translation;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereTranslationId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereUsxCode($value)
+ * @property string $status
+ * @property string|null $job_id
+ * @property string|null $error_message
+ * @property \Illuminate\Support\Carbon|null $started_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property string|null $source_text
+ * @property int|null $token_usage
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereErrorMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereJobId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereSourceText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereStartedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Commentary whereTokenUsage($value)
  * @mixin \Eloquent
  */
 class Commentary extends Model
@@ -50,12 +64,15 @@ class Commentary extends Model
         'error_message',
         'started_at',
         'completed_at',
+        'source_text',
+        'token_usage',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'token_usage' => 'integer',
     ];
 
     public function translation(): BelongsTo

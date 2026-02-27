@@ -59,9 +59,6 @@ class RufAdComposer
                 return [];
             }
         });
-        if (config('app.debug')) {
-            \Log::debug('RUFAdComposer: Cache used: ' . (Cache::has('ruf_rss_feed') ? 'yes' : 'no'));
-        }
         $view->with('rufFeedItems', $rufFeedItems);
     }
 

@@ -111,6 +111,16 @@
                             <small>{{ commentary.commentary_text|length }} karakter</small>
                         </dd>
 
+                        <dt class="col-sm-6">Forrásszöveg:</dt>
+                        <dd class="col-sm-6">
+                            <small>{{ commentary.source_text|default('N/A')|slice(0, 100) }}{% if commentary.source_text and commentary.source_text|length > 100 %}...{% endif %}</small>
+                        </dd>
+
+                        <dt class="col-sm-6">Token felhasználás:</dt>
+                        <dd class="col-sm-6">
+                            <small>{{ commentary.token_usage|default('N/A') }}</small>
+                        </dd>
+
                         <dt class="col-sm-6">Létrehozva:</dt>
                         <dd class="col-sm-6">
                             <small>{{ commentary.created_at.format('Y-m-d H:i:s') }}</small>

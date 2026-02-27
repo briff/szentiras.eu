@@ -172,7 +172,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-  queue_worker:
+  horizon:
     image: szeu-app-dev
     volumes:
       - .:/var/www/html
@@ -186,7 +186,8 @@ services:
         condition: service_healthy
     networks:
       - szeu-network
-    command: php artisan queue:work --sleep=3 --timeout=120 --tries=3
+    command: php artisan horizon
+    restart: unless-stopped
     # Hunspell is inside the container for now, this is preparation for the future
   # hunspell:
   #   image: szeu-hunspell

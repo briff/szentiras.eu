@@ -77,9 +77,15 @@ class GenerateCommentaryJobTest extends TestCase
                 Mockery::type(CanonicalReference::class),
                 $this->translation,
                 $mockAiPromptService,
-                []
+                [],
+                Mockery::any(), // maxLength
+                Mockery::any()  // force
             )
-            ->andReturn('Generated commentary text');
+            ->andReturn([
+                'text' => 'Generated commentary text',
+                'source_text' => 'Source verse text',
+                'token_usage' => 42,
+            ]);
 
         // Swap the service instance in the container
         $this->app->instance(CommentaryService::class, $mockCommentaryService);
@@ -98,6 +104,8 @@ class GenerateCommentaryJobTest extends TestCase
         $this->assertEquals('completed', $commentary->status);
         $this->assertNotNull($commentary->commentary_text);
         $this->assertEquals('Generated commentary text', $commentary->commentary_text);
+        $this->assertEquals('Source verse text', $commentary->source_text);
+        $this->assertEquals(42, $commentary->token_usage);
         $this->assertNotNull($commentary->started_at);
         $this->assertNotNull($commentary->completed_at);
     }

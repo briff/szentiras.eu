@@ -3,6 +3,7 @@
 namespace SzentirasHu\Service\Ai;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Support\Facades\Log;
 use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory as OpenAIFactory;
 use InvalidArgumentException;
@@ -47,7 +48,7 @@ class AiPromptService
         $merged['endpoint'] ??= null;
         $merged['model'] ??= null;
         $merged['prompt'] ??= '';
-        $merged['temperature'] ??= 0.7;
+        // temperature only exists for gpt-5.2, so for that we set a default of 0.7, but for older models it will be ignored
         $merged['max_output_tokens'] ??= 2048;
         $merged['timeout'] ??= 30;
         $merged['reasoning_effort'] ??= 'none';
@@ -79,6 +80,41 @@ class AiPromptService
         }
 
         return $prompt;
+    }
+
+    /**
+     * Load and prepare system and user prompts from configuration.
+     *
+     * @param array<string, mixed> $config Configuration array
+     * @param array<string, string> $placeholders Placeholder replacements
+     * @return array{system: string, user: string} Prepared prompts
+     */
+    public function preparePrompts(array $config, array $placeholders): array
+    {
+        // Load system prompt (optional)
+        $systemPrompt = '';
+        if (isset($config['system_prompt'])) {
+            $systemPrompt = $this->loadPromptFromFile($config['system_prompt']);
+        }
+
+        // Load user prompt (required)
+        $userPrompt = $config['user_prompt'] ?? $config['prompt'] ?? '';
+        if (empty($userPrompt)) {
+            throw new InvalidArgumentException('Configuration must contain either "user_prompt" or "prompt"');
+        }
+
+        $userPrompt = $this->loadPromptFromFile($userPrompt);
+
+        // Replace placeholders in user prompt
+        foreach ($placeholders as $key => $value) {
+            $placeholder = '{' . $key . '}';
+            $userPrompt = str_replace($placeholder, $value, $userPrompt);
+        }
+
+        return [
+            'system' => $systemPrompt,
+            'user' => $userPrompt,
+        ];
     }
 
     /**
@@ -161,14 +197,14 @@ class AiPromptService
      * @param string|null $userMessage Optional user message to append to the prompt.
      * @return mixed Raw API response.
      */
-    public function generate(string $configurationName, array $placeholders = [], ?string $userMessage = null): mixed
+    public function generate(string $configurationName, array $placeholders = []): mixed
     {
         $config = $this->resolveConfiguration($configurationName);
-        $prompt = $this->replacePlaceholders($config, $placeholders);
-
-        if ($userMessage !== null) {
-            $prompt .= "\n\n" . $userMessage;
-        }
+        
+        // Prepare system and user prompts
+        $prompts = $this->preparePrompts($config, $placeholders);
+        $systemPrompt = $prompts['system'];
+        $userPrompt = $prompts['user'];
 
         $client = $this->client($config['provider'], [
             'api_key' => $config['api_key'],
@@ -176,14 +212,21 @@ class AiPromptService
             'timeout' => $config['timeout'],
         ]);
 
+        // Prepare input for OpenAI API
+        $input = $this->prepareInput($systemPrompt, $userPrompt);
+
         $params = [
             'model' => $config['model'],
-            'input' => $prompt,
-            'temperature' => (float) $config['temperature'],
+            'input' => $input,
             'max_output_tokens' => (int) $config['max_output_tokens'],
-            'store' => true,
+            'store' => false,
             'parallel_tool_calls' => false,
         ];
+
+        // Only include temperature for OpenAI gpt-5.2 models
+        if ($config['provider'] === 'openai' && str_starts_with($config['model'] ?? '', 'gpt-5.2')) {
+            $params['temperature'] = (float) $config['temperature'];
+        }
 
         // Configure reasoning if effort is not 'none'
         if ($config['reasoning_effort'] !== 'none') {
@@ -208,9 +251,44 @@ class AiPromptService
 
         $params['text'] = $textParams;
 
+        Log::debug("Generating AI response with configuration '{$configurationName}'", [
+            'provider' => $config['provider'],
+            'model' => $config['model'],
+            'reasoning_effort' => $config['reasoning_effort'],
+            'verbosity' => $config['verbosity'],
+            'response_format' => $config['response_format'] ?? 'default',
+            'has_system_prompt' => !empty($systemPrompt),
+        ]);
         return match ($config['provider']) {
             'openai' => $client->responses()->create($params),
             default => throw new RuntimeException("Provider '{$config['provider']}' not supported for generation."),
         };
+    }
+
+    /**
+     * Prepare input for OpenAI API based on system and user prompts.
+     *
+     * @param string $systemPrompt
+     * @param string $userPrompt
+     * @return string|array Input for OpenAI API
+     */
+    protected function prepareInput(string $systemPrompt, string $userPrompt): string|array
+    {
+        // If there's no system prompt, return user prompt as string (backward compatibility)
+        if (empty($systemPrompt)) {
+            return $userPrompt;
+        }
+
+        // Otherwise, return array of messages
+        return [
+            [
+                'role' => 'system',
+                'content' => $systemPrompt,
+            ],
+            [
+                'role' => 'user',
+                'content' => $userPrompt,
+            ],
+        ];
     }
 }

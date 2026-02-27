@@ -88,13 +88,21 @@ class GenerateAiCommentary extends Command
                 : $referenceString;
             $canonicalRef = CanonicalReference::fromString($canonicalRefString);
 
+            $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
+
             // Generate commentary text
-            $commentaryText = $this->commentaryService->generateCommentaryText(
+            $result = $this->commentaryService->generateCommentaryText(
                 $canonicalRef,
                 $translation,
                 $this->aiPromptService,
-                $this->getAdditionalPlaceholders()
+                $this->getAdditionalPlaceholders(),
+                $maxLength,
+                $force
             );
+
+            $commentaryText = $result['text'];
+            $sourceText = $result['source_text'];
+            $tokenUsage = $result['token_usage'];
 
             if (empty($commentaryText)) {
                 $this->error('Failed to generate commentary text.');
@@ -115,6 +123,7 @@ class GenerateAiCommentary extends Command
 
             // Prepare metadata
             $metadata = $this->getMetadata();
+            $metadata['max_length'] = $maxLength;
 
             // Store commentary
             $commentary = $this->commentaryService->store(
@@ -122,10 +131,13 @@ class GenerateAiCommentary extends Command
                 $usxCode,
                 $commentaryText,
                 $ranges,
-                $metadata
+                $metadata,
+                $sourceText,
+                $tokenUsage
             );
 
             $this->info("Commentary saved with ID {$commentary->id}.");
+            $this->info("Token usage: {$tokenUsage}");
             $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
 
             return self::SUCCESS;
@@ -154,7 +166,6 @@ class GenerateAiCommentary extends Command
             return self::SUCCESS;
         }
 
-        return self::SUCCESS;
     }
 
     /**
@@ -259,6 +270,8 @@ class GenerateAiCommentary extends Command
             'command' => $this->getName(),
             'reference' => $this->argument('reference'),
             'translation' => $this->argument('translation'),
+            'force' => (bool) $this->option('force'),
+            'max_length' => config('ai.configurations.commentary.max_input_length', 8000),
         ];
 
         return array_merge($defaults, $metadata);

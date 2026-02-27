@@ -328,6 +328,8 @@ class CommentaryService
      * @param string $commentaryText
      * @param array $ranges Array of arrays with keys: start_chapter, start_verse, end_chapter, end_verse
      * @param array $metadata Optional metadata (AI model, prompt version, etc.)
+     * @param string|null $sourceText The source text (verse) that the commentary was generated for
+     * @param int|null $tokenUsage Token usage count from AI generation
      * @return Commentary
      */
     public function store(
@@ -335,7 +337,9 @@ class CommentaryService
         string $usxCode,
         string $commentaryText,
         array $ranges,
-        array $metadata = []
+        array $metadata = [],
+        ?string $sourceText = null,
+        ?int $tokenUsage = null
     ): Commentary {
         $commentary = Commentary::create([
             'translation_id' => $translation->id,
@@ -345,6 +349,8 @@ class CommentaryService
             'status' => Commentary::STATUS_COMPLETED,
             'started_at' => now(),
             'completed_at' => now(),
+            'source_text' => $sourceText,
+            'token_usage' => $tokenUsage,
         ]);
 
         foreach ($ranges as $range) {
@@ -402,33 +408,59 @@ class CommentaryService
      * @param Translation $translation
      * @param AiPromptService $aiPromptService
      * @param array $additionalPlaceholders
-     * @return string
+     * @param int $maxLength Maximum allowed commentary text length (characters)
+     * @param bool $force If true, bypass length validation
+     * @return array{text: string, source_text: string, token_usage: int}
+     * @throws \RuntimeException If commentary text exceeds maxLength and force is false
      */
     public function generateCommentaryText(
         CanonicalReference $reference,
         Translation $translation,
         AiPromptService $aiPromptService,
-        array $additionalPlaceholders = []
-    ): string {
+        array $additionalPlaceholders = [],
+        int $maxLength,
+        bool $force = false
+    ): array {
         $verseText = $this->textService->getPureText($reference, $translation);
+
+                // Length validation
+        if (!$force && strlen($verseText) > $maxLength) {
+            throw new \RuntimeException(sprintf(
+                'Verse text length (%d characters) exceeds maximum allowed length (%d characters). Use --force to bypass.',
+                strlen($verseText),
+                $maxLength
+            ));
+        }
 
         $placeholders = array_merge([
             'verse_text' => $verseText,
             'reference' => $reference->toString(),
             'translation' => $translation->abbrev,
+            // we estimate the token count by assuming 2.5 characters per token.
+            'max_tokens' => (int) ceil(strlen($verseText) / 2.5),
         ], $additionalPlaceholders);
 
         $config = $aiPromptService->resolveConfiguration('commentary');
-        $prompt = $aiPromptService->replacePlaceholders($config, $placeholders);
 
         $response = $aiPromptService->generate('commentary', $placeholders);
 
         // Extract content from OpenAI Responses API structure
+        $text = '';
+        $tokenUsage = 0;
         if (is_object($response) && property_exists($response, 'output')) {
-            return $response->output[0]->content[0]->text ?? '';
+            $text = $response->output[0]->content[0]->text ?? '';
+            if (property_exists($response, 'usage') && is_object($response->usage) && property_exists($response->usage, 'totalTokens')) {
+                $tokenUsage = $response->usage->totalTokens;
+            }
+        } else {
+            $text = (string) $response;
         }
 
-        return (string) $response;
+        return [
+            'text' => $text,
+            'source_text' => $verseText,
+            'token_usage' => $tokenUsage,
+        ];
     }
 
     /**

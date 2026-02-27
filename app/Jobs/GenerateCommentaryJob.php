@@ -89,20 +89,30 @@ class GenerateCommentaryJob extends Job implements ShouldQueue
             $canonicalRef = CanonicalReference::fromString($referenceString);
 
             // Generate commentary text using the service.
-            $commentaryText = $commentaryService->generateCommentaryText(
+            $force = $metadata['force'] ?? false;
+            $maxLength = $metadata['max_length'];
+            $result = $commentaryService->generateCommentaryText(
                 $canonicalRef,
                 $translation,
                 $aiPromptService,
-                $this->getAdditionalPlaceholders()
+                $this->getAdditionalPlaceholders(),
+                $maxLength,
+                $force
             );
 
-            // Update commentary with generated text
+            $commentaryText = $result['text'];
+            $sourceText = $result['source_text'];
+            $tokenUsage = $result['token_usage'];
+
+            // Update commentary with generated text and metadata
             $this->commentary->commentary_text = $commentaryText;
+            $this->commentary->source_text = $sourceText;
+            $this->commentary->token_usage = $tokenUsage;
             $this->commentary->status = Commentary::STATUS_COMPLETED;
             $this->commentary->completed_at = now();
             $this->commentary->save();
 
-            Log::info("Commentary {$this->commentary->id} generated successfully.");
+            Log::info("Commentary {$this->commentary->id} generated successfully. Token usage: {$tokenUsage}");
         } catch (\Throwable $e) {
             Log::error("Failed to generate commentary {$this->commentary->id}: {$e->getMessage()}", [
                 'exception' => $e,

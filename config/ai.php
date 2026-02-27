@@ -18,16 +18,18 @@ return [
     // Named configurations for specific use cases
     'configurations' => [
         'commentary' => [
+            'max_input_length' => env('AI_COMMENTARY_MAX_INPUT_LENGTH', 8000),
             'provider'         => env('AI_COMMENTARY_PROVIDER', 'openai'),
             'api_key'          => env('AI_COMMENTARY_API_KEY'),
             'endpoint'         => env('AI_COMMENTARY_ENDPOINT'),
             'model'            => env('AI_COMMENTARY_MODEL', 'gpt-4.1'),
-            'prompt'           => env('AI_COMMENTARY_PROMPT', resource_path('prompts/hungarian_biblical_commentary.md')),
             'temperature'      => env('AI_COMMENTARY_TEMPERATURE', 0.7),
             'max_output_tokens' => env('AI_COMMENTARY_MAX_OUTPUT_TOKENS', 4096),
             'timeout'          => env('AI_COMMENTARY_TIMEOUT', 60),
             'verbosity'        => env('AI_COMMENTARY_VERBOSITY', 'low'),
             'reasoning_effort' => env('AI_COMMENTARY_REASONING_EFFORT', 'none'),
+            'system_prompt'    => resource_path('prompts/hungarian_biblical_commentary_system.md'),
+            'user_prompt'      => resource_path('prompts/hungarian_biblical_commentary_user.md'),
             'response_format' => [
                 'type' => 'json_schema',
                 'name' => 'commentary',
