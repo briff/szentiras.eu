@@ -5,6 +5,7 @@ namespace SzentirasHu\Http\Controllers\Display;
 use Cache;
 use Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Redirect;
 use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Service\Reference\CanonicalReference;
@@ -78,6 +79,28 @@ class TextDisplayController extends Controller
         $this->textService = $textService;
         $this->numberingSchemeService = $numberingSchemeService;
         $this->commentaryService = $commentaryService;
+    }
+
+    /**
+     * Check if commentary generation is allowed for the current user.
+     * Replicates the logic from CheckCommentaryGeneration middleware.
+     */
+    private function canGenerateCommentary(): bool
+    {
+        // Allow editors unconditionally
+        if ($this->editorService->currentIsEditor()) {
+            return true;
+        }
+
+        // Check if commentary generation is allowed for all logged-in users
+        $allUsersAllowed = config('ai.configurations.commentary.all_users_allowed', false);
+        if (!$allUsersAllowed) {
+            return false;
+        }
+
+        // Check if user is logged in (has anonymous token)
+        $token = Session::get('anonymous_token');
+        return (bool) $token;
     }
 
     public function showTranslationList()
@@ -324,6 +347,7 @@ class TextDisplayController extends Controller
                 'media' => $mediaVerses ?? [],
                 'otherMedia' => $otherMedia ?? [],
                 'isEditor' => $this->editorService->currentIsEditor(),
+                'canGenerateCommentary' => $this->canGenerateCommentary(),
                 'translationLinks' => $translations->map(
                     function ($otherTranslation) use ($canonicalRef, $translation) {
                         $allBooksExistInTranslation = true;

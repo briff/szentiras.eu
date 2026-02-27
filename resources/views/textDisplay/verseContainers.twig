@@ -48,10 +48,10 @@
                                 <div class="p-2">
                                     <p class="font-semibold text-gray-800 mb-2">A pontos szentírási helyhez még nincs kommentár</p>
                                 </div>
-                                {% if pendingCommentaries is empty %}
+                                {% if pendingCommentaries is empty and canGenerateCommentary %}
                                 <div class="commentary-status-container" id="status-0">
                                     {# Status will be loaded via AJAX #}
-                                </div>                                    
+                                </div>
                                 <div class="commentary-generator">
                                     <form method="POST" action="{{ route('editor.commentaries.generate') }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
@@ -106,10 +106,10 @@
                         </details>
                     </div>
                 {% else %}
-                    {% if isEditor %}
+                    {% if canGenerateCommentary %}
                         <div class="commentary-status-container" id="status-0">
                                 {# Status will be loaded via AJAX #}
-                        </div>                                    
+                        </div>
                         <div class="commentary-generator">
                             <form method="POST" action="{{ route('editor.commentaries.generate') }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
