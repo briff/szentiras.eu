@@ -96,6 +96,7 @@ Route::middleware('editor')->group(function () {
         Route::get('/', [CommentaryEditorController::class, 'index'])->name('index');
         Route::get('/{commentary}', [CommentaryEditorController::class, 'show'])->name('show');
         Route::get('/{commentary}/status', [CommentaryEditorController::class, 'status'])->name('status');
+        Route::put('/{commentary}', [CommentaryEditorController::class, 'update'])->name('update');
         Route::delete('/{commentary}', [CommentaryEditorController::class, 'destroy'])->name('destroy');
     });
 });

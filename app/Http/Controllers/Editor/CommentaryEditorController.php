@@ -172,6 +172,23 @@ class CommentaryEditorController extends Controller
     }
 
     /**
+     * Update a commentary's verification level.
+     */
+    public function update(Request $request, Commentary $commentary)
+    {
+        $request->validate([
+            'verification_level' => 'required|string|in:none,sanity,theology',
+        ]);
+
+        $commentary->update([
+            'verification_level' => $request->input('verification_level'),
+        ]);
+
+        return redirect()->route('editor.commentaries.show', $commentary)
+            ->with('success', 'Ellenőrzési szint frissítve.');
+    }
+
+    /**
      * Delete a commentary.
      */
     public function destroy(Commentary $commentary)

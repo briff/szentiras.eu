@@ -17,6 +17,7 @@
                         <th>Fordítás</th>
                         <th>Könyv</th>
                         <th>Státusz</th>
+                        <th>Ellenőrzés</th>
                         <th>Versek</th>
                         <th>Létrehozva</th>
                         <th>Műveletek</th>
@@ -43,6 +44,17 @@
                                 {% set statusBadgeClass = 'bg-danger' %}
                             {% endif %}
                             <span class="badge {{ statusBadgeClass }}">{{ commentary.status }}</span>
+                        </td>
+                        <td>
+                            {% set verificationBadgeClass = 'bg-secondary' %}
+                            {% if commentary.verification_level == 'none' %}
+                                {% set verificationBadgeClass = 'bg-light text-dark' %}
+                            {% elseif commentary.verification_level == 'sanity' %}
+                                {% set verificationBadgeClass = 'bg-info' %}
+                            {% elseif commentary.verification_level == 'theology' %}
+                                {% set verificationBadgeClass = 'bg-success' %}
+                            {% endif %}
+                            <span class="badge {{ verificationBadgeClass }}">{{ commentary.verification_level }}</span>
                         </td>
                         <td>
                             <small class="text-muted">
