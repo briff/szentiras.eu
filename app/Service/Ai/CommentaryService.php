@@ -411,6 +411,7 @@ class CommentaryService
      * @param bool $force If true, bypass length validation
      * @return array{text: string, source_text: string, token_usage: int}
      * @throws \RuntimeException If commentary text exceeds maxLength and force is false
+     * @throws \RuntimeException If daily token usage limit is exceeded and force is false
      */
     public function generateCommentaryText(
         CanonicalReference $reference,
@@ -428,6 +429,19 @@ class CommentaryService
                 strlen($verseText),
                 $maxLength
             ));
+        }
+
+        // Daily token usage validation
+        if (!$force) {
+            $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 150000);
+            $usedTokens = $this->sumTokenUsageForDay();
+            if ($usedTokens >= $maxTokenPerDay) {
+                throw new \RuntimeException(sprintf(
+                    'Daily token usage limit (%d tokens) already exceeded (%d tokens used). Use --force to bypass.',
+                    $maxTokenPerDay,
+                    $usedTokens
+                ));
+            }
         }
 
         $placeholders = ['verse_text' => $verseText,
@@ -516,5 +530,29 @@ class CommentaryService
         }
 
         return $ranges;
+    }
+
+    /**
+     * Sum the token_usage of Commentaries created on the given day.
+     *
+     * @param \Carbon\Carbon|\DateTime|string $date Date to filter by (defaults to today)
+     * @return int Total token usage for the day
+     */
+    public function sumTokenUsageForDay($date = null): int
+    {
+        if ($date === null) {
+            $date = now();
+        } elseif (is_string($date)) {
+            $date = \Carbon\Carbon::parse($date);
+        } elseif (!$date instanceof \Carbon\Carbon) {
+            $date = \Carbon\Carbon::instance($date);
+        }
+
+        $startOfDay = $date->copy()->startOfDay();
+        $endOfDay = $date->copy()->endOfDay();
+
+        return (int) Commentary::query()
+            ->whereBetween('created_at', [$startOfDay, $endOfDay])
+            ->sum('token_usage');
     }
 }

@@ -17,20 +17,6 @@ class GenerateCommentaryJob extends Job implements ShouldQueue
     use Dispatchable, InteractsWithQueue, SerializesModels, GeneratesCommentary;
 
     /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 3;
-
-    /**
-     * The backoff strategy for retries (seconds).
-     *
-     * @var array
-     */
-    public $backoff = [60, 120];
-
-    /**
      * The commentary instance.
      *
      * @var Commentary

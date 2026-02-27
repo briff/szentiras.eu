@@ -206,9 +206,11 @@ return [
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 128,
-            'tries' => 1,
-            'timeout' => 60,
+            'tries' => 2,
+            'timeout' => 120,
             'nice' => 0,
+            'backoff' => [60, 120],
+
         ],
     ],
 

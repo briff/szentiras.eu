@@ -356,4 +356,74 @@ class AiCommentaryServiceTest extends TestCase
         $this->assertContains(Commentary::STATUS_COMPLETED, $statuses);
         $this->assertContains(Commentary::STATUS_PENDING, $statuses);
     }
+
+    public function test_sum_token_usage_for_day(): void
+    {
+        // Create commentaries with token_usage on different days
+        $today = now();
+        $yesterday = now()->subDay();
+
+        // Create 2 commentaries today with token usage
+        Commentary::withoutTimestamps(function () use ($today) {
+            Commentary::forceCreate([
+                'translation_id' => $this->translation->id,
+                'usx_code' => 'MAT',
+                'commentary_text' => 'Test 1',
+                'token_usage' => 100,
+                'created_at' => $today,
+                'updated_at' => $today,
+            ]);
+
+            Commentary::forceCreate([
+                'translation_id' => $this->translation->id,
+                'usx_code' => 'MAT',
+                'commentary_text' => 'Test 2',
+                'token_usage' => 200,
+                'created_at' => $today,
+                'updated_at' => $today,
+            ]);
+
+            // Create commentary with null token_usage (should be ignored in sum)
+            Commentary::forceCreate([
+                'translation_id' => $this->translation->id,
+                'usx_code' => 'MAT',
+                'commentary_text' => 'Test 4',
+                'token_usage' => null,
+                'created_at' => $today,
+                'updated_at' => $today,
+            ]);
+        });
+
+        // Create commentary yesterday with token usage
+        Commentary::withoutTimestamps(function () use ($yesterday) {
+            Commentary::forceCreate([
+                'translation_id' => $this->translation->id,
+                'usx_code' => 'MAT',
+                'commentary_text' => 'Test 3',
+                'token_usage' => 150,
+                'created_at' => $yesterday,
+                'updated_at' => $yesterday,
+            ]);
+        });
+
+        $sumToday = $this->service->sumTokenUsageForDay($today);
+        $this->assertEquals(300, $sumToday); // 100 + 200
+
+        $sumYesterday = $this->service->sumTokenUsageForDay($yesterday);
+        $this->assertEquals(150, $sumYesterday);
+
+        // Test with string date
+        $sumTodayString = $this->service->sumTokenUsageForDay($today->toDateString());
+        $this->assertEquals(300, $sumTodayString);
+
+        // Test default (today)
+        $sumDefault = $this->service->sumTokenUsageForDay();
+        $this->assertEquals(300, $sumDefault);
+    }
+
+    public function test_sum_token_usage_for_day_with_no_commentaries(): void
+    {
+        $sum = $this->service->sumTokenUsageForDay(now());
+        $this->assertEquals(0, $sum);
+    }
 }

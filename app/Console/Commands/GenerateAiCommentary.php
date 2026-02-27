@@ -90,7 +90,6 @@ class GenerateAiCommentary extends Command
                 ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
                 : $referenceString;
 
-            $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
 
             $result = $this->generateCommentaryForReference(
                 $canonicalRefString,
@@ -123,7 +122,6 @@ class GenerateAiCommentary extends Command
 
             // Prepare metadata
             $metadata = $this->getMetadata();
-            $metadata['max_length'] = $maxLength;
 
             // Store commentary
             $commentary = $this->commentaryService->store(
@@ -264,7 +262,7 @@ class GenerateAiCommentary extends Command
             'reference' => $this->argument('reference'),
             'translation' => $this->argument('translation'),
             'force' => (bool) $this->option('force'),
-            'max_length' => config('ai.configurations.commentary.max_input_length', 8000),
+            'max_length' => config('ai.configurations.commentary.max_input_length'),
         ];
 
         return array_merge($defaults, $metadata);
