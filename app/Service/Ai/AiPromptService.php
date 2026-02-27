@@ -194,13 +194,14 @@ class AiPromptService
      *
      * @param string $configurationName
      * @param array<string, string|int> $placeholders
-     * @param string|null $userMessage Optional user message to append to the prompt.
-     * @return mixed Raw API response.
+     * @param bool $isBatch Whether to submit as a batch job
+     * @param int|null $sourceId Optional source ID (e.g., commentary ID) to associate with batch item
+     * @return mixed Raw API response, or null if batch job was submitted
      */
-    public function generate(string $configurationName, array $placeholders = []): mixed
+    public function generate(string $configurationName, bool $isBatch = false, array $placeholders = [], ?int $sourceId = null): mixed
     {
         $config = $this->resolveConfiguration($configurationName);
-        
+
         // Prepare system and user prompts
         $prompts = $this->preparePrompts($config, $placeholders);
         $systemPrompt = $prompts['system'];
@@ -259,10 +260,29 @@ class AiPromptService
             'response_format' => $config['response_format'] ?? 'default',
             'has_system_prompt' => !empty($systemPrompt),
         ]);
-        return match ($config['provider']) {
-            'openai' => $client->responses()->create($params),
-            default => throw new RuntimeException("Provider '{$config['provider']}' not supported for generation."),
-        };
+
+        if ($isBatch) {
+            $batch = \SzentirasHu\Models\OpenAIBatch::create([
+                'endpoint' => '/v1/responses',
+                'status' => 'queued',
+            ]);
+
+            $batch->items()->create([
+                'custom_id' => "gen_{$batch->id}_1",
+                'source_id' => $sourceId, // Use the provided source ID (e.g., commentary ID)
+                'payload' => $params,
+                'status' => 'queued',
+            ]);
+
+            SubmitOpenAIBatch::dispatch($batch->id)->onQueue('openai-batch');
+            return null;
+        }
+        else {
+            return match ($config['provider']) {
+                'openai' => $client->responses()->create($params),
+                default => throw new RuntimeException("Provider '{$config['provider']}' not supported for generation."),
+            };
+            }
     }
 
     /**

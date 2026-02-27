@@ -69,7 +69,7 @@ return [
 
     'prefix' => env(
         'HORIZON_PREFIX',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_horizon:'
+        Str::slug(env('APP_NAME', 'laravel'), '_') . '_horizon:'
     ),
 
     /*
@@ -210,8 +210,17 @@ return [
             'timeout' => 120,
             'nice' => 0,
             'backoff' => [60, 120],
-
         ],
+        'supervisor-openai-batch' => [
+            'connection' => 'redis',
+            'queue' => ['openai-batch'],
+            'balance' => 'auto',
+            'minProcesses' => 1,
+            'maxProcesses' => 5,
+            'tries' => 1,
+            'timeout' => 120,
+        ],
+
     ],
 
     'environments' => [

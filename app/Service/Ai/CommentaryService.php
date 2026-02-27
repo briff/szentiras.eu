@@ -409,6 +409,8 @@ class CommentaryService
      * @param AiPromptService $aiPromptService
      * @param int $maxLength Maximum allowed commentary text length (characters)
      * @param bool $force If true, bypass length validation
+     * @param bool $useBatch Whether to use OpenAI batch API
+     * @param int|null $commentaryId Optional commentary ID to associate with batch item
      * @return array{text: string, source_text: string, token_usage: int}
      * @throws \RuntimeException If commentary text exceeds maxLength and force is false
      * @throws \RuntimeException If daily token usage limit is exceeded and force is false
@@ -418,7 +420,9 @@ class CommentaryService
         Translation $translation,
         AiPromptService $aiPromptService,
         int $maxLength,
-        bool $force = false
+        bool $force = false,
+        bool $useBatch = false,
+        ?int $commentaryId = null
     ): array {
         $verseText = $this->textService->getPureText($reference, $translation);
 
@@ -451,7 +455,17 @@ class CommentaryService
             'max_tokens' => (int) ceil(strlen($verseText) / 2.5),
         ];
 
-        $response = $aiPromptService->generate('commentary', $placeholders);
+        $response = $aiPromptService->generate('commentary', $useBatch, $placeholders, $commentaryId);
+
+        // If using batch mode, response will be null
+        if ($useBatch) {
+            // Batch job submitted, return empty result
+            return [
+                'text' => '',
+                'source_text' => $verseText,
+                'token_usage' => 0,
+            ];
+        }
 
         // Extract content from OpenAI Responses API structure
         $text = '';

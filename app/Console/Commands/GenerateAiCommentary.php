@@ -19,11 +19,12 @@ class GenerateAiCommentary extends Command
     use GeneratesCommentary;
 
     protected $signature = 'szentiras:generate-commentary
-                            {reference : Bible reference (e.g., "MAT_1_2-MAT_1_6,MAT_1_12,MAT_1_23-MAT_2_5")}
+                            {reference : Bible reference (e.g., "Mt1,2-3.4-6")}
                             {translation : Translation abbreviation (e.g., "KNB")}
                             {--dry-run : Generate commentary but do not save to database}
                             {--force : Overwrite existing commentary for the same reference}
                             {--sync : Generate commentary synchronously (skip queue)}
+                            {--batch : Use OpenAI batch API for asynchronous processing}
                             {--metadata= : JSON metadata to attach (e.g., \'{"model":"gpt-4","temperature":0.7}\')}';
 
     protected $description = 'Generate AI commentary for a Bible reference and store it.';
@@ -45,6 +46,7 @@ class GenerateAiCommentary extends Command
         $dryRun = $this->option('dry-run');
         $force = $this->option('force');
         $sync = $this->option('sync');
+        $batch = $this->option('batch');
 
         // Parse translation
         $translation = Translation::where('abbrev', $translationAbbrev)->first();
@@ -141,26 +143,67 @@ class GenerateAiCommentary extends Command
 
             return self::SUCCESS;
         } else {
-            // Asynchronous generation: create pending commentary and dispatch job
-            $this->info("Creating pending commentary and dispatching job...");
+            // Asynchronous generation
+            if ($batch) {
+                // Batch mode: create pending commentary and submit to OpenAI batch API
+                $this->info("Creating pending commentary and submitting to OpenAI batch API...");
 
-            // Prepare metadata (includes reference)
-            $metadata = $this->getMetadata();
+                // Prepare metadata (includes reference)
+                $metadata = $this->getMetadata();
 
-            // Create pending commentary
-            $commentary = $this->commentaryService->createPendingCommentary(
-                $translation,
-                $usxCode,
-                $ranges,
-                $metadata
-            );
+                // Create pending commentary
+                $commentary = $this->commentaryService->createPendingCommentary(
+                    $translation,
+                    $usxCode,
+                    $ranges,
+                    $metadata
+                );
 
-            // Dispatch job
-            GenerateCommentaryJob::dispatch($commentary);
+                // Create canonical reference for AI prompt
+                // If input is already canonical, use it directly; otherwise convert from USX
+                $canonicalRefString = str_contains($referenceString, '_')
+                    ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
+                    : $referenceString;
+                
+                $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($canonicalRefString);
 
-            $this->info("Pending commentary created with ID {$commentary->id}. Job dispatched.");
-            $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
-            $this->info("The commentary will be generated in the background. Use the queue worker to process jobs.");
+                // Generate commentary text using batch mode
+                $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
+                $result = $this->commentaryService->generateCommentaryText(
+                    $canonicalRef,
+                    $translation,
+                    $this->aiPromptService,
+                    $maxLength,
+                    $force,
+                    true, // useBatch
+                    $commentary->id // commentaryId
+                );
+
+                $this->info("Pending commentary created with ID {$commentary->id}. Batch job submitted.");
+                $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
+                $this->info("The commentary will be generated via OpenAI batch API. Results will be processed when available.");
+            } else {
+                // Regular async mode: create pending commentary and dispatch job
+                $this->info("Creating pending commentary and dispatching job...");
+
+                // Prepare metadata (includes reference)
+                $metadata = $this->getMetadata();
+
+                // Create pending commentary
+                $commentary = $this->commentaryService->createPendingCommentary(
+                    $translation,
+                    $usxCode,
+                    $ranges,
+                    $metadata
+                );
+
+                // Dispatch job
+                GenerateCommentaryJob::dispatch($commentary);
+
+                $this->info("Pending commentary created with ID {$commentary->id}. Job dispatched.");
+                $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
+                $this->info("The commentary will be generated in the background. Use the queue worker to process jobs.");
+            }
 
             return self::SUCCESS;
         }
@@ -320,13 +363,6 @@ class GenerateAiCommentary extends Command
      */
     private function extractUsxCodeFromReference(string $referenceString, string $translationAbbrev): string
     {
-        // Check if input is USX format (contains underscores)
-        if (str_contains($referenceString, '_')) {
-            // USX format: MAT_5_20-MAT_5_26 or MAT_5_20,MAT_5_21
-            $firstPart = explode(',', $referenceString)[0];
-            $firstVerse = str_contains($firstPart, '-') ? explode('-', $firstPart)[0] : $firstPart;
-            return explode('_', $firstVerse)[0];
-        }
         
         // Canonical format: parse with CanonicalReference
         try {
@@ -359,10 +395,6 @@ class GenerateAiCommentary extends Command
      */
     private function convertToUsxFormatIfNeeded(string $referenceString, string $translationAbbrev): string
     {
-        // If already USX format, return as-is
-        if (str_contains($referenceString, '_')) {
-            return $referenceString;
-        }
         
         // Parse canonical reference
         $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($referenceString);
