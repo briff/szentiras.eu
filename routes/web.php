@@ -91,14 +91,18 @@ Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show'
 
 // Editor routes
 Route::middleware('editor')->group(function () {
-    // Commentary editor
+    // Commentary editor (except generate which has special permissions)
     Route::prefix('editor/commentaries')->name('editor.commentaries.')->group(function () {
         Route::get('/', [CommentaryEditorController::class, 'index'])->name('index');
         Route::get('/{commentary}', [CommentaryEditorController::class, 'show'])->name('show');
         Route::get('/{commentary}/status', [CommentaryEditorController::class, 'status'])->name('status');
-        Route::post('/generate', [CommentaryEditorController::class, 'generate'])->name('generate');
         Route::delete('/{commentary}', [CommentaryEditorController::class, 'destroy'])->name('destroy');
     });
+});
+
+// Commentary generation route - allows editors OR logged-in users when config permits
+Route::middleware('commentaryGeneration')->group(function () {
+    Route::post('/editor/commentaries/generate', [CommentaryEditorController::class, 'generate'])->name('editor.commentaries.generate');
 });
 
 // Public API for commentary status

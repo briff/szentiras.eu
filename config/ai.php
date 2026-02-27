@@ -18,6 +18,7 @@ return [
     // Named configurations for specific use cases
     'configurations' => [
         'commentary' => [
+            'all_users_allowed' => env('AI_COMMENTARY_ALL_USERS_ALLOWED', false),
             'max_token_per_day' => env('AI_COMMENTARY_MAX_TOKENS_PER_DAY', 150000),
             'max_input_length' => env('AI_COMMENTARY_MAX_INPUT_LENGTH', 8000),
             'provider'         => env('AI_COMMENTARY_PROVIDER', 'openai'),
