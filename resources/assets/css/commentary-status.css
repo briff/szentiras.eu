@@ -1,0 +1,18 @@
+/**
+ * Commentary Status Styles
+ * Styles for commentary status display and animations
+ */
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotating-icon {
+    display: inline-block;
+    animation: rotate 2s linear infinite;
+}

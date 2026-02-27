@@ -282,4 +282,78 @@ class AiCommentaryServiceTest extends TestCase
         $this->assertEquals(1, $range->end_chapter);
         $this->assertEquals(1, $range->end_verse);
     }
+
+    public function test_find_for_reference_includes_pending_commentary(): void
+    {
+        $pending = $this->service->createPendingCommentary(
+            $this->translation,
+            'MAT',
+            [
+                ['start_chapter' => 1, 'start_verse' => 1, 'end_chapter' => 1, 'end_verse' => 10],
+            ]
+        );
+
+        $reference = CanonicalReference::fromString('MAT 1,5-8');
+        $results = $this->service->findForReference($reference, $this->translation);
+
+        $this->assertCount(1, $results);
+        $found = $results->first();
+        $this->assertEquals($pending->id, $found->id);
+        $this->assertEquals(Commentary::STATUS_PENDING, $found->status);
+        $this->assertNull($found->commentary_text);
+    }
+
+    public function test_find_for_reference_includes_processing_commentary(): void
+    {
+        $processing = Commentary::create([
+            'translation_id' => $this->translation->id,
+            'usx_code' => 'MAT',
+            'commentary_text' => null,
+            'status' => Commentary::STATUS_PROCESSING,
+            'started_at' => now(),
+        ]);
+        $processing->ranges()->create([
+            'start_chapter' => 1,
+            'start_verse' => 1,
+            'end_chapter' => 1,
+            'end_verse' => 10,
+        ]);
+
+        $reference = CanonicalReference::fromString('MAT 1,5-8');
+        $results = $this->service->findForReference($reference, $this->translation);
+
+        $this->assertCount(1, $results);
+        $found = $results->first();
+        $this->assertEquals($processing->id, $found->id);
+        $this->assertEquals(Commentary::STATUS_PROCESSING, $found->status);
+    }
+
+    public function test_find_for_reference_returns_completed_and_pending_together(): void
+    {
+        $completed = $this->service->store(
+            $this->translation,
+            'MAT',
+            'Completed commentary text',
+            [
+                ['start_chapter' => 1, 'start_verse' => 1, 'end_chapter' => 1, 'end_verse' => 5],
+            ]
+        );
+
+        $pending = $this->service->createPendingCommentary(
+            $this->translation,
+            'MAT',
+            [
+                ['start_chapter' => 1, 'start_verse' => 3, 'end_chapter' => 1, 'end_verse' => 8],
+            ]
+        );
+
+        $reference = CanonicalReference::fromString('MAT 1,4');
+        $results = $this->service->findForReference($reference, $this->translation);
+
+        $this->assertCount(2, $results);
+
+        $statuses = $results->pluck('status')->toArray();
+        $this->assertContains(Commentary::STATUS_COMPLETED, $statuses);
+        $this->assertContains(Commentary::STATUS_PENDING, $statuses);
+    }
 }

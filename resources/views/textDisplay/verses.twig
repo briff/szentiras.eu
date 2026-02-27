@@ -1,5 +1,7 @@
 {% extends 'layout' %}
 
+{% set loadCommentaryPolling = true %}
+
 {% block meta %}
     <link rel="canonical" href="{{ url('/' ~ seoUrl ) }}" />
     {% if seoUrl != canonicalUrl or mediaEnabled or fullContext %}
@@ -138,9 +140,9 @@
 {% endblock %}
 
 {% if isEditor and mediaEnabled %}
-    {% set js=['pages/verses', 'editor-media-move'] %}
+    {% set js=['pages/verses', 'editor-media-move', 'commentary-status-polling'] %}
 {% else %}
-    {% set js=['pages/verses'] %}
+    {% set js=['pages/verses', 'commentary-status-polling'] %}
 {% endif %}
 
 {% block script %}

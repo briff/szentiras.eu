@@ -101,6 +101,9 @@ Route::middleware('editor')->group(function () {
     });
 });
 
+// Public API for commentary status
+Route::get('/api/commentaries/status', [CommentaryEditorController::class, 'statusByReference']);
+
 // Media API endpoints for editors
 Route::prefix('api/media')->middleware('editor')->group(function () {
     Route::get('/{id}', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'show']);

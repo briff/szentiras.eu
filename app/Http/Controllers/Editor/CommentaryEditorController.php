@@ -9,12 +9,16 @@ use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Models\Commentary;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
+use SzentirasHu\Service\Ai\CommentaryService;
+use SzentirasHu\Service\Reference\CanonicalReference;
+use SzentirasHu\Data\Entity\Translation;
 
 class CommentaryEditorController extends Controller
 {
     public function __construct(
         protected TranslationService $translationService,
         protected BookService $bookService,
+        protected CommentaryService $commentaryService,
     ) {}
 
     /**
@@ -80,6 +84,21 @@ class CommentaryEditorController extends Controller
             'translation' => 'required|string',
         ]);
 
+        // Check if this is a JSON request
+        if ($request->expectsJson()) {
+            // Call the Artisan command asynchronously
+            Artisan::call('szentiras:generate-commentary', [
+                'reference' => $request->input('reference'),
+                'translation' => $request->input('translation'),
+                '--force' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kommentár generálása megkezdődött.',
+            ]);
+        }
+
         // Call the Artisan command
         Artisan::call('szentiras:generate-commentary', [
             'reference' => $request->input('reference'),
@@ -102,6 +121,55 @@ class CommentaryEditorController extends Controller
             'started_at' => $commentary->started_at,
             'completed_at' => $commentary->completed_at,
             'error_message' => $commentary->error_message,
+        ]);
+    }
+
+    /**
+     * Get the status of a commentary by reference and translation.
+     */
+    public function statusByReference(Request $request)
+    {
+        $request->validate([
+            'reference' => 'required|string',
+            'translation' => 'required|string',
+        ]);
+
+        $reference = $request->input('reference');
+        $translationAbbrev = $request->input('translation');
+
+        // Get the translation
+        $translation = Translation::where('abbrev', $translationAbbrev)->first();
+        if (!$translation) {
+            return response()->json(['error' => 'Translation not found'], 404);
+        }
+
+        // Parse the reference string
+        try {
+            $canonicalReference = CanonicalReference::fromString($reference);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid reference format'], 400);
+        }
+
+        // Find exact matching commentaries for this reference
+        $commentaries = $this->commentaryService->findForReference($canonicalReference, $translation);
+
+        // Filter for exact matches only
+        $exactMatch = $commentaries->firstWhere('is_exact', true);
+
+        if (!$exactMatch) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'No exact commentary found for this reference',
+            ]);
+        }
+
+        return response()->json([
+            'id' => $exactMatch->id,
+            'status' => $exactMatch->status,
+            'commentary_text' => $exactMatch->commentary_text,
+            'started_at' => $exactMatch->started_at,
+            'completed_at' => $exactMatch->completed_at,
+            'error_message' => $exactMatch->error_message,
         ]);
     }
 
