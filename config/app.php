@@ -132,6 +132,7 @@ return [
          */
         SzentirasHu\Providers\AppServiceProvider::class,
         SzentirasHu\Providers\RouteServiceProvider::class,
+        SzentirasHu\Providers\TelescopeServiceProvider::class,
         SzentirasHu\Providers\RepositoriesProvider::class,
         SzentirasHu\Providers\ViewComposerServiceProvider::class,
         SzentirasHu\Service\Imagine\ImagineServiceProvider::class
