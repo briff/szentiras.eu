@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory as OpenAIFactory;
 use SzentirasHu\Models\OpenAIBatch;
+use SzentirasHu\Models\OpenAIBatchItem;
 use SzentirasHu\Models\Commentary;
 
 class ProcessOpenAIBatchOutput implements ShouldQueue
@@ -20,21 +21,46 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
 
     public function __construct(public int $openaiBatchId) {}
 
-    public function handle(OpenAIClient $openai)
+    public function handle(AiPromptService $aiPromptService)
     {
+        Log::debug("ProcessOpenAIBatchOutput: Starting batch processing for batch ID: {$this->openaiBatchId}");
+        $openai = $aiPromptService->clientForConfig('commentary');
         $batch = OpenAIBatch::findOrFail($this->openaiBatchId);
+        Log::debug("ProcessOpenAIBatchOutput: Found batch", [
+            'batch_id' => $batch->id,
+            'output_file_id' => $batch->output_file_id,
+            'status' => $batch->status,
+        ]);
 
         $jsonl = $openai->files()->download($batch->output_file_id);
+        Log::debug("ProcessOpenAIBatchOutput: Downloaded output file", [
+            'file_size' => strlen($jsonl),
+            'lines_count' => count(explode("\n", trim($jsonl))),
+        ]);
+
+        $processedCount = 0;
+        $successCount = 0;
+        $failureCount = 0;
 
         foreach (explode("\n", trim($jsonl)) as $line) {
             $row = json_decode($line, true);
-            if (!$row) continue;
+            if (!$row) {
+                Log::debug("ProcessOpenAIBatchOutput: Skipping invalid JSON line");
+                continue;
+            }
 
             $customId = $row['custom_id'] ?? null;
-            if (!$customId) continue;
+            if (!$customId) {
+                Log::debug("ProcessOpenAIBatchOutput: Skipping row without custom_id");
+                continue;
+            }
 
+            /** @var OpenAIBatchItem|null $item */
             $item = $batch->items()->where('custom_id', $customId)->first();
-            if (!$item) continue;
+            if (!$item instanceof OpenAIBatchItem) {
+                Log::warning("ProcessOpenAIBatchOutput: Batch item not found for custom_id: {$customId}");
+                continue;
+            }
 
             [$text, $tokenUsage, $error] = $this->extractTextAndTokensFromBatchRow($row);
 
@@ -42,6 +68,23 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
             // Note: result_text column removed per user request
             $item->error = $text ? null : json_encode($row['response'] ?? $row);
             $item->save();
+
+            $processedCount++;
+            if ($text) {
+                $successCount++;
+                Log::debug("ProcessOpenAIBatchOutput: Batch item succeeded", [
+                    'item_id' => $item->id,
+                    'custom_id' => $customId,
+                    'token_usage' => $tokenUsage,
+                ]);
+            } else {
+                $failureCount++;
+                Log::warning("ProcessOpenAIBatchOutput: Batch item failed", [
+                    'item_id' => $item->id,
+                    'custom_id' => $customId,
+                    'error' => $item->error,
+                ]);
+            }
 
             // Optionally: write into your domain table here
             if ($text && $item->source_id) {
@@ -51,6 +94,13 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
 
         $batch->status = 'processed';
         $batch->save();
+
+        Log::info("ProcessOpenAIBatchOutput: Batch processing completed", [
+            'batch_id' => $batch->id,
+            'processed_count' => $processedCount,
+            'success_count' => $successCount,
+            'failure_count' => $failureCount,
+        ]);
     }
 
     /**
@@ -61,7 +111,7 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
      * @param int|null $tokenUsage
      * @return void
      */
-    private function updateCommentaryFromBatchItem($item, string $text, ?int $tokenUsage): void
+    private function updateCommentaryFromBatchItem(OpenAIBatchItem $item, string $text, ?int $tokenUsage): void
     {
         try {
             $commentary = Commentary::find($item->source_id);
@@ -75,7 +125,7 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
             $commentary->token_usage = $tokenUsage;
             $commentary->status = Commentary::STATUS_COMPLETED;
             $commentary->completed_at = now();
-            
+
             // If not already started, set started_at
             if (!$commentary->started_at) {
                 $commentary->started_at = now();
@@ -91,23 +141,20 @@ class ProcessOpenAIBatchOutput implements ShouldQueue
         }
     }
 
-        private function extractTextAndTokensFromBatchRow(array $row): array
+    private function extractTextAndTokensFromBatchRow(array $row): array
     {
         if (isset($row['error'])) {
             return ['', null, $row['error']];
         }
 
-        $resp = $row['response'] ?? null;
-        if (!is_array($resp)) {
-            return ['', null, ['message' => 'Missing response object']];
+        $body = $row['response']['body'] ?? null;
+        if (!is_array($body)) {
+            return ['', null, ['message' => 'Missing body object in response']];
         }
 
-        $text = $resp['output'][0]['content'][0]['text'] ?? '';
-
-        $usage = $resp['usage'] ?? [];
-        $tokens = $usage['total_tokens'] ?? $usage['totalTokens'] ?? null;
+        $text = $body['output'][0]['content'][0]['text'] ?? '';
+        $tokens = $body['usage']['total_tokens'] ?? null;
 
         return [$text, $tokens, null];
     }
-
 }

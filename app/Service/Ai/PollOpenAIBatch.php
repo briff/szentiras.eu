@@ -22,21 +22,22 @@ class PollOpenAIBatch implements ShouldQueue, ShouldBeUnique
     // Optional: how long it stays unique (seconds)
     public $uniqueFor = 900; // 15 minutes
 
-    public function __construct(public int $openaiBatchId) {}
+    public function __construct(public int $batchId) {}
 
     public function uniqueId(): string
     {
-        return (string) $this->openaiBatchId;
+        return "{$this->batchId}";
     }
 
-    public function handle(OpenAIClient $openai)
+    public function handle(AiPromptService $aiPromptService)
     {
-        Log::debug('PollOpenAIBatch: starting', ['batch_id' => $this->openaiBatchId]);
+        $openai = $aiPromptService->clientForConfig('commentary');
+        Log::debug('PollOpenAIBatch: starting', ['batch_id' => $this->batchId]);
         
-        $batch = OpenAIBatch::findOrFail($this->openaiBatchId);
+        $batch = OpenAIBatch::findOrFail($this->batchId);
 
         if (!$batch->batch_id) {
-            Log::debug('PollOpenAIBatch: no OpenAI batch_id yet, skipping', ['batch_id' => $this->openaiBatchId]);
+            Log::debug('PollOpenAIBatch: no OpenAI batch_id yet, skipping', ['batch_id' => $this->batchId]);
             return;
         }
 
@@ -95,11 +96,11 @@ class PollOpenAIBatch implements ShouldQueue, ShouldBeUnique
 
         Log::debug('PollOpenAIBatch: requeuing with delay', [
             'batch_id' => $batch->id,
-            'attempts' => $this->attempts(),
             'delay_seconds' => $delay,
             'status' => $batch->status,
         ]);
         
-        self::dispatch($batch->id)->delay(now()->addSeconds($delay))->onQueue('openai-batch');
+        $this->release($delay);
+        return;
     }
 }

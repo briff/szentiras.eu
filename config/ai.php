@@ -31,6 +31,7 @@ return [
             'timeout'          => env('AI_COMMENTARY_TIMEOUT', 60),
             'verbosity'        => env('AI_COMMENTARY_VERBOSITY', 'low'),
             'reasoning_effort' => env('AI_COMMENTARY_REASONING_EFFORT', 'none'),
+            'store' => env('AI_COMMENTARY_STORE', false),
             'system_prompt'    => resource_path('prompts/hungarian_biblical_commentary_system.md'),
             'user_prompt'      => resource_path('prompts/hungarian_biblical_commentary_user.md'),
             'response_format' => [

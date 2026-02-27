@@ -20,8 +20,9 @@ class ProcessOpenAIBatchErrors implements ShouldQueue
 
     public function __construct(public int $openaiBatchId) {}
 
-    public function handle(OpenAIClient $openai)
+    public function handle(AiPromptService $aiPromptService)
     {
+        $openai = $aiPromptService->clientForConfig('commentary');
         $batch = OpenAIBatch::findOrFail($this->openaiBatchId);
 
         if ($batch->error_file_id) {

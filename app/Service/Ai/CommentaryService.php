@@ -426,6 +426,11 @@ class CommentaryService
     ): array {
         $verseText = $this->textService->getPureText($reference, $translation);
 
+        // if no text, throw an exception to avoid generating empty commentary
+        if (empty($verseText)) {
+            throw new \RuntimeException('No verse text found for the given reference and translation. Cannot generate commentary.');
+        }   
+
                 // Length validation
         if (!$force && strlen($verseText) > $maxLength) {
             throw new \RuntimeException(sprintf(

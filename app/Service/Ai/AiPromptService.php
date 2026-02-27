@@ -142,6 +142,12 @@ class AiPromptService
         return $prompt;
     }
 
+    public function clientForConfig($configurationName): OpenAIClient
+    {
+        $config = $this->resolveConfiguration($configurationName);
+
+        return $this->client($config['provider'], $config);
+    }
     /**
      * Get an authenticated client for the given provider.
      *
@@ -209,6 +215,7 @@ class AiPromptService
 
         $client = $this->client($config['provider'], [
             'api_key' => $config['api_key'],
+            'organization' => $config['organization'],
             'endpoint' => $config['endpoint'],
             'timeout' => $config['timeout'],
         ]);
@@ -220,7 +227,7 @@ class AiPromptService
             'model' => $config['model'],
             'input' => $input,
             'max_output_tokens' => (int) $config['max_output_tokens'],
-            'store' => false,
+            'store' => (bool) $config['store'], // store in logs
             'parallel_tool_calls' => false,
         ];
 

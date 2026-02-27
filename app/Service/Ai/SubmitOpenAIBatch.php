@@ -22,7 +22,7 @@ class SubmitOpenAIBatch implements ShouldQueue
     public function handle(AiPromptService $aiPromptService)
     {
         Log::debug('SubmitOpenAIBatch job started', ['batch_id' => $this->openaiBatchId]);
-        $openai = $aiPromptService->client('openai', $aiPromptService->resolveConfiguration('commentary'));
+        $openai = $aiPromptService->clientForConfig('commentary');
         try {
             $batch = OpenAIBatch::findOrFail($this->openaiBatchId);
             Log::debug('Batch retrieved from database', ['batch_id' => $batch->id, 'status' => $batch->status]);
@@ -106,7 +106,7 @@ class SubmitOpenAIBatch implements ShouldQueue
                 'delay' => '2 minutes',
                 'queue' => 'openai-batch'
             ]);
-            PollOpenAIBatch::dispatch($batch->id)->delay(now()->addMinutes(2))->onQueue('openai-batch');
+            PollOpenAIBatch::dispatch($batch->id)->delay(now()->addSeconds(30))->onQueue('openai-batch');
             
             Log::debug('SubmitOpenAIBatch job completed successfully', ['batch_id' => $batch->id]);
             
