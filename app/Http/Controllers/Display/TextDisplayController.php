@@ -100,7 +100,15 @@ class TextDisplayController extends Controller
 
         // Check if user is logged in (has anonymous token)
         $token = Session::get('anonymous_token');
-        return (bool) $token;
+        if (!$token) {
+            return false;
+        }
+
+        // Check daily token usage limit
+        $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
+        $usedTokens = $this->commentaryService->sumTokenUsageForDay();
+        
+        return $usedTokens < $maxTokenPerDay;
     }
 
     public function showTranslationList()

@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use SzentirasHu\Service\Editor\EditorService;
+use SzentirasHu\Service\Ai\CommentaryService;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckCommentaryGeneration
@@ -14,7 +15,8 @@ class CheckCommentaryGeneration
      * Create a new middleware instance.
      */
     public function __construct(
-        protected EditorService $editorService
+        protected EditorService $editorService,
+        protected CommentaryService $commentaryService
     ) {}
 
     /**
@@ -45,6 +47,20 @@ class CheckCommentaryGeneration
                 'success' => false,
                 'message' => 'Authentication required. Please log in.'
             ], 401);
+        }
+
+        // Check daily token usage limit
+        $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
+        $usedTokens = $this->commentaryService->sumTokenUsageForDay();
+        if ($usedTokens >= $maxTokenPerDay) {
+            return response()->json([
+                'success' => false,
+                'message' => sprintf(
+                    'Daily token usage limit (%d tokens) already exceeded (%d tokens used).',
+                    $maxTokenPerDay,
+                    $usedTokens
+                )
+            ], 429); // 429 Too Many Requests
         }
 
         // Token validation is already done by FillAnonymousIdFromCookie middleware,

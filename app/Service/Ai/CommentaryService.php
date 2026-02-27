@@ -433,7 +433,7 @@ class CommentaryService
 
         // Daily token usage validation
         if (!$force) {
-            $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 150000);
+            $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
             $usedTokens = $this->sumTokenUsageForDay();
             if ($usedTokens >= $maxTokenPerDay) {
                 throw new \RuntimeException(sprintf(
