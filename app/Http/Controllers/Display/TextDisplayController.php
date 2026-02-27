@@ -81,6 +81,18 @@ class TextDisplayController extends Controller
         $this->commentaryService = $commentaryService;
     }
 
+    private function commentaryGenerationPossible(): bool
+    {
+        $allUsersAllowed = config('ai.configurations.commentary.all_users_allowed', false);
+        if (!$allUsersAllowed) {
+            return false;
+        }
+        $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
+        $usedTokens = $this->commentaryService->sumTokenUsageForDay();
+        
+        return $usedTokens < $maxTokenPerDay;
+    }
+
     /**
      * Check if commentary generation is allowed for the current user.
      * Replicates the logic from CheckCommentaryGeneration middleware.
@@ -357,6 +369,7 @@ class TextDisplayController extends Controller
                 'otherMedia' => $otherMedia ?? [],
                 'isEditor' => $this->editorService->currentIsEditor(),
                 'canGenerateCommentary' => $this->canGenerateCommentary(),
+                'commentaryGenerationPossible' => $this->commentaryGenerationPossible(),
                 'translationLinks' => $translations->map(
                     function ($otherTranslation) use ($canonicalRef, $translation) {
                         $allBooksExistInTranslation = true;

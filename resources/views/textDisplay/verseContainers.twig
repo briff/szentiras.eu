@@ -79,6 +79,10 @@
                                     </button>
                                     </form>
                                 </div>
+                                {% elseif pendingCommentaries is empty and commentaryGenerationPossible %}
+                                <div class="p-2 border-t border-gray-200 mt-4">
+                                    Belépett felhasználóink kérhetnek mesterséges intelligenciával előállított kommentárt ehhez a szentírási helyhez. Ez a szolgáltatás jelenleg fejlesztés alatt áll, de hamarosan elérhető lesz.
+                                </div>
                                 {% endif %}
 
                             {% endif %}
@@ -148,6 +152,10 @@
                                 </button>
                             </form>
                         </div>
+                    {% elseif pendingCommentaries is empty and commentaryGenerationPossible %}
+                    <div class="p-2 border-top mt-4">
+                        <i class="bi-robot"></i> Belépett felhasználóink kérhetnek mesterséges intelligenciával előállított kommentárt ehhez a szentírási helyhez.
+                    </div>
                     {% endif %}
                 {% endif %}
             </div>
