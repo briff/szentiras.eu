@@ -103,7 +103,7 @@ services:
       - path: ./.env.prod
         required: false
     networks:
-      - szeu-network
+      - traefik
     volumes:
       - redis-data:/data
     healthcheck:
@@ -124,7 +124,7 @@ services:
       database:
         condition: service_healthy
     networks:
-      - szeu-network
+      - traefik
     command: php artisan horizon
     restart: unless-stopped
   memcached:
