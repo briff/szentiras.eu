@@ -28,6 +28,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewHorizon', function ($user = null) {
+            // If $user is null, optional($user)->email returns null, so access is denied.
             return in_array(optional($user)->email, [
                 //
             ]);

@@ -407,7 +407,6 @@ class CommentaryService
      * @param CanonicalReference $reference
      * @param Translation $translation
      * @param AiPromptService $aiPromptService
-     * @param array $additionalPlaceholders
      * @param int $maxLength Maximum allowed commentary text length (characters)
      * @param bool $force If true, bypass length validation
      * @return array{text: string, source_text: string, token_usage: int}
@@ -417,7 +416,6 @@ class CommentaryService
         CanonicalReference $reference,
         Translation $translation,
         AiPromptService $aiPromptService,
-        array $additionalPlaceholders = [],
         int $maxLength,
         bool $force = false
     ): array {
@@ -432,15 +430,12 @@ class CommentaryService
             ));
         }
 
-        $placeholders = array_merge([
-            'verse_text' => $verseText,
+        $placeholders = ['verse_text' => $verseText,
             'reference' => $reference->toString(),
             'translation' => $translation->abbrev,
             // we estimate the token count by assuming 2.5 characters per token.
             'max_tokens' => (int) ceil(strlen($verseText) / 2.5),
-        ], $additionalPlaceholders);
-
-        $config = $aiPromptService->resolveConfiguration('commentary');
+        ];
 
         $response = $aiPromptService->generate('commentary', $placeholders);
 

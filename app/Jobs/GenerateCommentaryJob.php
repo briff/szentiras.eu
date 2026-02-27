@@ -9,12 +9,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use SzentirasHu\Models\Commentary;
 use SzentirasHu\Service\Ai\CommentaryService;
 use SzentirasHu\Service\Ai\AiPromptService;
-use SzentirasHu\Service\Reference\CanonicalReference;
+use SzentirasHu\Service\Ai\GeneratesCommentary;
 use Illuminate\Support\Facades\Log;
 
 class GenerateCommentaryJob extends Job implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels, GeneratesCommentary;
 
     /**
      * The number of times the job may be attempted.
@@ -77,50 +77,24 @@ class GenerateCommentaryJob extends Job implements ShouldQueue
             // Retrieve reference from metadata (stored during pending creation)
             $metadata = $this->commentary->metadata ?? [];
             $referenceString = $metadata['reference'] ?? '';
-            if (empty($referenceString)) {
-                throw new \RuntimeException('Missing reference in commentary metadata.');
-            }
-
-            $translation = $this->commentary->translation;
-            if (!$translation) {
-                throw new \RuntimeException('Translation not found for commentary.');
-            }
-
-            $canonicalRef = CanonicalReference::fromString($referenceString);
-
-            // Generate commentary text using the service.
             $force = $metadata['force'] ?? false;
-            $maxLength = $metadata['max_length'];
-            $result = $commentaryService->generateCommentaryText(
-                $canonicalRef,
-                $translation,
+
+            $result = $this->generateCommentaryForReference(
+                $referenceString,
+                $this->commentary->translation,
+                $commentaryService,
                 $aiPromptService,
-                $this->getAdditionalPlaceholders(),
-                $maxLength,
                 $force
             );
 
-            $commentaryText = $result['text'];
-            $sourceText = $result['source_text'];
-            $tokenUsage = $result['token_usage'];
-
-            // Update commentary with generated text and metadata
-            $this->commentary->commentary_text = $commentaryText;
-            $this->commentary->source_text = $sourceText;
-            $this->commentary->token_usage = $tokenUsage;
-            $this->commentary->status = Commentary::STATUS_COMPLETED;
-            $this->commentary->completed_at = now();
-            $this->commentary->save();
-
-            Log::info("Commentary {$this->commentary->id} generated successfully. Token usage: {$tokenUsage}");
+            $this->handleCommentarySuccess(
+                $this->commentary,
+                $result['text'],
+                $result['source_text'],
+                $result['token_usage']
+            );
         } catch (\Throwable $e) {
-            Log::error("Failed to generate commentary {$this->commentary->id}: {$e->getMessage()}", [
-                'exception' => $e,
-            ]);
-
-            $this->commentary->status = Commentary::STATUS_FAILED;
-            $this->commentary->error_message = $e->getMessage();
-            $this->commentary->save();
+            $this->handleCommentaryFailure($this->commentary, $e);
 
             // Re-throw to allow job retry (if attempts left)
             throw $e;
@@ -128,18 +102,6 @@ class GenerateCommentaryJob extends Job implements ShouldQueue
     }
 
     /**
-     * Get additional placeholders for AI prompt.
-     *
-     * @return array
-     */
-    private function getAdditionalPlaceholders(): array
-    {
-        return [
-            'command_timestamp' => now()->toIso8601String(),
-            'user' => 'queue',
-            'job_id' => $this->job ? $this->job->getJobId() : null,
-        ];
-    }
 
     /**
      * Handle a job failure.

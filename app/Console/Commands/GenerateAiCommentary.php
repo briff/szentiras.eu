@@ -7,6 +7,7 @@ use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Models\Commentary;
 use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Service\Ai\CommentaryService;
+use SzentirasHu\Service\Ai\GeneratesCommentary;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ReferenceService;
 use SzentirasHu\Service\Text\BookService;
@@ -15,6 +16,8 @@ use SzentirasHu\Jobs\GenerateCommentaryJob;
 
 class GenerateAiCommentary extends Command
 {
+    use GeneratesCommentary;
+
     protected $signature = 'szentiras:generate-commentary
                             {reference : Bible reference (e.g., "MAT_1_2-MAT_1_6,MAT_1_12,MAT_1_23-MAT_2_5")}
                             {translation : Translation abbreviation (e.g., "KNB")}
@@ -86,17 +89,14 @@ class GenerateAiCommentary extends Command
             $canonicalRefString = str_contains($referenceString, '_')
                 ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
                 : $referenceString;
-            $canonicalRef = CanonicalReference::fromString($canonicalRefString);
 
             $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
 
-            // Generate commentary text
-            $result = $this->commentaryService->generateCommentaryText(
-                $canonicalRef,
+            $result = $this->generateCommentaryForReference(
+                $canonicalRefString,
                 $translation,
+                $this->commentaryService,
                 $this->aiPromptService,
-                $this->getAdditionalPlaceholders(),
-                $maxLength,
                 $force
             );
 
@@ -136,6 +136,7 @@ class GenerateAiCommentary extends Command
                 $tokenUsage
             );
 
+            $this->line('');
             $this->info("Commentary saved with ID {$commentary->id}.");
             $this->info("Token usage: {$tokenUsage}");
             $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
@@ -247,14 +248,6 @@ class GenerateAiCommentary extends Command
         ]);
 
         return $existingNormalized === $newNormalized;
-    }
-
-    private function getAdditionalPlaceholders(): array
-    {
-        return [
-            'command_timestamp' => now()->toIso8601String(),
-            'user' => get_current_user() ?: 'system',
-        ];
     }
 
     private function getMetadata(): array

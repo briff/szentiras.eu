@@ -193,7 +193,7 @@ class AiPromptService
      * Generate a completion using a named configuration.
      *
      * @param string $configurationName
-     * @param array<string, string> $placeholders
+     * @param array<string, string|int> $placeholders
      * @param string|null $userMessage Optional user message to append to the prompt.
      * @return mixed Raw API response.
      */
