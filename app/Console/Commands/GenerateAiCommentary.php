@@ -88,9 +88,7 @@ class GenerateAiCommentary extends Command
         if ($generateSync) {
             // Generate canonical reference for AI prompt
             // If input is already canonical, use it directly; otherwise convert from USX
-            $canonicalRefString = str_contains($referenceString, '_')
-                ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
-                : $referenceString;
+            $canonicalRefString =$referenceString;
 
 
             $result = $this->generateCommentaryForReference(
@@ -161,16 +159,18 @@ class GenerateAiCommentary extends Command
 
                 // Create canonical reference for AI prompt
                 // If input is already canonical, use it directly; otherwise convert from USX
-                $canonicalRefString = str_contains($referenceString, '_')
-                    ? $this->convertUsxToCanonical($referenceString, $translationAbbrev)
-                    : $referenceString;
+                $canonicalRefString = $referenceString;
                 
                 $canonicalRef = \SzentirasHu\Service\Reference\CanonicalReference::fromString($canonicalRefString);
+
+
+
 
                 // Generate commentary text using batch mode
                 $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
                 $result = $this->commentaryService->generateCommentaryText(
-                    $canonicalRef,
+
+                $canonicalRef,
                     $translation,
                     $this->aiPromptService,
                     $maxLength,
@@ -306,52 +306,10 @@ class GenerateAiCommentary extends Command
             'translation' => $this->argument('translation'),
             'force' => (bool) $this->option('force'),
             'max_length' => config('ai.configurations.commentary.max_input_length'),
+            'model' => config('ai.configurations.commentary.model'),
         ];
 
         return array_merge($defaults, $metadata);
-    }
-
-    /**
-     * Convert USX format reference to canonical format.
-     *
-     * Example: "MAT_5_20-MAT_5_26" -> "Mat 5,20-26"
-     * Example: "MAT_5_20,MAT_5_21" -> "Mat 5,20.21"
-     *
-     * @param string $usxReference USX format reference
-     * @param string $translationAbbrev Translation abbreviation
-     * @return string Canonical format reference
-     */
-    private function convertUsxToCanonical(string $usxReference, string $translationAbbrev): string
-    {
-        // Parse the USX reference into ranges
-        $parts = explode(',', $usxReference);
-        $canonicalParts = [];
-        
-        foreach ($parts as $part) {
-            if (str_contains($part, '-')) {
-                // Range: MAT_5_20-MAT_5_26
-                [$start, $end] = explode('-', $part, 2);
-                $startParts = explode('_', $start);
-                $endParts = explode('_', $end);
-                
-                // Convert to canonical: "Mat 5,20-26"
-                $bookAbbrev = \SzentirasHu\Data\UsxCodes::getPreferredAbbreviation($startParts[0], $translationAbbrev) ?? $startParts[0];
-                $canonicalParts[] = "{$bookAbbrev} {$startParts[1]},{$startParts[2]}-{$endParts[2]}";
-            } else {
-                // Single verse: MAT_5_20
-                $verseParts = explode('_', $part);
-                $bookAbbrev = \SzentirasHu\Data\UsxCodes::getPreferredAbbreviation($verseParts[0], $translationAbbrev) ?? $verseParts[0];
-                $canonicalParts[] = "{$bookAbbrev} {$verseParts[1]},{$verseParts[2]}";
-            }
-        }
-        
-        // Combine parts: if same book/chapter, combine verses
-        if (count($canonicalParts) > 1) {
-            // Simple implementation: just join with semicolon for now
-            return implode('; ', $canonicalParts);
-        }
-        
-        return $canonicalParts[0] ?? '';
     }
 
     /**

@@ -23,6 +23,7 @@ return [
             'max_input_length' => env('AI_COMMENTARY_MAX_INPUT_LENGTH', 8000),
             'provider'         => env('AI_COMMENTARY_PROVIDER', 'openai'),
             'api_key'          => env('AI_COMMENTARY_API_KEY'),
+            'organization'     => env('AI_COMMENTARY_ORGANIZATION'),
             'endpoint'         => env('AI_COMMENTARY_ENDPOINT'),
             'model'            => env('AI_COMMENTARY_MODEL', 'gpt-4.1'),
             'temperature'      => env('AI_COMMENTARY_TEMPERATURE', 0.7),
