@@ -5,14 +5,17 @@
     <form method="post" action="/register">
         <div class="mb-2">
             A regisztráció annyiból áll, hogy elfogadod az adatvédelmi szabályainkat, és kapsz egy névtelen azonosítót, amit használhatsz a belépéshez.
-            Az adatvédelmi szabályaink a következők: a belépett felhasználóknál elhelyezünk egy cookie-t (sütit), amivel a későbbi belépéseiket automatizáljuk. 
-            A legutolsó belépés időpontját rögzítjük. 
-            Semmilyen személyes adatot, semmilyen formában nem kezelünk, nem kérünk és nem tárolunk. Későbbiekben tervezzük, hogy  hasznos funkciókat hozzárendelünk 
+            Az adatvédelmi szabályaink a következők: a belépett felhasználóknál elhelyezünk egy cookie-t (sütit), amivel a későbbi belépéseiket automatizáljuk.
+            A legutolsó belépés időpontját rögzítjük.
+            Semmilyen személyes adatot, semmilyen formában nem kezelünk, nem kérünk és nem tárolunk. Későbbiekben tervezzük, hogy  hasznos funkciókat hozzárendelünk
             a névtelen azonosítóhoz (könyvjelző, jegyzetek, kedvenc részek stb.), de ezek is anonim módon működnek majd.
 
         </div>
         <div class="mb-2">
             {{ csrf_field() }}
+            {% if redirect %}
+            <input type="hidden" name="redirect" value="{{ redirect }}">
+            {% endif %}
             <input type="checkbox"  class="form-check-input" name="approve" id="accept" required>
             <label class="form-label {% if errors.first['approve']%}is-invalid{%  endif %}" for="accept">A regisztrációval elfogadom az adatvédelmi feltételeket.</a></label>
             {% if errors.any() %}
@@ -23,7 +26,7 @@
                         {% endfor %}
                     </ul>
                 </div>
-                {% endif %}    
+                {% endif %}
         </div>
         <div class="cf-turnstile" data-sitekey="{{ config_get('services.cloudflare_turnstile.site_key') }}"></div>
 

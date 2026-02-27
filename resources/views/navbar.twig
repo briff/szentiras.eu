@@ -50,7 +50,8 @@
               <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     {% if  not session('anonymous_token') %}
-                    <a class="nav-link" href="/login">
+                    {% set currentPath = app.request.pathInfo %}
+                    <a class="nav-link" href="/login{% if currentPath != '/login' %}?redirect={{ currentPath|url_encode }}{% endif %}">
                         <i class="bi bi-person bi-large"></i> Belépés
                     </a>
                     {% else %}

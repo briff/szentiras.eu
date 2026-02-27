@@ -9,20 +9,23 @@
             {% set link = url("/profile/" ~ anonymousId.token) %}
             <p>Az alábbi névtelen azonosítód segítségével tudsz belépni a rendszerbe, ha megnyitod ezt a hivatkozást bármilyen eszközön: <a href="{{ link }}">{{ link }}</a></p>
             <p>Fontos, hogy ehhez az azonosítóhoz semmilyen személyes adatot nem tárolunk, ezért
-            nem tudjuk neked elküldeni emailben, és <b>ha elveszted, nem tudjuk visszaállítani</b>. 
+            nem tudjuk neked elküldeni emailben, és <b>ha elveszted, nem tudjuk visszaállítani</b>.
             <p>Kérjük, mentsd el ezt az azonosítót a könyvjelzőid közé (Ctrl+D), küldd el magadnak üzenetben stb., és ne tedd közzé mások számára!
         </div>
-    <label for="tokenField" class="form-label">Névtelen azonosító:</label> 
-    <div class="input-group mb-2">        
+    <label for="tokenField" class="form-label">Névtelen azonosító:</label>
+    <div class="input-group mb-2">
 <input type="text" class="form-control" value="{{ anonymousId.token }}" id="tokenField" readonly>
 <button class="btn btn-primary" onclick="copyToken()"><i class="bi bi-clipboard"></i> Belépési link másolása</button>
     </div>
 
-    <form method="get" action="/logout">
-        <div class="mb-3">
-            <button type="submit" class="btn btn-primary">Kilépés</button>           
-        </div>
-    </form>
+    <div class="mb-3">
+        {% if redirect %}
+        <a href="{{ redirect }}" class="btn btn-success me-2">Tovább az eredeti oldalra</a>
+        {% endif %}
+        <form method="get" action="/logout" class="d-inline">
+            <button type="submit" class="btn btn-primary">Kilépés</button>
+        </form>
+    </div>
 </div>
 
 {% endblock %}
