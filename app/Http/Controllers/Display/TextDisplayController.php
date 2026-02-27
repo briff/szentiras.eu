@@ -318,9 +318,10 @@ class TextDisplayController extends Controller
                             'references' => [],
                         ];
                     }
-                    // Add exact match flag, status and id for polling
+                    // Add exact match flag, status, verification level and id for polling
                     $commentaryData['exact'] = $commentary->is_exact ?? false;
                     $commentaryData['status'] = $commentary->status;
+                    $commentaryData['verification_level'] = $commentary->verification_level;
                     $commentaryData['commentary_id'] = $commentary->id;
                     $parsed[] = $commentaryData;
                 }

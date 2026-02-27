@@ -18,7 +18,7 @@
                     <div class="commentaries mt-2 mb-2 parsedVerses">
                         <details class="overflow-hidden">
                             <summary class="h6 cursor-pointer flex items-center bg-blue-100 hover:bg-blue-200 transition-colors">
-                                <span class="mr-2">📖</span>
+                                <span class="mr-2"><i class="bi-robot"></i></span>
                                 Kommentár
                             </summary>
 
@@ -29,6 +29,22 @@
                                         
                                         <div class="space-y-4" id="exact-commentaries-{{ loop.index0 }}">
                                             <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
+                                                {# Verification state display #}
+                                                {% if commentaryData.verification_level is defined %}
+                                                    {% set verification_config = {
+                                                        'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrizve, lehet pontatlan, téves'},
+                                                        'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Értelmi ellenőrzésen átesett, teológiailag lehet pontatlan'},
+                                                        'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
+                                                    } %}
+                                                    {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
+                                                    <div class="mb-2 flex items-center">
+                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
+                                                            <i class="bi {{ config.icon }} mr-1"></i>
+                                                            <span class="text-xs">{{ config.label }}</span>
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
+                                                
                                                 <div class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}
@@ -72,6 +88,22 @@
                                     {% for commentaryData in relatedCommentaries %}
                                         <div class="space-y-4">
                                             <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
+                                                {# Verification state display #}
+                                                {% if commentaryData.verification_level is defined %}
+                                                    {% set verification_config = {
+                                                        'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrzés'},
+                                                        'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Ésszerűségi ellenőrzés'},
+                                                        'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzés'}
+                                                    } %}
+                                                    {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
+                                                    <div class="mb-2 flex items-center">
+                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
+                                                            <i class="bi {{ config.icon }} mr-1"></i>
+                                                            <span class="text-xs">{{ config.label }}</span>
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
+                                                
                                                 <div class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}
