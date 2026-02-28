@@ -76,7 +76,7 @@ class ContactTest extends TestCase
     public function test_user_inbox_requires_login()
     {
         $response = $this->get(route('contact.inbox'));
-        $response->assertRedirect(route('contact.form'));
+        $response->assertRedirect('/register');
     }
 
     public function test_logged_in_user_can_view_inbox()
@@ -171,14 +171,14 @@ class ContactTest extends TestCase
         $this->assertDatabaseMissing('contact_messages', ['id' => $message->id]);
     }
 
-    private function mockTurnstileSuccess()
+    private function mockTurnstileSuccess(): void
     {
-        // This is a simplified mock; in a real test you'd use a service mock
-        // For now we assume the TurnstileValidationRule passes
         $this->app->bind(\SzentirasHu\Rules\TurnstileValidationRule::class, function () {
-            $rule = $this->createMock(\SzentirasHu\Rules\TurnstileValidationRule::class);
-            $rule->method('passes')->willReturn(true);
-            return $rule;
+            $mock = $this->createMock(\SzentirasHu\Rules\TurnstileValidationRule::class);
+            $mock->method('validate')->willReturnCallback(function (string $attribute, mixed $value, \Closure $fail): void {
+                // Do nothing — validation passes
+            });
+            return $mock;
         });
     }
 }

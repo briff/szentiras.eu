@@ -14,7 +14,7 @@
         <div class="mb-2">
             {{ csrf_field() }}
             {% if redirect %}
-            <input type="hidden" name="redirect" value="{{ redirect }}">
+            <input type="hidden" name="r" value="{{ redirect }}">
             {% endif %}
             <input type="checkbox"  class="form-check-input" name="approve" id="accept" required>
             <label class="form-label {% if errors.first['approve']%}is-invalid{%  endif %}" for="accept">A regisztrációval elfogadom az adatvédelmi feltételeket.</a></label>

@@ -2,6 +2,7 @@
 
 namespace SzentirasHu\Data\Entity;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -22,5 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AnonymousId extends Model
 {
+    /** @use HasFactory<\Database\Factories\Data\Entity\AnonymousIdFactory> */
+    use HasFactory;
+
     protected $fillable = ['token', 'last_login'];
 }

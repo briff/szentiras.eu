@@ -31,7 +31,7 @@ class AnonymousIdController extends Controller
     public function registerAnonymousId() {
         $validator = Validator::make(request()->all(), [
             'approve' => 'accepted',
-            'cf-turnstile-response' => ['required', new TurnstileValidationRule()],
+            'cf-turnstile-response' => ['required', app(TurnstileValidationRule::class)],
             'r' => ['nullable', new LocalRedirectRule()],
         ]);
         
@@ -117,11 +117,10 @@ class AnonymousIdController extends Controller
         // If a valid redirect parameter is provided, redirect immediately (auto-login)
         if ($redirect) {
             if ($this->isValidLocalRedirect($redirect)) {
-            return Redirect::to($redirect);
-            } else {
-                return response(null, 400);
+                return Redirect::to($redirect);
             }
-        } 
+            // Invalid external redirect: fall through to show profile page
+        }
                
         return view("auth.anonymousId", [
             'anonymousId' => $anonymousId,

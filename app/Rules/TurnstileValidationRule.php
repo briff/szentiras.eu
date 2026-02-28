@@ -24,8 +24,13 @@ class TurnstileValidationRule implements ValidationRule
 
     private function validateToken(string $token): bool
     {
-        $response = $this->getResponse($token);
-        return $response->json('success') === true;
+        try {
+            $response = $this->getResponse($token);
+            \Illuminate\Support\Facades\Log::info("Turnstile response", ['response' => $response->json()]);
+            return $response->json('success') === true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     private function getResponse(string $token)

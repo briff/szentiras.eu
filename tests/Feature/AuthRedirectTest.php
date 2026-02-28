@@ -16,7 +16,7 @@ class AuthRedirectTest extends TestCase
         $response = $this->get('/login?r=/test-page');
         
         $response->assertStatus(200);
-        $response->assertSee('name="redirect"', false);
+        $response->assertSee('name="r"', false);
         $response->assertSee('value="/test-page"', false);
     }
 
@@ -25,7 +25,7 @@ class AuthRedirectTest extends TestCase
         $response = $this->get('/register?r=/test-page');
         
         $response->assertStatus(200);
-        $response->assertSee('name="redirect"', false);
+        $response->assertSee('name="r"', false);
         $response->assertSee('value="/test-page"', false);
     }
 
@@ -38,7 +38,7 @@ class AuthRedirectTest extends TestCase
 
         $response = $this->post('/login', [
             'anonymous_token' => 'testtoken123',
-            'redirect' => '/test-page',
+            'r' => '/test-page',
         ]);
 
         $response->assertRedirect('/test-page');
@@ -70,7 +70,7 @@ class AuthRedirectTest extends TestCase
 
         $response = $this->post('/login', [
             'anonymous_token' => 'testtoken789',
-            'redirect' => 'https://evil.com/malicious',
+            'r' => 'https://evil.com/malicious',
         ]);
 
         $response->assertStatus(400);
@@ -86,7 +86,7 @@ class AuthRedirectTest extends TestCase
 
         $response = $this->post('/login', [
             'anonymous_token' => 'testtokenabc',
-            'redirect' => 'javascript:alert("xss")',
+            'r' => 'javascript:alert("xss")',
         ]);
 
         $response->assertStatus(400);
@@ -102,7 +102,7 @@ class AuthRedirectTest extends TestCase
 
         $response = $this->post('/login', [
             'anonymous_token' => 'testtokenxyz',
-            'redirect' => '//google.com',
+            'r' => '//google.com',
         ]);
 
         $response->assertStatus(400);
@@ -118,7 +118,7 @@ class AuthRedirectTest extends TestCase
 
         $response = $this->post('/login', [
             'anonymous_token' => 'testtokenurlenc',
-            'redirect' => '/%2f%2fgoogle.com', // URL-encoded "//google.com"
+            'r' => '/%2f%2fgoogle.com', // URL-encoded "//google.com"
         ]);
 
         $response->assertStatus(400);
@@ -140,7 +140,7 @@ class AuthRedirectTest extends TestCase
         $this->assertTrue(session()->has('anonymous_token'));
     }
 
-    public function test_profile_page_shows_continue_button_when_invalid_redirect_provided()
+    public function test_profile_page_does_not_show_continue_button_when_invalid_redirect_provided()
     {
         $anonymousId = AnonymousId::create([
             'token' => 'testprofiletoken2',
@@ -151,7 +151,7 @@ class AuthRedirectTest extends TestCase
 
         // Invalid redirect (external) should show profile page WITHOUT continue button
         $response = $this->get('/profile/testprofiletoken2?r=https://evil.com');
-        
+
         $response->assertStatus(200);
         // Should not show continue button for external URL
         $response->assertDontSee('Tovább az eredeti oldalra', false);
@@ -175,7 +175,7 @@ class AuthRedirectTest extends TestCase
     public function test_register_link_in_login_includes_redirect_parameter()
     {
         $response = $this->get('/login?r=/test-page');
-        
+
         $response->assertStatus(200);
         $response->assertSee('href="/register?r=', false);
         $response->assertSee('/test-page', false);

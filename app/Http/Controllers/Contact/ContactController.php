@@ -28,7 +28,7 @@ class ContactController extends Controller
         ];
 
         if (!$isLoggedIn) {
-            $rules['cf-turnstile-response'] = ['required', new TurnstileValidationRule()];
+            $rules['cf-turnstile-response'] = ['required', app(TurnstileValidationRule::class)];
         }
 
         $validator = Validator::make(request()->all(), $rules);
