@@ -13,6 +13,7 @@ export default defineConfig({
             input: ['resources/assets/less/app.less',
                 'resources/assets/js/app.js',
                 'resources/assets/js/editor-media-move.js',
+                'resources/assets/js/commentary-status-polling.js',
                 'resources/assets/js/pages/home.js',
                 'resources/assets/js/pages/translation.js',
                 'resources/assets/js/pages/verses.js',
