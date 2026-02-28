@@ -159,20 +159,30 @@
                     {% endif %}
                 {% endif %}
             </div>
+            {% set hasFootnote = false %}
             {% for verse in verseContainer.parsedVerses %}
                 {% if verse.footnotes is not empty %}
                     {% if not hasFootnote %}
-                    <div class = "footnotes parsedVerses">                            
-                        <h5>Jegyzetek</h5>
-                        {% set hasFootnote = true %}
+                    <div class="footnotes parsedVerses">
+                        <details class="overflow-hidden" {% if not readingPlanDay %}open{% endif %}>
+                            <summary class="h6 cursor-pointer flex items-center bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-2 rounded-t">
+                                <i class="bi-journal-text mr-2"></i>
+                                Jegyzetek
+                            </summary>
+                            <div class="px-3 py-2">
+                    {% set hasFootnote = true %}
                     {% endif %}
                     {% for footnote in verse.footnotes %}
                         <p class="footnote"><strong>{{ verse.chapter }},{{ verse.numv }}</strong>
                             {{ footnote.text|raw }}</p>
                     {%endfor %}
                 {% endif %}
-                {% endfor %}
-                {% if hasFootnote %}</div>{% endif %}
+            {% endfor %}
+            {% if hasFootnote %}
+                            </div>
+                        </details>
+                    </div>
+            {% endif %}
             </div>
             {%  if chapterLinks %}
                 <ul class="pagination">
