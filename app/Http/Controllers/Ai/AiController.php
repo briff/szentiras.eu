@@ -110,16 +110,20 @@ class AiController extends Controller
                 }
             }
         }
-        $similarExcerpts = $this->semanticSearchService->findSimilarVersesInTranslation($canonicalReference->toString(), $translationAbbrev, 20);
+        // Get balanced results: 10 from OT and 10 from NT, sorted by relevance
+        $similarExcerpts = $this->semanticSearchService->findSimilarVersesInTranslation($canonicalReference->toString(), $translationAbbrev, 10, true);
         $similarsOT = [];
         $similarsNT = [];
         if (!empty($similarExcerpts)) {
             foreach ($similarExcerpts as $excerpt) {
+                /** @var \SzentirasHu\Data\Entity\EmbeddedExcerpt $excerpt */
+                // Get translation ID from abbreviation
+                $translation = $this->translationService->getByAbbreviation($excerpt->translation_abbrev);
                 $similar = [
                     "reference" => $excerpt->reference,
                     "translationAbbrev" => $excerpt->translation_abbrev,
                     "similarity" => 1 - $excerpt->neighbor_distance,
-                    "text" => $this->textService->getPureText(CanonicalReference::fromString($excerpt->reference, $excerpt->translation_id), $this->translationService->getByAbbreviation($excerpt->translation_abbrev), false)
+                    "text" => $this->textService->getPureText(CanonicalReference::fromString($excerpt->reference, $translation->id), $translation, false)
                 ];
                 
                 // Extract book abbreviation from reference to determine OT/NT
@@ -147,14 +151,18 @@ class AiController extends Controller
                 }
                 
                 if (in_array($matchingUsxCode, $otUsxCodes)) {
-                    $similarsOT[] = $similar;
+                    if (count($similarsOT) < 10) {
+                        $similarsOT[] = $similar;
+                    }
                 } else {
-                    $similarsNT[] = $similar;
+                    if (count($similarsNT) < 10) {
+                        $similarsNT[] = $similar;
+                    }
                 }
             }
         }
 
-        $view = view("ai.aiToolPopover", ['pureTexts' => $pureTexts, 'similars' => $similarsOT + $similarsNT, 'similarsOT' => $similarsOT, 'similarsNT' => $similarsNT, 'greekText' => $annotatedGreekText, 'greekSimilarity' => $greekSimilarity, 'gepi' => $gepi])->render();
+        $view = view("ai.aiToolPopover", ['pureTexts' => $pureTexts, 'similarsOT' => $similarsOT, 'similarsNT' => $similarsNT, 'greekText' => $annotatedGreekText, 'greekSimilarity' => $greekSimilarity, 'gepi' => $gepi])->render();
         return response()->json($view);
     }
 

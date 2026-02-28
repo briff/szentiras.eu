@@ -124,28 +124,70 @@ class SemanticSearchService {
     }
     /**
      * Returns the most similar verses in the same translation.
+     *
+     * @param string $reference The reference to find similar verses for
+     * @param string $translationAbbrev The translation abbreviation
+     * @param int $limit Maximum number of results to return (applies to each testament when $balanceTestaments is true)
+     * @param bool $balanceTestaments If true, returns up to $limit results from OT and $limit from NT separately
+     * @return \Illuminate\Database\Eloquent\Collection|null
      */
-    public function findSimilarVersesInTranslation($reference, $translationAbbrev, $limit = 10) {
+    public function findSimilarVersesInTranslation($reference, $translationAbbrev, $limit = 10, bool $balanceTestaments = false) {
         $model = Config::get("settings.ai.embeddingModel");
         $scope = EmbeddedExcerptScope::Verse;
         $vector = EmbeddedExcerpt::query()
         ->where("reference", $reference)
-        ->where("translation_abbrev", $translationAbbrev)            
+        ->where("translation_abbrev", $translationAbbrev)
         ->where("scope", $scope)
         ->where("model", $model)
         ->first();
         if (empty($vector)) {
             return null;
         }
-        return EmbeddedExcerpt::query()
-        ->where("reference", "!=", $reference)
-        ->where("translation_abbrev", $translationAbbrev)            
-        ->where("scope", $scope)
-        ->where("model", $model)
-        ->nearestNeighbors("embedding", $vector->embedding, Distance::Cosine)
-        ->limit($limit)
-        ->get();
 
+        if (!$balanceTestaments) {
+            // Original behavior: single query with limit
+            return EmbeddedExcerpt::query()
+            ->where("reference", "!=", $reference)
+            ->where("translation_abbrev", $translationAbbrev)
+            ->where("scope", $scope)
+            ->where("model", $model)
+            ->nearestNeighbors("embedding", $vector->embedding, Distance::Cosine)
+            ->limit($limit)
+            ->get();
+        }
+
+        // Get OT and NT USX codes
+        $otUsxCodes = \SzentirasHu\Data\UsxCodes::oldTestamentUsx();
+        $ntUsxCodes = \SzentirasHu\Data\UsxCodes::newTestamentUsx();
+
+        // Query for OT verses
+        $otResults = EmbeddedExcerpt::query()
+            ->where("reference", "!=", $reference)
+            ->where("translation_abbrev", $translationAbbrev)
+            ->where("scope", $scope)
+            ->where("model", $model)
+            ->whereIn("usx_code", $otUsxCodes)
+            ->nearestNeighbors("embedding", $vector->embedding, Distance::Cosine)
+            ->limit($limit)
+            ->get();
+
+        // Query for NT verses
+        $ntResults = EmbeddedExcerpt::query()
+            ->where("reference", "!=", $reference)
+            ->where("translation_abbrev", $translationAbbrev)
+            ->where("scope", $scope)
+            ->where("model", $model)
+            ->whereIn("usx_code", $ntUsxCodes)
+            ->nearestNeighbors("embedding", $vector->embedding, Distance::Cosine)
+            ->limit($limit)
+            ->get();
+
+        // Merge results and sort by neighbor_distance (ascending = more similar)
+        $allResults = $otResults->merge($ntResults)
+            ->sortBy('neighbor_distance')
+            ->values();
+
+        return $allResults;
     }
 
     public function retrieveVector($reference, $translationAbbrev, $scope = EmbeddedExcerptScope::Verse) {

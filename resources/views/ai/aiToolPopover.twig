@@ -64,10 +64,7 @@
       <!-- Filter Radio Buttons -->
       <div class="mb-3 p-2 border-bottom">
         <div class="btn-group btn-group-sm" role="group">
-          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterAll{{ gepi }}" value="all" checked>
-          <label class="btn btn-outline-secondary" for="filterAll{{ gepi }}">Mindkettő ({{ similars|length }})</label>
-          
-          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterOT{{ gepi }}" value="ot">
+          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterOT{{ gepi }}" value="ot" checked>
           <label class="btn btn-outline-secondary" for="filterOT{{ gepi }}">Ó.Sz. ({{ similarsOT|length }})</label>
           
           <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterNT{{ gepi }}" value="nt">
@@ -75,19 +72,8 @@
         </div>
       </div>
       
-      <!-- All similars (default view) - sorted by relevance -->
-      <div class="similars-container" data-filter="all">
-        {% set allSimilars = similars|sort((a, b) => b.similarity <=> a.similarity) %}
-        {% for similar in allSimilars %}
-          <div class="similar-item">
-            <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
-            <span class="pureText">{{ similar.text }}</span>
-          </div>
-        {% endfor %}
-      </div>
-      
       <!-- Old Testament similars -->
-      <div class="similars-container" data-filter="ot" style="display: none;">
+      <div class="similars-container" data-filter="ot">
         {% for similar in similarsOT %}
           <div class="similar-item">
             <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
