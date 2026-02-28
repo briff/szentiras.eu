@@ -35,6 +35,23 @@ class AppServiceProvider extends ServiceProvider
         $twig->addFunction(new \Twig\TwigFunction('isEditor', function () {
             return app(EditorService::class)->currentIsEditor();
         }));
+        
+        // Add unreadMessageCount function to Twig
+        $twig->addFunction(new \Twig\TwigFunction('unreadMessageCount', function () {
+            $token = session('anonymous_token');
+            if (!$token) {
+                return 0;
+            }
+            
+            $anonymousId = \SzentirasHu\Data\Entity\AnonymousId::where('token', $token)->first();
+            if (!$anonymousId) {
+                return 0;
+            }
+            
+            return \SzentirasHu\Data\Entity\ContactMessage::where('receiver_anonymous_id', $anonymousId->id)
+                ->where('is_read', false)
+                ->count();
+        }));
     }
 
     /**

@@ -58,8 +58,15 @@
 
             {% if isLoggedIn %}
                 <div class="mt-3 text-center">
-                    <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary">
+                    <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary position-relative">
                         <i class="bi bi-inbox"></i> Üzeneteim megtekintése
+                        {% set unreadCount = unreadMessageCount() %}
+                        {% if unreadCount > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
+                                {{ unreadCount }}
+                                <span class="visually-hidden">Olvasatlan üzenetek</span>
+                            </span>
+                        {% endif %}
                     </a>
                 </div>
             {% else %}

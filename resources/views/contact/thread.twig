@@ -73,10 +73,50 @@
                 </div>
             {% endif %}
 
-            <div class="mt-4">
-                <a href="{{ route('contact.inbox') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Vissza az üzenetekhez
-                </a>
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Válasz küldése</h5>
+                </div>
+                <div class="card-body">
+                    {% if session('success') %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i> {{ session('success') }}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ route('contact.reply', {message: message.id}) }}">
+                        {{ csrf_field() }}
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Üzenet</label>
+                            <textarea
+                                class="form-control {{ errors.has('message') ? 'is-invalid' : '' }}"
+                                id="message"
+                                name="message"
+                                rows="4"
+                                placeholder="Írd ide a válaszod..."
+                                required
+                            >{{ old('message', '') }}</textarea>
+                            {% if errors.has('message') %}
+                                <div class="invalid-feedback">
+                                    {{ errors.first('message') }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Minimum 5, maximum 2000 karakter.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('contact.inbox') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Vissza az üzenetekhez
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Válasz küldése
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

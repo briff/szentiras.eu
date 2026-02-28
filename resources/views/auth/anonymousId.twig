@@ -22,8 +22,15 @@
         {% if redirect %}
         <a href="{{ redirect }}" class="btn btn-success me-2">Tovább az eredeti oldalra</a>
         {% endif %}
-        <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary me-2">
+        <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary me-2 position-relative">
             <i class="bi bi-inbox"></i> Üzeneteim
+            {% set unreadCount = unreadMessageCount() %}
+            {% if unreadCount > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
+                    {{ unreadCount }}
+                    <span class="visually-hidden">Olvasatlan üzenetek</span>
+                </span>
+            {% endif %}
         </a>
         <form method="get" action="/logout" class="d-inline">
             <button type="submit" class="btn btn-primary">Kilépés</button>

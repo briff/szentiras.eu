@@ -100,6 +100,7 @@ Route::get('/contact/thankyou', [ContactController::class, 'thankYou'])->name('c
 Route::middleware('anonymousId')->group(function () {
     Route::get('/inbox', [InboxController::class, 'index'])->name('contact.inbox');
     Route::get('/inbox/{message}', [InboxController::class, 'showThread'])->name('contact.thread');
+    Route::post('/inbox/{message}/reply', [InboxController::class, 'reply'])->name('contact.reply');
 });
 
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');

@@ -114,4 +114,12 @@ class ContactMessage extends Model
     {
         return $query->where('sender_anonymous_id', $sender->id);
     }
+
+    public function scopeForParticipant($query, AnonymousId $participant)
+    {
+        return $query->where(function ($q) use ($participant) {
+            $q->where('sender_anonymous_id', $participant->id)
+              ->orWhere('receiver_anonymous_id', $participant->id);
+        });
+    }
 }

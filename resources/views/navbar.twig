@@ -72,6 +72,13 @@
                             {% else %}
                                 <i class="bi bi-person-check bi-large"></i>
                             {% endif %}
+                            {% set unreadCount = unreadMessageCount() %}
+                            {% if unreadCount > 0 %}
+                                <span class="badge bg-danger ms-1" style="font-size: 0.6em;">
+                                    <i class="bi bi-envelope"></i>
+                                    {{ unreadCount }}
+                                </span>
+                            {% endif %}
                         </a>
                     {% endif %}
                 </li>
