@@ -34,14 +34,16 @@ class AnonymousIdController extends Controller
             'cf-turnstile-response' => ['required', app(TurnstileValidationRule::class)],
             'r' => ['nullable', new LocalRedirectRule()],
         ]);
-        
+
+        $fails = $validator->fails();
+
         // Check if redirect validation failed
-        if ($validator->fails() && $validator->errors()->has('r')) {
+        if ($fails && $validator->errors()->has('r')) {
             return response()->json(['error' => 'Invalid redirect URL'], 400);
         }
-        
+
         // Check for other validation errors
-        if ($validator->fails()) {
+        if ($fails) {
             return redirect()->back()->withErrors($validator);
         }
         
@@ -72,14 +74,16 @@ class AnonymousIdController extends Controller
             'anonymous_token' => 'required|exists:anonymous_ids,token',
             'r' => ['nullable', new LocalRedirectRule()],
         ]);
-        
+
+        $fails = $validator->fails();
+
         // Check if redirect validation failed
-        if ($validator->fails() && $validator->errors()->has('r')) {
+        if ($fails && $validator->errors()->has('r')) {
             return response()->json(['error' => 'Invalid redirect URL'], 400);
         }
-        
+
         // Check for other validation errors
-        if ($validator->fails()) {
+        if ($fails) {
             return redirect()->back()->withErrors($validator);
         }
         

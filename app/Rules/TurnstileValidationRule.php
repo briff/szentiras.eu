@@ -26,7 +26,6 @@ class TurnstileValidationRule implements ValidationRule
     {
         try {
             $response = $this->getResponse($token);
-            \Illuminate\Support\Facades\Log::info("Turnstile response", ['response' => $response->json()]);
             return $response->json('success') === true;
         } catch (\Throwable $e) {
             return false;
