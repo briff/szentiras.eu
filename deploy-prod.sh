@@ -127,7 +127,7 @@ if [ "$ENV_CHECK" = "missing" ]; then
 fi
 
 # 5. Check for docker-compose.prod.yml on server
-echo "5. Ensuring docker-compose.prod.yml exists on server..."
+echo "5. Ensuring docker-compose.prod.yml is up to date on server..."
 COMPOSE_CHECK=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && if [ -f docker-compose.prod.yml ]; then echo 'exists'; else echo 'missing'; fi")
 
 if [ "$COMPOSE_CHECK" = "missing" ]; then
@@ -135,7 +135,28 @@ if [ "$COMPOSE_CHECK" = "missing" ]; then
     $SCP_CMD "docker-compose.prod.yml" "$SSH_TARGET:$DEPLOY_REMOTE_PATH/"
     echo "   ✅ docker-compose.prod.yml uploaded"
 else
-    echo "   ✅ docker-compose.prod.yml already exists"
+    # Compare local and remote checksums
+    LOCAL_CHECKSUM=$(md5sum docker-compose.prod.yml | awk '{print $1}')
+    REMOTE_CHECKSUM=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && md5sum docker-compose.prod.yml | awk '{print \$1}'")
+    
+    if [ "$LOCAL_CHECKSUM" != "$REMOTE_CHECKSUM" ]; then
+        echo "   ⚠️  Local docker-compose.prod.yml differs from remote version"
+        echo "   Local checksum:  $LOCAL_CHECKSUM"
+        echo "   Remote checksum: $REMOTE_CHECKSUM"
+        echo
+        read -p "   Upload and use local version? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "   Uploading docker-compose.prod.yml..."
+            $SCP_CMD "docker-compose.prod.yml" "$SSH_TARGET:$DEPLOY_REMOTE_PATH/"
+            echo "   ✅ docker-compose.prod.yml uploaded"
+        else
+            echo "   ❌ Deployment aborted: docker-compose.prod.yml mismatch"
+            exit 1
+        fi
+    else
+        echo "   ✅ docker-compose.prod.yml is up to date"
+    fi
 fi
 
 # 6. Restart app services (keep traefik running to minimise downtime)
