@@ -163,14 +163,14 @@ fi
 echo "6. Restarting app services (traefik kept running)..."
 
 # Bring up infrastructure services first (database, redis, sphinx) if not already running
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d database redis sphinx memcached"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d database redis sphinx memcached"
 
 # Stop only the app-layer containers so traefik keeps serving (returns 502 briefly, not 404)
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose stop horizon app 2>/dev/null || true"
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose rm -f horizon app 2>/dev/null || true"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml stop horizon app 2>/dev/null || true"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml rm -f horizon app 2>/dev/null || true"
 
 # Run migrations before starting app-layer services
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod run --rm --no-deps migrator"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps migrator"
 
 if [ $? -ne 0 ]; then
     echo "❌ Migrations failed! Aborting deployment."
@@ -179,14 +179,14 @@ fi
 echo "   ✅ Migrations complete"
 
 # Start horizon; app depends_on horizon being healthy before it accepts traffic
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --no-deps horizon"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-deps horizon"
 
 echo "   Waiting for horizon to become healthy..."
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && timeout 120 bash -c 'until docker compose ps horizon | grep -q \"healthy\"; do sleep 3; done'" || {
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && timeout 120 bash -c 'until docker compose -f docker-compose.prod.yml ps horizon | grep -q \"healthy\"; do sleep 3; done'" || {
     echo "   ⚠️  Horizon did not become healthy within 120s — check logs"
 }
 
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --no-deps app"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-deps app"
 
 if [ $? -ne 0 ]; then
     echo "❌ Docker compose up failed!"
@@ -195,17 +195,17 @@ if [ $? -ne 0 ]; then
 fi
 
 # Remove orphaned containers from previous deploys (but not traefik)
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --remove-orphans 2>/dev/null || true"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans 2>/dev/null || true"
 
 echo "   ✅ Containers started successfully"
 
 # 8. Verify services are running
 echo "8. Verifying services..."
 sleep 5
-SERVICES=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose ps --services")
+SERVICES=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml ps --services")
 echo "   Running services:"
 for service in $SERVICES; do
-    STATUS=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose ps $service --format '{{.Status}}'")
+    STATUS=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml ps $service --format '{{.Status}}'")
     echo "   - $service: $STATUS"
 done
 
@@ -213,7 +213,7 @@ if [ $EXEC -eq 1 ]; then
     echo
     echo "=== Executing into container app ==="
     SSH_TTY_CMD="$SSH_CMD -t"
-    $SSH_TTY_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose exec app bash"
+    $SSH_TTY_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml exec app bash"
 fi
 
 echo
