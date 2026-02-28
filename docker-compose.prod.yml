@@ -44,6 +44,10 @@ services:
         condition: service_healthy
       sphinx:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+      horizon:
+        condition: service_healthy
     labels:
       - traefik.enable=true
       - traefik.http.routers.myapp.rule=Host(`${APP_DOMAIN}`) || Host(`www.${APP_DOMAIN}`)
@@ -111,22 +115,45 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-  horizon:
-    image: szeu-app-dev
-    volumes:
-      - .:/var/www/html
+  migrator:
+    image: szeu-app-prod
     env_file:
       - path: ./.env.prod
         required: false
+    volumes:
+      - storage:/var/www/html/storage
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - traefik
+    entrypoint: []
+    command: php artisan migrate -n --force
+    restart: "no"
+  horizon:
+    image: szeu-app-prod
+    env_file:
+      - path: ./.env.prod
+        required: false
+    volumes:
+      - storage:/var/www/html/storage
     depends_on:
       redis:
         condition: service_healthy
       database:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     networks:
       - traefik
     command: php artisan horizon
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
+      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 3
   memcached:
     image: memcached:1.6
     command:

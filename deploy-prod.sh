@@ -138,20 +138,44 @@ else
     echo "   ✅ docker-compose.prod.yml already exists"
 fi
 
-# 6. Stop and remove existing containers
-echo "6. Stopping existing containers..."
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose down --remove-orphans 2>/dev/null || true"
-echo "   ✅ Existing containers stopped"
+# 6. Restart app services (keep traefik running to minimise downtime)
+echo "6. Restarting app services (traefik kept running)..."
 
-# 7. Start new containers with .env.prod
-echo "7. Starting new containers with .env.prod..."
-$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d"
+# Bring up infrastructure services first (database, redis, sphinx) if not already running
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d database redis sphinx memcached"
+
+# Stop only the app-layer containers so traefik keeps serving (returns 502 briefly, not 404)
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose stop horizon app 2>/dev/null || true"
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose rm -f horizon app 2>/dev/null || true"
+
+# Run migrations before starting app-layer services
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod run --rm --no-deps migrator"
+
+if [ $? -ne 0 ]; then
+    echo "❌ Migrations failed! Aborting deployment."
+    exit 1
+fi
+echo "   ✅ Migrations complete"
+
+# Start horizon; app depends_on horizon being healthy before it accepts traffic
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --no-deps horizon"
+
+echo "   Waiting for horizon to become healthy..."
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && timeout 120 bash -c 'until docker compose ps horizon | grep -q \"healthy\"; do sleep 3; done'" || {
+    echo "   ⚠️  Horizon did not become healthy within 120s — check logs"
+}
+
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --no-deps app"
 
 if [ $? -ne 0 ]; then
     echo "❌ Docker compose up failed!"
     echo "   Check logs with: ssh -p $DEPLOY_PORT $SSH_TARGET 'cd $DEPLOY_REMOTE_PATH && docker compose logs'"
     exit 1
 fi
+
+# Remove orphaned containers from previous deploys (but not traefik)
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose --env-file .env.prod up -d --remove-orphans 2>/dev/null || true"
+
 echo "   ✅ Containers started successfully"
 
 # 8. Verify services are running

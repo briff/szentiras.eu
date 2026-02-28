@@ -36,8 +36,10 @@ services:
       database:
         condition: service_healthy
       migrator:
-        condition: service_completed_successfully        
+        condition: service_completed_successfully
       sphinx:
+        condition: service_healthy
+      horizon:
         condition: service_healthy
   database:
     image: pgvector/pgvector:pg17
@@ -184,10 +186,18 @@ services:
         condition: service_healthy
       database:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     networks:
       - szeu-network
     command: php artisan horizon
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
+      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 3
     # Hunspell is inside the container for now, this is preparation for the future
   # hunspell:
   #   image: szeu-hunspell
