@@ -1,0 +1,90 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Anonim azonosítók szerkesztése</h1>
+    <p class="text-muted">Regisztrált anonim felhasználók kezelése</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="anonymous-ids-editor">
+    {% if anonymousIds.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Token</th>
+                        <th>Létrehozva</th>
+                        <th>Utolsó bejelentkezés</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anonymousId in anonymousIds %}
+                    <tr>
+                        <td>
+                            <code class="user-select-all">{{ anonymousId.token }}</code>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ anonymousId.created_at.format('Y-m-d H:i:s') }}</small>
+                        </td>
+                        <td>
+                            {% if anonymousId.last_login %}
+                                <small class="text-muted">{{ anonymousId.last_login }}</small>
+                            {% else %}
+                                <small class="text-muted text-secondary">Soha</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if anonymousIds.hasPages() %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if anonymousIds.onFirstPage() %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Előző</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ anonymousIds.previousPageUrl() }}">Előző</a>
+                    </li>
+                {% endif %}
+
+                {% for page, url in anonymousIds.getUrlRange(1, anonymousIds.lastPage()) %}
+                    {% if page == anonymousIds.currentPage() %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if anonymousIds.hasMorePages() %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ anonymousIds.nextPageUrl() }}">Következő</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Következő</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>Nincs anonim azonosító</strong>
+            <p class="mb-0">Még nem lett regisztrálva anonim felhasználó.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

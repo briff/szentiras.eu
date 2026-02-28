@@ -5,6 +5,7 @@ use SzentirasHu\Http\Controllers\Ai\AiController;
 use SzentirasHu\Http\Controllers\Auth\AnonymousIdController;
 use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
+use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
 use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
 use SzentirasHu\Http\Controllers\Home\HomeController;
 use SzentirasHu\Http\Controllers\MediaController;
@@ -98,6 +99,11 @@ Route::middleware('editor')->group(function () {
         Route::get('/{commentary}/status', [CommentaryEditorController::class, 'status'])->name('status');
         Route::put('/{commentary}', [CommentaryEditorController::class, 'update'])->name('update');
         Route::delete('/{commentary}', [CommentaryEditorController::class, 'destroy'])->name('destroy');
+    });
+
+    // Anonymous IDs editor
+    Route::prefix('editor/anonymous-ids')->name('editor.anonymousIds.')->group(function () {
+        Route::get('/', [AnonymousIdEditorController::class, 'index'])->name('index');
     });
 });
 
