@@ -198,6 +198,7 @@ return [
             'last',
             'mix',
             'isEditor',
+            'request'
         ],
 
         /*

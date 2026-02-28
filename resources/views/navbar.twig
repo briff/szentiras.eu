@@ -10,7 +10,7 @@
         <div class="collapse navbar-collapse" id="navbar">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Fordítások<span class="caret"></span></a>
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-book"></i> Fordítások<span class="caret"></span></a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <!--a class="dropdown-item" href="/KNB">Káldi-Neovulgáta (KNB)</a-->
                         <a class="dropdown-item" href="/SZIT">Szent István Társulati Biblia (SZIT)</a>
@@ -22,37 +22,47 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="http://ujszov.hu" class="" rel="external" target="_new">
                             Görög újszövetségi honlap {{ externalIcon }}</a>
-                        <div class="dropdown-divider"></div>                 
+                        <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="/forditasok">Ismertetés a fordításokról</a>
                       </div>
-                <li class="nav-item"><a class="nav-link" href="/tervek">Olvasási tervek</a></li>
+                <li class="nav-item"><a class="nav-link" href="/tervek"><i class="bi bi-calendar-check"></i> Olvasási tervek</a></li>
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Kapcsolódó honlapok<span class="caret"></span></a>
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-link-45deg"></i> Kapcsolódó honlapok<span class="caret"></span></a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="https://szentjozsefhackathon.github.io/napi-lelki-batyu/naptar.html" target="_new">Katolikus igenaptár {{ externalIcon }}</a>
                         <a class="dropdown-item" href="https://lh.kbs.sk/cgi-bin/l.cgi?qt=pdnes&j=hu">Zsolozsma {{ externalIcon }}</a>
                         <a class="dropdown-item" href="https://szentiras.hu/" target="_new">Szent Jeromos Katolikus Bibliatársulat {{ externalIcon }}</a>
                     </div>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="/api">Fejlesztőknek</a></li>
-                <li class="nav-item"><a class="nav-link" href="/informaciok">Információk</a></li>
+                <li class="nav-item"><a class="nav-link" href="/informaciok"><i class="bi bi-info-circle"></i> Információk</a></li>
                 {% if isEditor() %}
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Szerkesztés<span class="caret"></span></a>
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-pencil-square"></i> Szerkesztés<span class="caret"></span></a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item" href="{{ route('editor.commentaries.index') }}">
                             <i class="bi bi-chat-left-text"></i> Kommentárok
+                        </a>
+                        <a class="dropdown-item" href="{{ route('editor.contactMessages.index') }}">
+                            <i class="bi bi-inbox-fill"></i> Beérkezett üzenetek
+                        </a>
+                        <a class="dropdown-item" href="{{ route('editor.anonymousIds.index') }}">
+                            <i class="bi bi-person-badge"></i> Anonim azonosítók
                         </a>
                     </div>
                 </li>
                 {% endif %}
               </ul>
               <ul class="navbar-nav ms-auto">
+                <li class="nav-item my-auto">
+                    <a class="nav-link" href="/contact" title="Kapcsolatfelvétel">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                </li>
                 <li class="nav-item">
                     {% if  not session('anonymous_token') %}
                     {% set currentPath = app.request.pathInfo %}
-                    <a class="nav-link" href="/login{% if currentPath != '/login' %}?r={{ currentPath|url_encode }}{% endif %}">
-                        <i class="bi bi-person bi-large"></i> Belépés
+                    <a class="nav-link" href="/login{% if currentPath != '/login' %}?r={{ currentPath|url_encode }}{% endif %}" title="Belépés">
+                        <i class="bi bi-person bi-large"></i>
                     </a>
                     {% else %}
                         <a class="nav-link" href="/profile/{{ session('anonymous_token') }}" title="{% if isEditor() %}Szerkesztő{% else %}Felhasználó{% endif %}">
@@ -65,7 +75,7 @@
                         </a>
                     {% endif %}
                 </li>
-                <li class="nav-item">
+                <li class="nav-item my-auto">
                     <button class="btn btn-link nav-link theme-toggle" type="button" title="Sötét/világos mód váltása">
                         <i class="bi bi-moon-stars theme-icon"></i>
                     </button>

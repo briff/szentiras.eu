@@ -7,6 +7,9 @@ use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
 use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
 use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
+use SzentirasHu\Http\Controllers\Editor\ContactMessageEditorController;
+use SzentirasHu\Http\Controllers\Contact\ContactController;
+use SzentirasHu\Http\Controllers\Contact\InboxController;
 use SzentirasHu\Http\Controllers\Home\HomeController;
 use SzentirasHu\Http\Controllers\MediaController;
 use SzentirasHu\Http\Middleware\RedirectLowerCaseTranslationAbbrev;
@@ -88,6 +91,17 @@ Route::get('/logout', [AnonymousIdController::class, 'logout'])
 Route::post('/login', [AnonymousIdController::class, 'login']);
 Route::get('/login', [AnonymousIdController::class, 'showLoginForm']);
 
+// Contact routes
+Route::get('/contact', [ContactController::class, 'showForm'])->name('contact.form');
+Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
+Route::get('/contact/thankyou', [ContactController::class, 'thankYou'])->name('contact.thankyou');
+
+// User inbox routes (require anonymous login)
+Route::middleware('anonymousId')->group(function () {
+    Route::get('/inbox', [InboxController::class, 'index'])->name('contact.inbox');
+    Route::get('/inbox/{message}', [InboxController::class, 'showThread'])->name('contact.thread');
+});
+
 Route::get('/media/{uuid}', [MediaController::class, 'show'])->name('media.show');
 
 // Editor routes
@@ -104,6 +118,15 @@ Route::middleware('editor')->group(function () {
     // Anonymous IDs editor
     Route::prefix('editor/anonymous-ids')->name('editor.anonymousIds.')->group(function () {
         Route::get('/', [AnonymousIdEditorController::class, 'index'])->name('index');
+    });
+
+    // Contact messages editor
+    Route::prefix('editor/contact-messages')->name('editor.contactMessages.')->group(function () {
+        Route::get('/', [ContactMessageEditorController::class, 'index'])->name('index');
+        Route::get('/{message}', [ContactMessageEditorController::class, 'showThread'])->name('thread');
+        Route::post('/{message}/reply', [ContactMessageEditorController::class, 'reply'])->name('reply');
+        Route::post('/{message}/resolve', [ContactMessageEditorController::class, 'markResolved'])->name('resolve');
+        Route::post('/{message}/delete', [ContactMessageEditorController::class, 'delete'])->name('delete');
     });
 });
 

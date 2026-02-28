@@ -1,0 +1,139 @@
+{% extends 'layout' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4 mb-0">
+                    <i class="bi bi-inbox-fill"></i> Szerkesztői beérkezett üzenetek
+                </h2>
+                <div class="btn-group">
+                    <a href="{{ route('editor.contactMessages.index', {filter: 'unresolved'}) }}"
+                       class="btn btn-outline-warning {{ request('filter') == 'unresolved' ? 'active' : '' }}">
+                        Nyitott
+                    </a>
+                    <a href="{{ route('editor.contactMessages.index', {filter: 'resolved'}) }}"
+                       class="btn btn-outline-success {{ request('filter') == 'resolved' ? 'active' : '' }}">
+                        Lezárt
+                    </a>
+                    <a href="{{ route('editor.contactMessages.index') }}"
+                       class="btn btn-outline-secondary {{ not request('filter') ? 'active' : '' }}">
+                        Összes
+                    </a>
+                </div>
+            </div>
+
+            {% if messages.total == 0 %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Nincsenek beérkezett üzenetek</h5>
+                        <p class="text-muted">Még senki sem küldött üzenetet.</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Feladó</th>
+                                <th>Üzenet</th>
+                                <th>Dátum</th>
+                                <th>Válaszok</th>
+                                <th>Állapot</th>
+                                <th>Műveletek</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for msg in messages %}
+                                <tr class="{{ msg.isResolved() ? 'table-success' : '' }}">
+                                    <td>{{ msg.id }}</td>
+                                    <td>
+                                        {% if msg.sender %}
+                                            <span class="badge bg-primary">{{ msg.sender.token|slice(0, 8) }}…</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Vendég</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('editor.contactMessages.thread', msg.id) }}">
+                                            {{ msg.message|slice(0, 80) }}{% if msg.message|length > 80 %}…{% endif %}
+                                        </a>
+                                    </td>
+                                    <td>{{ msg.created_at|date('m.d. H:i') }}</td>
+                                    <td>
+                                        {% if msg.replies.count > 0 %}
+                                            <span class="badge bg-info">{{ msg.replies.count }}</span>
+                                        {% else %}
+                                            <span class="text-muted">–</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if msg.isResolved() %}
+                                            <span class="badge bg-success">Lezárt</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Nyitott</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ route('editor.contactMessages.thread', msg.id) }}"
+                                               class="btn btn-outline-primary" title="Megtekintés">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if not msg.isResolved() %}
+                                                <form method="post"
+                                                      action="{{ route('editor.contactMessages.resolve', msg.id) }}"
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('Biztosan lezárod ezt a beszélgetést?')">
+                                                    {{ csrf_field() }}
+                                                    <button type="submit" class="btn btn-outline-success" title="Lezárás">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                            <form method="post"
+                                                  action="{{ route('editor.contactMessages.delete', msg.id) }}"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Biztosan törlöd ezt az üzenetet? A törlés végleges!')">
+                                                {{ csrf_field() }}
+                                                <button type="submit" class="btn btn-outline-danger" title="Törlés">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if messages.lastPage > 1 %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if messages.currentPage > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ messages.previousPageUrl }}">Előző</a>
+                                </li>
+                            {% endif %}
+                            {% for page in 1..messages.lastPage %}
+                                <li class="page-item {{ page == messages.currentPage ? 'active' }}">
+                                    <a class="page-link" href="{{ messages.url(page) }}">{{ page }}</a>
+                                </li>
+                            {% endfor %}
+                            {% if messages.currentPage < messages.lastPage %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ messages.nextPageUrl }}">Következő</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

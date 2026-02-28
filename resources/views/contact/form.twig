@@ -1,0 +1,83 @@
+{% extends 'layout' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h4 mb-0">Kapcsolatfelvétel</h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Kérdése, észrevétele van? Írjon nekünk! A választ a profiljában fogja látni, ha be van jelentkezve.
+                        {% if not isLoggedIn %}
+                            <br><strong>Nem bejelentkezett felhasználóknak</strong> a küldés előtt egy CAPTCHA‑ellenőrzés szükséges.
+                        {% endif %}
+                    </p>
+
+                    <form method="post" action="{{ route('contact.submit') }}">
+                        {{ csrf_field() }}
+
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Üzenet *</label>
+                            <textarea
+                                id="message"
+                                name="message"
+                                class="form-control"
+                                rows="6"
+                                placeholder="Írja ide üzenetét…"
+                                required
+                                minlength="5"
+                                maxlength="2000"
+                            >{{ old('message') }}</textarea>
+                            <div class="form-text">Minimum 5 karakter.</div>
+                            {% if errors.has('message') %}
+                                <div class="invalid-feedback d-block">{{ errors.first('message') }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if not isLoggedIn %}
+                            <div class="mb-3">
+                                <div class="cf-turnstile" data-sitekey="{{ config_get('services.cloudflare_turnstile.site_key') }}"></div>
+                                {% if errors.has('cf-turnstile-response') %}
+                                    <div class="invalid-feedback d-block">{{ errors.first('cf-turnstile-response') }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url('/') }}" class="btn btn-outline-secondary">Mégsem</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Üzenet elküldése</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if isLoggedIn %}
+                <div class="mt-3 text-center">
+                    <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-inbox"></i> Üzeneteim megtekintése
+                    </a>
+                </div>
+            {% else %}
+                <div class="mt-3 text-center">
+                    <p class="text-muted">
+                        Ha bejelentkezne, nem kellene CAPTCHA‑t megoldania, és válaszokat is kaphatna.
+                        <a href="{{ url('/login') }}">Bejelentkezés</a> vagy
+                        <a href="{{ url('/register') }}">névtelen azonosító létrehozása</a>.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+    {% if not isLoggedIn %}
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+    {% endif %}
+{% endblock %}

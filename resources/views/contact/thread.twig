@@ -1,0 +1,84 @@
+{% extends 'layout' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('contact.inbox') }}">Üzeneteim</a></li>
+                    <li class="breadcrumb-item active">Beszélgetés</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Eredeti üzenet</h5>
+                    <small class="text-muted">{{ message.created_at|date('Y. m. d. H:i') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-person-circle fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">
+                                {% if message.sender %}
+                                    <span class="badge bg-secondary">Szerkesztő</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Ön</span>
+                                {% endif %}
+                                {% if message.sender %}
+                                    {{ message.sender.token|slice(0, 8) }}…
+                                {% else %}
+                                    Vendég
+                                {% endif %}
+                            </h6>
+                            <p class="mb-0">{{ message.message|nl2br }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if message.replies.count > 0 %}
+                <h5 class="mb-3">Válaszok ({{ message.replies.count }})</h5>
+                {% for reply in message.replies %}
+                    <div class="card mb-3 {{ reply.sender_anonymous_id == anonymousId.id ? 'border-primary' }}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-person-circle fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0">
+                                            {% if reply.sender_anonymous_id == anonymousId.id %}
+                                                <span class="badge bg-primary">Ön</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Szerkesztő</span>
+                                            {% endif %}
+                                            {{ reply.sender.token|slice(0, 8) }}…
+                                        </h6>
+                                        <small class="text-muted">{{ reply.created_at|date('Y. m. d. H:i') }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ reply.message|nl2br }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Még nem érkezett válasz erre az üzenetre.
+                </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{{ route('contact.inbox') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Vissza az üzenetekhez
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

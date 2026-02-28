@@ -1,0 +1,50 @@
+{% extends 'layout' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0">Üzenet elküldve</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <p class="lead text-center">
+                        Köszönjük üzenetét! Sikeresen megkaptuk.
+                    </p>
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Mi történik most?</h5>
+                        <ul class="mb-0">
+                            <li>Az üzenetét a szerkesztők hamarosan megtekintik.</li>
+                            {% if session('anonymous_token') %}
+                                <li>Mivel be van jelentkezve, választ is kaphat. A választ a <strong>profiljában</strong> fogja látni.</li>
+                                <li>Ha szeretné, azonnal megnézheti az üzeneteit.</li>
+                            {% else %}
+                                <li>Mivel nem jelentkezett be, <strong>nem tudunk választ küldeni</strong> erre az üzenetre.</li>
+                                <li>Ha választ szeretne kapni, <a href="{{ url('/login') }}">jelentkezzen be</a> vagy <a href="{{ url('/register') }}">hozzon létre egy névtelen azonosítót</a>, majd küldje el újra az üzenetét.</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="{{ url('/') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-house"></i> Főoldal
+                        </a>
+                        {% if session('anonymous_token') %}
+                            <a href="{{ route('contact.inbox') }}" class="btn btn-primary">
+                                <i class="bi bi-inbox"></i> Üzeneteim
+                            </a>
+                        {% else %}
+                            <a href="{{ route('contact.form') }}" class="btn btn-primary">
+                                <i class="bi bi-envelope"></i> Új üzenet
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
