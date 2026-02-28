@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Pgvector\Vector;
+use SzentirasHu\Data\UsxCodes;
 use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Models\DictionaryEntry;
 use SzentirasHu\Models\DictionaryMeaning;
@@ -109,19 +110,51 @@ class AiController extends Controller
                 }
             }
         }
-        $similarExcerpts = $this->semanticSearchService->findSimilarVersesInTranslation($canonicalReference->toString(), $translationAbbrev);
+        $similarExcerpts = $this->semanticSearchService->findSimilarVersesInTranslation($canonicalReference->toString(), $translationAbbrev, 20);
+        $similarsOT = [];
+        $similarsNT = [];
         if (!empty($similarExcerpts)) {
             foreach ($similarExcerpts as $excerpt) {
-                $similars[] = [
+                $similar = [
                     "reference" => $excerpt->reference,
                     "translationAbbrev" => $excerpt->translation_abbrev,
                     "similarity" => 1 - $excerpt->neighbor_distance,
                     "text" => $this->textService->getPureText(CanonicalReference::fromString($excerpt->reference, $excerpt->translation_id), $this->translationService->getByAbbreviation($excerpt->translation_abbrev), false)
                 ];
+                
+                // Extract book abbreviation from reference to determine OT/NT
+                $refParts = explode(' ', $excerpt->reference);
+                $bookAbbrev = $refParts[0];
+                $otUsxCodes = array_keys(UsxCodes::OLD_TESTAMENT);
+                $ntUsxCodes = array_keys(UsxCodes::NEW_TESTAMENT);
+                
+                // Find matching USX code
+                $matchingUsxCode = null;
+                foreach ($otUsxCodes as $usxCode) {
+                    if (in_array($bookAbbrev, UsxCodes::OLD_TESTAMENT[$usxCode]['default'] ?? [])) {
+                        $matchingUsxCode = $usxCode;
+                        break;
+                    }
+                }
+                
+                if (!$matchingUsxCode) {
+                    foreach ($ntUsxCodes as $usxCode) {
+                        if (in_array($bookAbbrev, UsxCodes::NEW_TESTAMENT[$usxCode]['default'] ?? [])) {
+                            $matchingUsxCode = $usxCode;
+                            break;
+                        }
+                    }
+                }
+                
+                if (in_array($matchingUsxCode, $otUsxCodes)) {
+                    $similarsOT[] = $similar;
+                } else {
+                    $similarsNT[] = $similar;
+                }
             }
         }
 
-        $view = view("ai.aiToolPopover", ['pureTexts' => $pureTexts, 'similars' => $similars ?? [], 'greekText' => $annotatedGreekText, 'greekSimilarity' => $greekSimilarity, 'gepi' => $gepi])->render();
+        $view = view("ai.aiToolPopover", ['pureTexts' => $pureTexts, 'similars' => $similarsOT + $similarsNT, 'similarsOT' => $similarsOT, 'similarsNT' => $similarsNT, 'greekText' => $annotatedGreekText, 'greekSimilarity' => $greekSimilarity, 'gepi' => $gepi])->render();
         return response()->json($view);
     }
 

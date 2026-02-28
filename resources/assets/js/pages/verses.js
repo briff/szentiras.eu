@@ -104,6 +104,15 @@ const initToggler = function () {
                             popover.tip.querySelector('.btn-close').addEventListener("click", () => {
                                 popover.hide();
                             });
+                            const filterRadios = popover.tip.querySelectorAll('.btn-check[name^="similarFilter"]');
+                            filterRadios.forEach(radio => {
+                                radio.addEventListener('change', function() {
+                                    const filterValue = this.value;
+                                    popover.tip.querySelectorAll('.similars-container').forEach(container => {
+                                        container.style.display = container.dataset.filter === filterValue ? 'block' : 'none';
+                                    });
+                                });
+                            });
                             const tooltipTriggerList = popover.tip.querySelectorAll(".quality[data-bs-toggle='tooltip']");
                             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                             const greekWords = popover.tip.querySelectorAll('.greekWord');

@@ -57,15 +57,55 @@
       {% endif %}
     </div>
     <div class="tab-pane scrollable-content" id="similar{{ gepi }}" role="tabpanel" aria-labelledby="similar-tab" tabindex="0">
-      <div><a href="/{{ pureTexts[0].text }}/{{ pureText[0].reference }}">{{ pureTexts[0].reference }}</a>  
+      <div><a href="/{{ pureTexts[0].text }}/{{ pureText[0].reference }}">{{ pureTexts[0].reference }}</a>
       <span class="pureText">{{ pureTexts[0].text }}</span>
       </div>
-      {% for similar in similars %}
-        <div>
-          <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
-          <span class="pureText">{{ similar.text }}</span>
+      
+      <!-- Filter Radio Buttons -->
+      <div class="mb-3 p-2 border-bottom">
+        <div class="btn-group btn-group-sm" role="group">
+          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterAll{{ gepi }}" value="all" checked>
+          <label class="btn btn-outline-secondary" for="filterAll{{ gepi }}">Mindkettő ({{ similars|length }})</label>
+          
+          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterOT{{ gepi }}" value="ot">
+          <label class="btn btn-outline-secondary" for="filterOT{{ gepi }}">Ó.Sz. ({{ similarsOT|length }})</label>
+          
+          <input type="radio" class="btn-check" name="similarFilter{{ gepi }}" id="filterNT{{ gepi }}" value="nt">
+          <label class="btn btn-outline-secondary" for="filterNT{{ gepi }}">Ú.Sz. ({{ similarsNT|length }})</label>
         </div>
-      {% endfor %}
+      </div>
+      
+      <!-- All similars (default view) - sorted by relevance -->
+      <div class="similars-container" data-filter="all">
+        {% set allSimilars = similars|sort((a, b) => b.similarity <=> a.similarity) %}
+        {% for similar in allSimilars %}
+          <div class="similar-item">
+            <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
+            <span class="pureText">{{ similar.text }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Old Testament similars -->
+      <div class="similars-container" data-filter="ot" style="display: none;">
+        {% for similar in similarsOT %}
+          <div class="similar-item">
+            <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
+            <span class="pureText">{{ similar.text }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- New Testament similars -->
+      <div class="similars-container" data-filter="nt" style="display: none;">
+        {% for similar in similarsNT %}
+          <div class="similar-item">
+            <a href="/{{ similar.translationAbbrev }}/{{ similar.reference }}">{{ similar.reference }}</a> {{ similarityCircle(similar.similarity) }}
+            <span class="pureText">{{ similar.text }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      
     </div>
 
   </div>
