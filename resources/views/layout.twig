@@ -23,12 +23,13 @@
             (function() {
                 try {
                     var theme = localStorage.getItem('theme');
+                    // Only apply stored theme if it's 'light' or 'dark'; treat 'system' and missing as system preference
                     if (theme === 'dark') {
                         document.documentElement.setAttribute('data-theme', 'dark');
                     } else if (theme === 'light') {
                         document.documentElement.removeAttribute('data-theme');
                     } else {
-                        // No stored preference, check system preference
+                        // No stored preference or 'system' theme, check system preference
                         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                             document.documentElement.setAttribute('data-theme', 'dark');
                         }
