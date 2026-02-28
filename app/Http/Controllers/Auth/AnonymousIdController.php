@@ -16,7 +16,7 @@ class AnonymousIdController extends Controller
         if (session()->has('anonymous_token')) {
             return Redirect::to('/profile');
         }
-        $redirect = request()->query('redirect');
+        $redirect = request()->query('r');
         return view("auth.login", ['redirect' => $redirect]);
     }
     
@@ -24,7 +24,7 @@ class AnonymousIdController extends Controller
         if (session()->has('anonymous_token')) {
             return Redirect::to('/profile');
         }
-        $redirect = request()->query('redirect');
+        $redirect = request()->query('r');
         return view("auth.anonymousRegistration", ['redirect' => $redirect]);
     }
 
@@ -32,11 +32,11 @@ class AnonymousIdController extends Controller
         $validator = Validator::make(request()->all(), [
             'approve' => 'accepted',
             'cf-turnstile-response' => ['required', new TurnstileValidationRule()],
-            'redirect' => ['nullable', new LocalRedirectRule()],
+            'r' => ['nullable', new LocalRedirectRule()],
         ]);
         
         // Check if redirect validation failed
-        if ($validator->fails() && $validator->errors()->has('redirect')) {
+        if ($validator->fails() && $validator->errors()->has('r')) {
             return response()->json(['error' => 'Invalid redirect URL'], 400);
         }
         
@@ -59,7 +59,7 @@ class AnonymousIdController extends Controller
         Cookie::queue(Cookie::forever('anonymous_token', $anonymousId->token));
         
         // Redirect to target URL or profile
-        $redirect = $validated['redirect'] ?? null;
+        $redirect = $validated['r'] ?? null;
         if ($redirect && $this->isValidLocalRedirect($redirect)) {
             return Redirect::to($redirect);
         }
@@ -70,11 +70,11 @@ class AnonymousIdController extends Controller
     public function login() {
         $validator = Validator::make(request()->all(), [
             'anonymous_token' => 'required|exists:anonymous_ids,token',
-            'redirect' => ['nullable', new LocalRedirectRule()],
+            'r' => ['nullable', new LocalRedirectRule()],
         ]);
         
         // Check if redirect validation failed
-        if ($validator->fails() && $validator->errors()->has('redirect')) {
+        if ($validator->fails() && $validator->errors()->has('r')) {
             return response()->json(['error' => 'Invalid redirect URL'], 400);
         }
         
@@ -90,7 +90,7 @@ class AnonymousIdController extends Controller
         Cookie::queue(Cookie::forever('anonymous_token', $anonymousId->token));
         
         // Redirect to target URL or home
-        $redirect = $validated['redirect'] ?? null;
+        $redirect = $validated['r'] ?? null;
         if ($redirect && $this->isValidLocalRedirect($redirect)) {
             return Redirect::to($redirect);
         }
@@ -112,7 +112,7 @@ class AnonymousIdController extends Controller
         Cookie::queue(Cookie::forever('anonymous_token', $anonymousId->token));
         
         // Check for redirect parameter
-        $redirect = request()->query('redirect');
+        $redirect = request()->query('r');
         
         // If a valid redirect parameter is provided, redirect immediately (auto-login)
         if ($redirect) {

@@ -19,11 +19,7 @@
         </div>
 
         <div class="row g-3 mb-4">
-            <!-- Translation select tile (1 wide) -->
-            <div class="col-12 col-md-6 col-lg-3">
-                {% include 'translationTile' with { cathBibles: cathBibles, otherBibles: otherBibles } %}
-            </div>
-            
+ 
             <!-- New Testament tile (1 wide) -->
             <div class="col-12 col-md-6 col-lg-3">
                 {% include 'newTestamentTile' %}
@@ -37,6 +33,11 @@
             <!-- Psalms tile (1 wide) -->
             <div class="col-12 col-md-6 col-lg-3">
                 {% include 'psalmsTile' %}
+            </div>
+
+            <!-- Translation select tile (1 wide) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                {% include 'translationTile' with { cathBibles: cathBibles, otherBibles: otherBibles } %}
             </div>
         </div>
 

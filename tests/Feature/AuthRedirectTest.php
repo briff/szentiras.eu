@@ -13,7 +13,7 @@ class AuthRedirectTest extends TestCase
 
     public function test_login_page_accepts_redirect_parameter()
     {
-        $response = $this->get('/login?redirect=/test-page');
+        $response = $this->get('/login?r=/test-page');
         
         $response->assertStatus(200);
         $response->assertSee('name="redirect"', false);
@@ -22,7 +22,7 @@ class AuthRedirectTest extends TestCase
 
     public function test_register_page_accepts_redirect_parameter()
     {
-        $response = $this->get('/register?redirect=/test-page');
+        $response = $this->get('/register?r=/test-page');
         
         $response->assertStatus(200);
         $response->assertSee('name="redirect"', false);
@@ -133,7 +133,7 @@ class AuthRedirectTest extends TestCase
         ]);
 
         // Don't set session - simulating auto-login via profile link
-        $response = $this->get('/profile/testprofiletoken?redirect=/test-page');
+        $response = $this->get('/profile/testprofiletoken?r=/test-page');
         
         $response->assertRedirect('/test-page');
         // Check session was set
@@ -150,7 +150,7 @@ class AuthRedirectTest extends TestCase
         session(['anonymous_token' => 'testprofiletoken2']);
 
         // Invalid redirect (external) should show profile page WITHOUT continue button
-        $response = $this->get('/profile/testprofiletoken2?redirect=https://evil.com');
+        $response = $this->get('/profile/testprofiletoken2?r=https://evil.com');
         
         $response->assertStatus(200);
         // Should not show continue button for external URL
@@ -174,10 +174,10 @@ class AuthRedirectTest extends TestCase
 
     public function test_register_link_in_login_includes_redirect_parameter()
     {
-        $response = $this->get('/login?redirect=/test-page');
+        $response = $this->get('/login?r=/test-page');
         
         $response->assertStatus(200);
-        $response->assertSee('href="/register?redirect=', false);
+        $response->assertSee('href="/register?r=', false);
         $response->assertSee('/test-page', false);
     }
 }

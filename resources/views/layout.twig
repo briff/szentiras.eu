@@ -19,6 +19,23 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         {% block meta %}{% endblock %}
+        <script>
+            (function() {
+                try {
+                    var theme = localStorage.getItem('theme');
+                    if (theme === 'dark') {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    } else if (theme === 'light') {
+                        document.documentElement.removeAttribute('data-theme');
+                    } else {
+                        // No stored preference, check system preference
+                        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                            document.documentElement.setAttribute('data-theme', 'dark');
+                        }
+                    }
+                } catch (e) {}
+            })();
+        </script>
         <link rel="shortcut icon" type="image/vnd.microsoft.icon" href="/favicon.ico">
         <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

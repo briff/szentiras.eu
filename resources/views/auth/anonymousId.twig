@@ -33,9 +33,13 @@
     <script>
 function copyToken() {
     var copyText = document.getElementById("tokenField");
-    navigator.clipboard.writeText(window.location.protocol + "://" + window.location.host+"/profile/"+copyText.value);
-    document.execCommand("copy");
-    alert("A belépési link a vágólapra került!");
+    navigator.clipboard.writeText(window.location.protocol + "://" + window.location.host+"/profile/"+copyText.value+"?r={{ '/'|url_encode }}").then(function() {
+        document.execCommand("copy");        
+        alert("A belépési link a vágólapra került!");
+    }, function(err) {
+        alert("Hiba történt a másolás során: ", err);
+    });
+    
 }
 </script>
 {% endblock %}

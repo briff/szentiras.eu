@@ -51,7 +51,7 @@
                 <li class="nav-item">
                     {% if  not session('anonymous_token') %}
                     {% set currentPath = app.request.pathInfo %}
-                    <a class="nav-link" href="/login{% if currentPath != '/login' %}?redirect={{ currentPath|url_encode }}{% endif %}">
+                    <a class="nav-link" href="/login{% if currentPath != '/login' %}?r={{ currentPath|url_encode }}{% endif %}">
                         <i class="bi bi-person bi-large"></i> Belépés
                     </a>
                     {% else %}
@@ -65,7 +65,12 @@
                         </a>
                     {% endif %}
                 </li>
-            </ul>
+                <li class="nav-item">
+                    <button class="btn btn-link nav-link theme-toggle" type="button" title="Sötét/világos mód váltása">
+                        <i class="bi bi-moon-stars theme-icon"></i>
+                    </button>
+                </li>
+             </ul>
         </div>
     </div>
 </nav>

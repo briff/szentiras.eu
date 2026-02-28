@@ -34,7 +34,7 @@
                                         <p class="font-semibold text-gray-800 mb-2">Kommentár a pontos szentírási helyhez:</p>
                                         
                                         <div class="space-y-4" id="exact-commentaries-{{ loop.index0 }}">
-                                            <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
+                                            <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
@@ -92,7 +92,7 @@
                                     <p class="font-semibold text-gray-800 mb-2">Kapcsolódó kommentár:</p>
                                     {% for commentaryData in relatedCommentaries %}
                                         <div class="space-y-4">
-                                            <div class="commentary p-3 border-l-4 border-blue-300 bg-white rounded-r shadow-sm">
+                                            <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
