@@ -6,6 +6,7 @@ use SzentirasHu\Http\Controllers\Auth\AnonymousIdController;
 use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
 use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
+use SzentirasHu\Http\Controllers\Editor\ApiKeyController;
 use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
 use SzentirasHu\Http\Controllers\Editor\ContactMessageEditorController;
 use SzentirasHu\Http\Controllers\Contact\ContactController;
@@ -128,6 +129,17 @@ Route::middleware('editor')->group(function () {
         Route::post('/{message}/reply', [ContactMessageEditorController::class, 'reply'])->name('reply');
         Route::post('/{message}/resolve', [ContactMessageEditorController::class, 'markResolved'])->name('resolve');
         Route::post('/{message}/delete', [ContactMessageEditorController::class, 'delete'])->name('delete');
+    });
+
+    // API keys editor
+    Route::prefix('editor/api-keys')->name('editor.apiKeys.')->group(function () {
+        Route::get('/', [ApiKeyController::class, 'index'])->name('index');
+        Route::get('/create', [ApiKeyController::class, 'create'])->name('create');
+        Route::post('/', [ApiKeyController::class, 'store'])->name('store');
+        Route::get('/{apiKey}', [ApiKeyController::class, 'show'])->name('show');
+        Route::get('/{apiKey}/edit', [ApiKeyController::class, 'edit'])->name('edit');
+        Route::put('/{apiKey}', [ApiKeyController::class, 'update'])->name('update');
+        Route::delete('/{apiKey}', [ApiKeyController::class, 'destroy'])->name('destroy');
     });
 });
 

@@ -7,6 +7,7 @@ use SzentirasHu\Http\Middleware\CheckCommentaryGeneration;
 use SzentirasHu\Http\Middleware\CheckEditor;
 use SzentirasHu\Http\Middleware\FillAnonymousIdFromCookie;
 use SzentirasHu\Http\Middleware\ValidateAnonymousId;
+use SzentirasHu\Http\Middleware\VerifyApiKey;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'anonymousId' => ValidateAnonymousId::class,
             'editor' => CheckEditor::class,
             'commentaryGeneration' => CheckCommentaryGeneration::class,
+            'apiKey' => VerifyApiKey::class,
         ]);
         $middleware->web(append: [FillAnonymousIdFromCookie::class]);
     })

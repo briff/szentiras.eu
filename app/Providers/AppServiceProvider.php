@@ -2,8 +2,10 @@
 
 namespace SzentirasHu\Providers;
 
-use SzentirasHu\Service\Ai\AiPromptService;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Service\Editor\EditorService;
 use Twig\Environment;
 use Twig\Extra\Markdown\DefaultMarkdown;
@@ -52,6 +54,22 @@ class AppServiceProvider extends ServiceProvider
                 ->where('is_read', false)
                 ->count();
         }));
+
+        // Define rate limiter for API keys
+        RateLimiter::for('api_key', function ($request) {
+            $apiKey = $request->attributes->get('apiKey');
+            if (!$apiKey || $apiKey->isInternal()) {
+                // No limit for internal keys or missing key (should not happen)
+                return \Illuminate\Cache\RateLimiting\Limit::none();
+            }
+
+            $rate = $apiKey->effectiveThrottleRate();
+            if ($rate === null) {
+                return \Illuminate\Cache\RateLimiting\Limit::none();
+            }
+
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute($rate)->by($apiKey->id);
+        });
     }
 
     /**

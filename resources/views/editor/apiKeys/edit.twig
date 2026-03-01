@@ -1,0 +1,101 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>API kulcs szerkesztése</h1>
+    <p class="text-muted">Módosítsd a kulcs tulajdonságait</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="api-keys-edit">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ route('editor.apiKeys.update', key.id) }}" method="POST">
+                        {{ csrf_field() }}
+                        {{ method_field('PUT') }}
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Név <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ key.name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Leírás</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ key.description ?? '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_internal" name="is_internal" value="1"
+                                    {{ key.is_internal ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_internal">
+                                    Belső kulcs (nincs korlátozás)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="throttle-rate-group">
+                            <label for="throttle_rate" class="form-label">Korlát (kérések percenként)</label>
+                            <input type="number" class="form-control" id="throttle_rate" name="throttle_rate"
+                                   min="1" max="1000" value="{{ key.throttle_rate ?? '' }}" placeholder="60">
+                            <div class="form-text">
+                                Külső kulcsok esetén megadható egyedi korlát. Ha üresen hagyod, az alapértelmezett érték ({{ config('api.default_throttle', 60) }}) lesz érvényes.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="1"
+                                    {{ key.enabled ? 'checked' : '' }}>
+                                <label class="form-check-label" for="enabled">
+                                    Kulcs aktív
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Ha nincs bejelölve, a kulcs letiltva lesz, és a hozzá tartozó API kérések <code>403</code> hibával fognak visszatérni.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Figyelem:</strong> A módosítások azonnal hatályba lépnek. A letiltott kulcsok már nem használhatók.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('editor.apiKeys.show', key.id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Mégse
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Módosítások mentése
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const internalCheckbox = document.getElementById('is_internal');
+        const throttleGroup = document.getElementById('throttle-rate-group');
+
+        function toggleThrottleVisibility() {
+            if (internalCheckbox.checked) {
+                throttleGroup.style.opacity = '0.5';
+                throttleGroup.style.pointerEvents = 'none';
+            } else {
+                throttleGroup.style.opacity = '1';
+                throttleGroup.style.pointerEvents = 'auto';
+            }
+        }
+
+        internalCheckbox.addEventListener('change', toggleThrottleVisibility);
+        toggleThrottleVisibility(); // initial state
+    });
+</script>
+{% endblock %}

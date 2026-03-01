@@ -1,0 +1,115 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>API kulcsok kezelése</h1>
+    <p class="text-muted">API kulcsok létrehozása, szerkesztése és törlése</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="api-keys-editor">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ route('editor.apiKeys.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Új API kulcs
+            </a>
+        </div>
+        <div class="text-muted">
+            <small>API kulcsok száma: {{ keys.count() }}</small>
+        </div>
+    </div>
+
+    {% if keys.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Név</th>
+                        <th>Előtag</th>
+                        <th>Típus</th>
+                        <th>Korlát (percenként)</th>
+                        <th>Státusz</th>
+                        <th>Létrehozta</th>
+                        <th>Utoljára használva</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key in keys %}
+                    <tr>
+                        <td>
+                            <strong>{{ key.name }}</strong>
+                            {% if key.description %}
+                                <br><small class="text-muted">{{ key.description }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code class="text-muted">{{ key.key_prefix }}</code>
+                        </td>
+                        <td>
+                            {% if key.is_internal %}
+                                <span class="badge bg-info">Belső</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Külső</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if key.is_internal %}
+                                <span class="text-muted">–</span>
+                            {% else %}
+                                {{ key.throttle_rate ?? 'alapértelmezett' }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if key.enabled %}
+                                <span class="badge bg-success">Aktív</span>
+                            {% else %}
+                                <span class="badge bg-danger">Letiltva</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if key.createdBy %}
+                                {{ key.createdBy.token|slice(0, 8) }}…
+                                <br><small class="text-muted">{{ key.created_at|date('Y‑m‑d') }}</small>
+                            {% else %}
+                                <span class="text-muted">–</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if key.last_used_at %}
+                                {{ key.last_used_at|date('Y‑m‑d H:i') }}
+                                <br><small class="text-muted">használatok: {{ key.usage_count }}</small>
+                            {% else %}
+                                <span class="text-muted">még nem</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ route('editor.apiKeys.show', key.id) }}" class="btn btn-outline-primary" title="Részletek">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ route('editor.apiKeys.edit', key.id) }}" class="btn btn-outline-secondary" title="Szerkesztés">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ route('editor.apiKeys.destroy', key.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Biztosan törölni szeretnéd ezt az API kulcsot?');">
+                                    {{ csrf_field() }}
+                                    {{ method_field('DELETE') }}
+                                    <button type="submit" class="btn btn-outline-danger" title="Törlés">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Még nincs API kulcs. Hozz létre egyet a fenti gombbal.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

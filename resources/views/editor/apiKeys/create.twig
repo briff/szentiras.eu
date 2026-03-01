@@ -1,0 +1,92 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Új API kulcs létrehozása</h1>
+    <p class="text-muted">Töltsd ki az alábbi űrlapot az új API kulcs létrehozásához.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="api-keys-create">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ route('editor.apiKeys.store') }}" method="POST">
+                        {{ csrf_field() }}
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Név <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required
+                                   placeholder="pl. Android alkalmazás, Külső partner, Belső szolgáltatás">
+                            <div class="form-text">Emberi olvasható azonosító, amely segít felismerni a kulcsot.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Leírás</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"
+                                      placeholder="Opcionális részletek, például felhasználó, projekt, kapcsolattartó"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_internal" name="is_internal" value="1">
+                                <label class="form-check-label" for="is_internal">
+                                    Belső kulcs (nincs korlátozás)
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Ha bejelölöd, a kulcs nem lesz alávetve rate‑limitingnek. Csak megbízható belső szolgáltatásokhoz használd.
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="throttle-rate-group">
+                            <label for="throttle_rate" class="form-label">Korlát (kérések percenként)</label>
+                            <input type="number" class="form-control" id="throttle_rate" name="throttle_rate"
+                                   min="1" max="1000" placeholder="60">
+                            <div class="form-text">
+                                Külső kulcsok esetén megadható egyedi korlát. Ha üresen hagyod, az alapértelmezett érték ({{ config('api.default_throttle', 60) }}) lesz érvényes.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Fontos:</strong> A kulcs létrehozása után egyszer megjelenik a nyers kulcs (UUID). Másold le és tárold biztonságosan, mert később nem lesz újra lekérhető.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('editor.apiKeys.index') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Vissza a listához
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Kulcs létrehozása
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const internalCheckbox = document.getElementById('is_internal');
+        const throttleGroup = document.getElementById('throttle-rate-group');
+
+        function toggleThrottleVisibility() {
+            if (internalCheckbox.checked) {
+                throttleGroup.style.opacity = '0.5';
+                throttleGroup.style.pointerEvents = 'none';
+            } else {
+                throttleGroup.style.opacity = '1';
+                throttleGroup.style.pointerEvents = 'auto';
+            }
+        }
+
+        internalCheckbox.addEventListener('change', toggleThrottleVisibility);
+        toggleThrottleVisibility(); // initial state
+    });
+</script>
+{% endblock %}
