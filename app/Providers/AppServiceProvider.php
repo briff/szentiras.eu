@@ -5,6 +5,8 @@ namespace SzentirasHu\Providers;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
+use Spatie\FlareClient\Api;
+use SzentirasHu\Data\Entity\ApiKey;
 use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Service\Editor\EditorService;
 use Twig\Environment;
@@ -57,7 +59,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Define rate limiter for API keys
         RateLimiter::for('api_key', function ($request) {
-            $apiKey = $request->attributes->get('apiKey');
+            $apiKeyHeader = $request->header('X-API-Key');
+        $apiKey = ApiKey::where('key', $apiKeyHeader)->first();
             if (!$apiKey || $apiKey->isInternal()) {
                 // No limit for internal keys or missing key (should not happen)
                 return \Illuminate\Cache\RateLimiting\Limit::none();

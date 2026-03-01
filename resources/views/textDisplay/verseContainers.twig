@@ -1,7 +1,7 @@
 {% set verification_config = {
-    'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'Nincs ellenőrizve, lehet pontatlan, téves'},
-    'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'Értelmi ellenőrzésen átesett, teológiailag lehet pontatlan'},
-    'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'Teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
+    'none': {icon: 'bi-exclamation-triangle', color: 'text-white bg-danger', label: 'MI-kommentár, nincs ellenőrizve, lehet pontatlan, téves'},
+    'sanity': {icon: 'bi-exclamation-circle', color: 'text-dark bg-warning', label: 'MI-kommentár, értelmi ellenőrzésen átesett, teológiailag lehet téves'},
+    'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'MI-kommentár, teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
 } %}
 
 {% for verseContainer in verseContainers %}
@@ -46,7 +46,7 @@
                                                     </div>
                                                 {% endif %}
                                                 
-                                                <div class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
+                                                <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}
                                                     <ul>
@@ -104,7 +104,7 @@
                                                     </div>
                                                 {% endif %}
                                                 
-                                                <div class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
+                                                <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}
                                                     <ul>
