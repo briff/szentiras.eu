@@ -33,4 +33,16 @@ return [
     |
     */
     'internal_throttle' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Whitelisted Domains
+    |--------------------------------------------------------------------------
+    |
+    | Domains from which API requests are allowed without an API key.
+    | Requests with an Origin or Referer header matching any of these domains
+    | will bypass API key validation.
+    |
+    */
+    'whitelisted_domains' => env('API_WHITELISTED_DOMAINS', 'ujszov.hu'),
 ];

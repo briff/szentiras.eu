@@ -19,6 +19,7 @@ Add to your `.env` file:
 ```env
 API_KEY_REQUIRED=false          # Set to true to enforce keys (end grace period)
 API_KEY_DEFAULT_THROTTLE=60     # Requests per minute for external keys (when null)
+API_WHITELISTED_DOMAINS=ujszov.hu # Comma-separated list of domains allowed without API key
 ```
 
 ### Config File
@@ -31,6 +32,7 @@ Settings are defined in `config/api.php`.
 2. Include the key in the `X‑API‑Key` header of every request.
 3. If `API_KEY_REQUIRED=false`, requests without a key are allowed but logged.
 4. If `API_KEY_REQUIRED=true`, missing/invalid keys result in `401 Unauthorized`.
+5. Requests originating from whitelisted domains (configured via `API_WHITELISTED_DOMAINS`) are allowed without an API key, regardless of the `API_KEY_REQUIRED` setting. The domain is determined by the `Origin` or `Referer` header.
 
 ### For Editors
 1. Log in as an editor (anonymous token with editor privileges).
@@ -64,6 +66,7 @@ Table `api_keys`:
 - Registered as `apiKey` middleware.
 - Applied to all API routes (see `routes/api.php`).
 - Validates the `X‑API‑Key` header, checks hash, updates usage stats, logs requests.
+- If the request originates from a whitelisted domain (configured in `api.whitelisted_domains`), the API key validation is skipped and the request is allowed.
 
 ### Rate Limiting
 - Defined in `AppServiceProvider::boot()` as `api_key` rate limiter.

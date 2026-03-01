@@ -18,6 +18,18 @@ class VerifyApiKey
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Check if request originates from a whitelisted domain
+        if ($this->isFromWhitelistedDomain($request)) {
+            // Allow request without API key
+            Log::info('API request from whitelisted domain', [
+                'domain' => $this->getRequestDomain($request),
+                'ip' => $request->ip(),
+                'path' => $request->path(),
+                'method' => $request->method(),
+            ]);
+            return $next($request);
+        }
+
         $apiKey = $request->header('X-API-Key');
 
         // If no key provided
@@ -107,5 +119,47 @@ class VerifyApiKey
         // We'll just pass the request along.
 
         return $next($request);
+    }
+
+    /**
+     * Determine if the request originates from a whitelisted domain.
+     */
+    private function isFromWhitelistedDomain(Request $request): bool
+    {
+        $domain = $this->getRequestDomain($request);
+        if (!$domain) {
+            return false;
+        }
+
+        $whitelisted = config('api.whitelisted_domains', '');
+        if (is_string($whitelisted)) {
+            $whitelisted = array_map('trim', explode(',', $whitelisted));
+        }
+
+        return in_array($domain, $whitelisted, true);
+    }
+
+    /**
+     * Extract the domain from Origin or Referer header.
+     */
+    private function getRequestDomain(Request $request): ?string
+    {
+        $origin = $request->header('Origin');
+        if ($origin) {
+            $host = parse_url($origin, PHP_URL_HOST);
+            if ($host) {
+                return $host;
+            }
+        }
+
+        $referer = $request->header('Referer');
+        if ($referer) {
+            $host = parse_url($referer, PHP_URL_HOST);
+            if ($host) {
+                return $host;
+            }
+        }
+
+        return null;
     }
 }
