@@ -60,7 +60,10 @@ class AppServiceProvider extends ServiceProvider
         // Define rate limiter for API keys
         RateLimiter::for('api_key', function ($request) {
             $apiKeyHeader = $request->header('X-API-Key');
-        $apiKey = ApiKey::where('key', $apiKeyHeader)->first();
+            $prefix = substr($apiKeyHeader, 0, 8);
+            $apiKey = ApiKey::where('key_prefix', $prefix)
+            ->where('enabled', true)
+            ->first();            
             if (!$apiKey || $apiKey->isInternal()) {
                 // No limit for internal keys or missing key (should not happen)
                 return \Illuminate\Cache\RateLimiting\Limit::none();
