@@ -95,14 +95,14 @@ services:
       - db-data:/var/lib/postgresql/data
       - ./docker/database:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U homestead -d bible"]
+      test: ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
       start_period: 1m
       interval: 10s
       timeout: 5s
       retries: 3      
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly no
     env_file:
       - path: ./.env.prod
         required: false
@@ -132,6 +132,7 @@ services:
     restart: "no"
   horizon:
     image: szeu-app-prod
+    init: true    
     env_file:
       - path: ./.env.prod
         required: false
