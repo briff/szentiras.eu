@@ -11,13 +11,47 @@
             Chrome</a> és <a href=" https://addons.mozilla.org/hu/firefox/addon/szent%C3%ADr%C3%A1s/">Mozilla
             Firefox</a> böngészőkben. További információ: <a href="http://molnarm.github.io/igemutato/">molnarm.github.io/igemutato</a>
     </p>
-    <p>Ha további widget/plugin ötlete vagy igénye van szívesen segítünk a kifejlesztésében.
-        Létező munkáját kérjük ossza meg velünk, hogy másoknak is hasznára lehessen.</p>
+    <p>Ha további widget/plugin ötleted vagy igényed van, szívesen segítünk a kifejlesztésében.
+        Létező munkádat kérjük oszd meg velünk, hogy másoknak is hasznára lehessen.</p>
 
     <h3>API</h3>
     <p><strong>Kérünk minden API fejlesztőt/használót, hogy egy emailben jelentkezzen, hogy értesíteni tudjuk az
             esetleges API fejlesztésekről!</strong></p>
     <p>Minden API hívás JSON formátumú válasszal tér vissza, kivéve hiba esetén (404, 500, 503 stb. HTTP kódoknál).</p>
+
+    <h4>API kulcs követelmények</h4>
+    <p><strong>⚠️ Fontos: 2026. április 1-től az API kulcs kötelezővé válik!</strong> Ennek a célja a hibás kérések és a túlterhelés elkerülése.</p>
+    <p>Az API kulcs egy egyedi azonosító, amely szükséges az API végpontok eléréséhez. A kulcsot a kérés fejlécében kell megadni.</p>
+    
+    <h5>API kulcs megadása</h5>
+    <p>Az API kulcsot az <code>X-API-Key</code> HTTP fejléc segítségével kell megadni:</p>
+    <pre><code>X-API-Key: your_api_key_here</code></pre>
+    
+    <h5>Példa cURL-lel:</h5>
+    <pre><code>curl -H "X-API-Key: your_api_key_here" https://szentiras.hu/api/idezet/1Kor13,10-13</code></pre>
+    
+    <h5>Átmeneti időszak (Grace Period)</h5>
+    <p>2026. március 31-ig az API kulcs nélküli kérések még engedélyezve vannak, de naplózva lesznek. <strong>Javasoljuk, hogy már most regisztrálj egy API kulcsot</strong>, hogy felkészülj a kötelezővé válásra!</p>
+    
+    <h5>API kulcs beszerzése</h5>
+    <p>Az API kulcs beszerzéséhez vedd fel velünk a kapcsolatot emailben vagy üzenetben. A kulcs egyedi és biztonságosan tárolva lesz.</p>
+    
+    <h5>Hibakezelés</h5>
+    <dl>
+        <dt>401 Unauthorized - Hiányzó vagy érvénytelen API kulcs</dt>
+        <dd>A kérésben nincs <code>X-API-Key</code> fejléc, vagy az érték érvénytelen.</dd>
+        <dt>403 Forbidden - Letiltott API kulcs</dt>
+        <dd>Az API kulcs létezik, de le van tiltva.</dd>
+    </dl>
+    
+    <h5>Rate Limiting (Sebességkorlátozás)</h5>
+    <p>Az API kulcsok sebességkorlátozásnak vannak alávetve:</p>
+    <ul>
+        <li><strong>Alapértelmezett korlát:</strong> 60 kérés percenként</li>
+        <li><strong>Egyéni korlátok:</strong> Egyes kulcsokhoz egyéni sebességkorlátok rendelhetők</li>
+    </ul>
+    <p>Ha túllépik a sebességkorlátot, a szerver 429 Too Many Requests hibát ad vissza.</p>
+
     <h4>idezet</h4>
     Megadott szentírási hely(ek) megjelenítése alapértelmezett vagy megadott fordításban.
     {% set exampleUrl = url('api/idezet/1Kor13,10-13') %}
