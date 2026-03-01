@@ -31,7 +31,7 @@ class BookRepositoryEloquent implements BookRepository
     public function getByAbbrev(string $bookAbbrev, ?Translation $translation) : ?Book
     {
         $translationAbbrev = $translation->abbrev ?? "default";
-        return Cache::remember("book_getByAbbrev_{$bookAbbrev}_{$translationAbbrev}", 120, function () use ($bookAbbrev, $translationAbbrev, $translation) {
+        return Cache::rememberForever("book_getByAbbrev_{$bookAbbrev}_{$translationAbbrev}", function () use ($bookAbbrev, $translationAbbrev, $translation) {
             $usxCode = UsxCodes::getUsxFromBookAbbrevAndTranslation($bookAbbrev, $translationAbbrev);
             if (!$usxCode) {
                 return null;
@@ -70,7 +70,7 @@ class BookRepositoryEloquent implements BookRepository
 
     public function getByUsxCodeForTranslation(string $usxCode, Translation $translation)
     {
-        return Cache::remember("getBookByUsxCodeForTranslation_{$usxCode}_{$translation->id}", 120, function () use ($translation, $usxCode) {
+        return Cache::rememberForever("getBookByUsxCodeForTranslation_{$usxCode}_{$translation->id}", function () use ($translation, $usxCode) {
             $book = Book::where('usx_code', $usxCode)
                 ->whereBelongsTo($translation)
                 ->with('translation')

@@ -619,7 +619,9 @@ class TextDisplayController extends Controller
                             return false;
                         }
                         // Check if Greek verses exist for this book
-                        return \SzentirasHu\Models\GreekVerse::where('usx_code', $usxCode)->exists();
+                        return Cache::rememberForever("greek_verse_exists_{$usxCode}", function () use ($usxCode) {
+                            return \SzentirasHu\Models\GreekVerse::where('usx_code', $usxCode)->exists();
+                        });
                     }
                     
                     return $this->bookRepository

@@ -36,6 +36,8 @@ class Media extends Model
 {
     protected $fillable = ['filename', 'mime_type', 'media_type_id', 'usx_code', 'chapter', 'verse', 'uuid'];
 
+    protected $with = ['mediaType'];
+
     public function mediaType() : BelongsTo
     {
         return $this->belongsTo('SzentirasHu\Models\MediaType');

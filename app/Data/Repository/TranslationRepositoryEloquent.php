@@ -13,8 +13,8 @@ class TranslationRepositoryEloquent implements TranslationRepository
 
     public function getAll() : Collection
     {
-        $allTranslations = \Cache::remember(
-           'getAllTranslations', 120, function () {
+        $allTranslations = \Cache::rememberForever(
+           'getAllTranslations', function () {
             return Translation::orderBy('order')->orderBy('name')->whereIn('id', \Config::get('settings.enabledTranslations'))->get();
         });
         return $allTranslations;
@@ -29,8 +29,8 @@ class TranslationRepositoryEloquent implements TranslationRepository
 
     public function getAllOrderedByDenom() : Collection
     {
-        $allTranslations = \Cache::remember(
-            'translations_allOrderedByDenom', 120, function () {
+        $allTranslations = \Cache::rememberForever(
+            'translations_allOrderedByDenom', function () {
             return Translation::orderBy('denom')->orderBy('order')->whereIn('id', \Config::get('settings.enabledTranslations'))->get();
         });
         return $allTranslations;
@@ -44,16 +44,16 @@ class TranslationRepositoryEloquent implements TranslationRepository
 
     public function getByAbbrev($abbrev)
     {
-        return \Cache::remember(
-            "translations_getByAbbrev_{$abbrev}", 120, function() use ($abbrev) {
+        return \Cache::rememberForever(
+            "translations_getByAbbrev_{$abbrev}", function() use ($abbrev) {
             return Translation::byAbbrev($abbrev);
             });
     }
 
     public function getById($id)
     {
-        return \Cache::remember(
-            "translations_getById_{$id}", 120, function() use ($id) {
+        return \Cache::rememberForever(
+            "translations_getById_{$id}", function() use ($id) {
             return Translation::find($id);
         });
     }

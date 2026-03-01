@@ -6,6 +6,7 @@
 namespace SzentirasHu\Data\Repository;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Data\Entity\Verse;
@@ -66,7 +67,11 @@ class VerseRepositoryEloquent implements VerseRepository {
 
     public function getMaxNumv(Book $book, int $chapter, Translation $translation)
     {
+        /** @var \Illuminate\Contracts\Cache\Repository $cache */
+        $cacheKey = "max_numv_{$book->usx_code}_{$chapter}_{$translation->id}";
+        return Cache::rememberForever($cacheKey, function () use ($book, $chapter, $translation) {
         return Verse::whereBelongsTo($translation)->where("usx_code", $book->usx_code)->where('chapter', $chapter)->max('numv');
+        });
     }
 
 
