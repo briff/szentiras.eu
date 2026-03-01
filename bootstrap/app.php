@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use SzentirasHu\Http\Middleware\CheckCommentaryGeneration;
 use SzentirasHu\Http\Middleware\CheckEditor;
 use SzentirasHu\Http\Middleware\FillAnonymousIdFromCookie;
+use SzentirasHu\Http\Middleware\SameOrigin;
 use SzentirasHu\Http\Middleware\ValidateAnonymousId;
 use SzentirasHu\Http\Middleware\VerifyApiKey;
 
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'editor' => CheckEditor::class,
             'commentaryGeneration' => CheckCommentaryGeneration::class,
             'apiKey' => VerifyApiKey::class,
+            'same-origin' => SameOrigin::class,
         ]);
         $middleware->web(append: [FillAnonymousIdFromCookie::class]);
     })

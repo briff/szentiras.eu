@@ -151,6 +151,10 @@ Route::middleware('commentaryGeneration')->group(function () {
 // Public API for commentary status
 Route::get('/api/commentaries/status', [CommentaryEditorController::class, 'statusByReference']);
 
+// Internal API for books (used by frontend components)
+Route::get('/internal-api/books/{translationAbbrev?}', [\SzentirasHu\Http\Controllers\Api\ApiController::class, 'getBooks'])
+    ->middleware('same-origin');
+
 // Media API endpoints for editors
 Route::prefix('api/media')->middleware('editor')->group(function () {
     Route::get('/{id}', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'show']);

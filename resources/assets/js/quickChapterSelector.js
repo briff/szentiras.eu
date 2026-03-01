@@ -10,7 +10,7 @@ class QuickChapterSelector {
 
     preloadBooks() {
         console.log('QuickChapterSelector: preloading books data for translation', this.translation || 'default');
-        const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
+        const apiLink = this.translation ? `/internal-api/books/${this.translation}` : '/internal-api/books';
         this.preloadPromise = fetch(apiLink)
             .then(response => response.json())
             .then(bookResponse => {
@@ -62,7 +62,7 @@ class QuickChapterSelector {
                     bookResponse = await this.preloadPromise;
                     books = bookResponse.books;
                 } else {
-                    const apiLink = this.translation ? `/api/books/${this.translation}` : '/api/books';
+                    const apiLink = this.translation ? `/internal-api/books/${this.translation}` : '/internal-api/books';
                     const response = await fetch(apiLink);
                     bookResponse = await response.json();
                     books = bookResponse.books;
