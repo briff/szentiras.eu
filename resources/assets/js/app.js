@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (storedTheme === 'system') {
             themeIcon.classList.add('bi-laptop');
         } else if (storedTheme === 'dark') {
-            themeIcon.classList.add('bi-sun');
-        } else { // light
             themeIcon.classList.add('bi-moon-stars');
+        } else { // light
+            themeIcon.classList.add('bi-sun');
         }
         
         // Update button title

@@ -7,6 +7,7 @@ namespace SzentirasHu\Data\Repository;
 
 
 use Cache;
+use Illuminate\Support\Facades\Log;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\BookAbbrev;
 use SzentirasHu\Data\Entity\Translation;
@@ -70,12 +71,15 @@ class BookRepositoryEloquent implements BookRepository
 
     public function getByUsxCodeForTranslation(string $usxCode, Translation $translation)
     {
-        return Cache::rememberForever("getBookByUsxCodeForTranslation_{$usxCode}_{$translation->id}", function () use ($translation, $usxCode) {
+        $cacheKey = "getBookByUsxCodeForTranslation_{$usxCode}_{$translation->id}";
+        return Cache::rememberForever($cacheKey, function () use ($translation, $usxCode) {
             $book = Book::where('usx_code', $usxCode)
-                ->whereBelongsTo($translation)
-                ->with('translation')
-                ->first();
-                return $book;
+            ->whereBelongsTo($translation)
+            ->with('translation')
+            ->first();
+
+            // Cache even if the result is null
+            return $book ?: false;
         });
     }
 }
