@@ -62,23 +62,29 @@ Görög Újszövetségi Szentírás
 {% block extramenu %}
     <div class="card">
         <div class="card-body">
-            <div class="d-flex flex-wrap">
-                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleNumv">
-                            <i class="toggle bi-check-square active"></i>
-                            <i class="toggle bi-square inactive"></i>
-                            Versszámozás</a>
-                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleXrefs">
-                            <i class="toggle bi-check-square active"></i>
-                            <i class="toggle bi-square inactive"></i>
-                            Hivatkozások</a>
-                        <a href="javascript:void(0)" role="button"  class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleHeadings">
-                            <i class="toggle bi-check-square active"></i>
-                            <i class="toggle bi-square inactive"></i>
-                            Címsorok</a>
-                        <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm active m-1 flex-fill" id="toggleAiTools">
-                            <i class="toggle bi-check-square active"></i>
-                            <i class="toggle bi-square inactive"></i>
-                            Segédeszközök</a>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm active" id="toggleNumv" title="Versszámozás" style="background-color: #0d6efd; color: white;">
+                    <i class="bi-123"></i>
+                </button>
+                <button type="button" class="btn btn-sm active" id="toggleXrefs" title="Hivatkozások" style="background-color: #0d6efd; color: white;">
+                    <i class="bi-link-45deg"></i>
+                </button>
+                <button type="button" class="btn btn-sm active" id="toggleHeadings" title="Címsorok" style="background-color: #0d6efd; color: white;">
+                    <i class="bi-card-heading"></i>
+                </button>
+                <button type="button" class="btn btn-sm inactive" id="toggleAiTools" title="Segédeszközök" style="background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;">
+                    <i class="bi-tools"></i>
+                </button>
+                {% if not mediaEnabled %}
+                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
+                        <i class="bi-images"></i>
+                    </a>
+                {% endif %}
+                {% if mediaEnabled %}
+                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ (fullContext ? '?fullContext' : '')) }}" title="Illusztrációk elrejtése">
+                        <i class="bi-images"></i>
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
