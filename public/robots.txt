@@ -7,5 +7,11 @@ Disallow: /include/
 Disallow: /js/
 Disallow: /tmp/
 Disallow: /pdf/
+Disallow: /profile
 Disallow: /profile/
+Disallow: /register
 Disallow: /register/
+Disallow: /login
+Disallow: /login/
+Disallow: /logout
+Disallow: /logout/

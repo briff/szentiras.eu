@@ -196,7 +196,7 @@ class CommentaryEditorController extends Controller
         }
         
         // Handle commentary text and references update
-        if ($request->has('commentary_text') || $request->has('references')) {
+        if ($request->has('commentary_text') || $request->has('references_form_submitted')) {
             $request->validate([
                 'commentary_text' => 'nullable|string',
                 'references' => 'nullable|array',
@@ -218,13 +218,10 @@ class CommentaryEditorController extends Controller
                 $commentaryData['commentary_text'] = $request->input('commentary_text');
             }
             
-            // Update references - handle both cases: provided array or missing (which means empty)
-            if ($request->has('references')) {
-                $commentaryData['references'] = $request->input('references');
-            } else {
-                // If references field is not present but we're in this branch (likely references form submitted),
-                // set references to empty array
-                $commentaryData['references'] = [];
+            // Update references if the references form was submitted
+            if ($request->has('references_form_submitted')) {
+                // If references field is present, use it; otherwise set to empty array (user cleared all)
+                $commentaryData['references'] = $request->has('references') ? $request->input('references') : [];
             }
             
             // Save updated commentary text as JSON
@@ -233,9 +230,9 @@ class CommentaryEditorController extends Controller
             ]);
             
             // Determine appropriate success message
-            if ($request->has('commentary_text') && !$request->has('references')) {
+            if ($request->has('commentary_text') && !$request->has('references_form_submitted')) {
                 $message = 'Kommentár szövege frissítve.';
-            } elseif (!$request->has('commentary_text') && $request->has('references')) {
+            } elseif (!$request->has('commentary_text') && $request->has('references_form_submitted')) {
                 $message = 'Hivatkozások frissítve.';
             } else {
                 $message = 'Kommentár szövege és hivatkozások frissítve.';

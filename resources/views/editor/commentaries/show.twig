@@ -101,6 +101,8 @@
                         <form method="POST" action="{{ route('editor.commentaries.update', commentary.id) }}" id="references-form">
                             {{ csrf_field() }}
                             <input type="hidden" name="_method" value="PUT">
+                            <!-- Hidden field to indicate references form was submitted -->
+                            <input type="hidden" name="references_form_submitted" value="1">
                             
                             <div id="references-edit-container">
                                 {% if commentaryData.references and commentaryData.references|length > 0 %}
