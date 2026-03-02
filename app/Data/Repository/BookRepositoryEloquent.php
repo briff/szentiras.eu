@@ -63,17 +63,16 @@ class BookRepositoryEloquent implements BookRepository
     {
         $usxCode = UsxCodes::getUsxFromBookAbbrevAndTranslation($abbrev, $translation->abbrev);
         if ($usxCode) {
-            $book = $this->getByUsxCodeForTranslation($usxCode, $translation);
-            return $book ?: null;
+            return $this->getByUsxCodeForTranslation($usxCode, $translation);
         } else {
             return null;
         }
     }
 
-    public function getByUsxCodeForTranslation(string $usxCode, Translation $translation)
+    public function getByUsxCodeForTranslation(string $usxCode, Translation $translation) : ?Book
     {
         $cacheKey = "getBookByUsxCodeForTranslation_{$usxCode}_{$translation->id}";
-        return Cache::rememberForever($cacheKey, function () use ($translation, $usxCode) {
+        $cachedBook = Cache::rememberForever($cacheKey, function () use ($translation, $usxCode) {
             $book = Book::where('usx_code', $usxCode)
             ->whereBelongsTo($translation)
             ->with('translation')
@@ -82,5 +81,6 @@ class BookRepositoryEloquent implements BookRepository
             // Cache even if the result is null
             return $book ?: false;
         });
+        return $cachedBook ?: null;
     }
 }
