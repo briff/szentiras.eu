@@ -184,9 +184,8 @@ class CommentaryService
             $searchRanges = $this->convertBookRefToSearchRanges($bookRef);
             $normalizedSearchRanges = $this->normalizeSearchRanges($searchRanges, $usxCode, $translation);
 
-            // Get all commentaries for this book and translation
+            // Get all commentaries for this book (no translation handling, as we assume there is only one translation per book in the Commentary model)
             $bookCommentaries = Commentary::query()
-                ->where('translation_id', $translation->id)
                 ->where('usx_code', $usxCode)
                 ->with('ranges')
                 ->get();
