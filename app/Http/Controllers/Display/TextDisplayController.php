@@ -727,26 +727,28 @@ class TextDisplayController extends Controller
 
         $html = '<div class="place-details">';
         
-        foreach ($places as $place) {
-            $html .= '<div class="place-item mb-3 pb-3 border-bottom">';
-            $html .= '<h6 class="mb-2"><strong>' . htmlspecialchars($place->friendly_id) . '</strong></h6>';
-            
-            if ($place->type) {
-                $html .= '<p class="mb-2"><small class="text-muted">Típus: ' . htmlspecialchars($place->type) . '</small></p>';
-            }
-            
-            if ($place->comment) {
-                $html .= '<p class="mb-2">' . htmlspecialchars($place->comment) . '</p>';
-            }
-            
-            if ($place->lon_lat) {
-                $html .= '<p class="mb-2"><small class="text-muted">Koordináták: ' . htmlspecialchars($place->lon_lat) . '</small></p>';
-            }
-            
-            $html .= '</div>';
-        }
+        // Create a single map container for all places
+        $html .= '<div class="place-map-container mb-3" id="placeMapContainer" style="height: 400px; width: 400px; border: 1px solid #ccc; border-radius: 4px;"></div>';
         
         $html .= '</div>';
+        
+        // Add data attribute with all place coordinates
+        $placesData = [];
+        foreach ($places as $place) {
+            if ($place->lon_lat) {
+                $coords = explode(',', $place->lon_lat);
+                if (count($coords) === 2) {
+                    $placesData[] = [
+                        'lat' => trim($coords[1]),
+                        'lon' => trim($coords[0]),
+                        'name' => $place->friendly_id,
+                    ];
+                }
+            }
+        }
+        
+        // Append data as JSON in a script tag for the JavaScript to access
+        $html .= '<script type="application/json" id="placeMapData">' . json_encode($placesData) . '</script>';
         
         return response()->json($html);
     }

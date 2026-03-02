@@ -7,6 +7,19 @@
 {% for verseContainer in verseContainers %}
     <div>
         {% include 'textDisplay.breadcrumb' with {'book': verseContainer.book, 'bookRef': verseContainer.bookRef } %}
+        {% set containerPlaces = parsedPlaces[loop.index0] ?? [] %}
+        {% if containerPlaces is not empty %}
+            <div class="mt-3 mb-3">
+                <button class="btn btn-sm btn-outline-success ai-tool-element"
+                        data-bs-toggle="modal"
+                        data-bs-target="#placeModal"
+                        data-place-ids="{{ containerPlaces|map(arrow => arrow.place_id)|join(',') }}"
+                        title="Helyek megtekintése">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span class="ms-2">Helyek megtekintése</span>
+                </button>
+            </div>
+        {% endif %}
     </div>
         <div class="mb-2">
          {{ include('textDisplay.parsedVerseContainer', { 'verseContainer' : verseContainer, 'translation' : translation, 'verseToPlaces': verseToPlaces}) }}

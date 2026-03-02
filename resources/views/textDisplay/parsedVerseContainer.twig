@@ -39,7 +39,7 @@
                 style="background: none; color: inherit; text-decoration: none; cursor: pointer;"
                 data-bs-toggle="modal"
                 data-bs-target="#placeModal"
-                data-place-ids="{{ verseToPlaces[gepi]|map(arrow => arrow.place_id)|join(',') }}"
+                data-place-ids="{{ verseToPlaces[gepi]|default([])|map(arrow => arrow.place_id)|join(',') }}"
                 title="Helyek: {{ placeNames|join(', ') }}">
             <i class="bi bi-geo-alt-fill" style="color: #28a745; margin-left: 0.25rem;"></i>
         </button>

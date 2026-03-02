@@ -12,6 +12,8 @@
     <meta property="og:title" content="{{ metaTitle }}">
     <meta property="og:description" content="{{ teaser }}">
 	<meta property="og:image" content="{{ asset('img/biblia.jpg')}}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}
 
 {% block content %}
@@ -32,7 +34,7 @@
         </div></div>
     </div>
     <div class="modal fade" id="placeModal" tabindex="-1" aria-labelledby="placeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog" style="max-width: 500px;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="placeModalLabel">Hely részletei</h5>
@@ -139,7 +141,7 @@
                         <a href="javascript:void(0)" role="button" class="btn btn-default btn-outline-primary btn-sm inactive m-1 flex-fill" id="toggleAiTools">
                             <i class="toggle bi-check-square active"></i>
                             <i class="toggle bi-square inactive"></i>
-                            MI eszközök</a>                    
+                            Segédeszközök</a>                    
                             {% if not mediaEnabled %}
                                 <a class="btn-sm btn btn-info m-1 flex-fill {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
                                     <i class="bi-images"></i> Illusztrációk megjelenítése</a>

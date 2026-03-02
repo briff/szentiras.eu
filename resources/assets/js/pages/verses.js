@@ -86,7 +86,7 @@ const initToggler = function () {
 
     // Initialize place icons visibility based on AI tools state
     if (localStorage.getItem('aiToolsState') !== 'true') {
-        $('.parsedVerses span.ai-tool-element').addClass('hidden');
+        $('button.ai-tool-element').addClass('hidden');
     }
 
     function ai(turnOn) {
@@ -161,7 +161,7 @@ const initToggler = function () {
         if (turnOn) {
             $('.parsedVerses span.numv').addClass('hidden');
             $('.parsedVerses span.numvai').removeClass('hidden');
-            $('.parsedVerses span.ai-tool-element').removeClass('hidden');
+            $('button.ai-tool-element').removeClass('hidden');
             $('#toggleAiTools').addClass('active');
             localStorage.setItem('aiToolsState', 'true');
             const aiTriggers = document.querySelectorAll("a.numvai");
@@ -179,7 +179,7 @@ const initToggler = function () {
                 $('.parsedVerses span.numv').removeClass('hidden');
             }
             $('.parsedVerses span.numvai').addClass('hidden');
-            $('.parsedVerses span.ai-tool-element').addClass('hidden');
+            $('button.ai-tool-element').addClass('hidden');
             $('#toggleAiTools').removeClass('active');
             localStorage.setItem('aiToolsState', 'false');
         }
@@ -281,6 +281,63 @@ function scrollToVerse() {
     }
 }
 
+function initPlaceMaps() {
+    // Handle single map with multiple places
+    const mapContainer = document.getElementById('placeMapContainer');
+    const mapDataScript = document.getElementById('placeMapData');
+    
+    if (mapContainer && mapDataScript) {
+        try {
+            const placesData = JSON.parse(mapDataScript.textContent);
+            
+            if (placesData.length > 0) {
+                // Create map centered on first place
+                const map = L.map(mapContainer).setView([placesData[0].lat, placesData[0].lon], 6);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Add markers for all places
+                const markers = [];
+                placesData.forEach((place) => {
+                    const marker = L.marker([place.lat, place.lon], {
+                        title: place.name
+                    })
+                        .bindPopup(place.name)
+                        .bindTooltip(place.name, {
+                            permanent: true,
+                            direction: 'top',
+                            offset: [0, -10]
+                        })
+                        .addTo(map);
+                    markers.push(marker);
+                });
+                
+                // Fit map bounds to all markers if multiple places
+                if (markers.length > 1) {
+                    const group = new L.featureGroup(markers);
+                    map.fitBounds(group.getBounds(), { padding: [50, 50] });
+                }
+            }
+        } catch (e) {
+            console.log("Error initializing place map", e);
+        }
+    }
+    
+    // Handle legacy individual place maps (if any)
+    document.querySelectorAll('.place-map:not(#placeMapContainer)').forEach((mapEl) => {
+        const lat = parseFloat(mapEl.dataset.lat);
+        const lon = parseFloat(mapEl.dataset.lon);
+        if (!isNaN(lat) && !isNaN(lon)) {
+            const map = L.map(mapEl).setView([lat, lon], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            L.marker([lat, lon]).addTo(map);
+        }
+    });
+}
+
 function initPlaceModal() {
     const placeModal = document.getElementById('placeModal');
     if (placeModal) {
@@ -294,6 +351,7 @@ function initPlaceModal() {
                     .then(response => response.json())
                     .then(data => {
                         placeModalBody.innerHTML = data;
+                        initPlaceMaps();
                     })
                     .catch((e) => {
                         console.log("Error loading place content", e);
