@@ -730,6 +730,12 @@ class TextDisplayController extends Controller
         // Create a single map container for all places
         $html .= '<div class="place-map-container mb-3" id="placeMapContainer" style="height: 400px; width: 400px; border: 1px solid #ccc; border-radius: 4px;"></div>';
         
+        // Add license attribution
+        $html .= '<div class="mt-2 small text-muted">';
+        $html .= ' Place data sourced from <a href="https://www.openbible.info/" target="_blank" rel="noopener noreferrer">OpenBible.info</a>';
+        $html .= ', licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">Creative Commons Attribution License</a>';
+        $html .= '</div>';
+        
         $html .= '</div>';
         
         // Add data attribute with all place coordinates

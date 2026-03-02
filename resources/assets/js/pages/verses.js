@@ -24,17 +24,21 @@ const initToggler = function () {
         var state = localStorage.getItem(toggle.storageKey);
         if (state === 'true') {
             $(toggle.selector).addClass('hidden');
-            $(toggle.toggleButton).removeClass('active');
+            $(toggle.toggleButton).removeClass('active').addClass('inactive');
+            $(toggle.toggleButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
         } else {
             $(toggle.selector).removeClass('hidden');
-            $(toggle.toggleButton).addClass('active');
+            $(toggle.toggleButton).addClass('active').removeClass('inactive');
+            $(toggle.toggleButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
         }
 
-        $(toggle.toggleButton).click(function () {
+        $(toggle.toggleButton).click(function (e) {
+            e.preventDefault();
             if ($(toggle.toggleButton).hasClass('active')) {
                 $(toggle.selector).fadeOut(delay);
                 $(toggle.selector).addClass('hidden');
-                $(toggle.toggleButton).removeClass('active');
+                $(toggle.toggleButton).removeClass('active').addClass('inactive');
+                $(toggle.toggleButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
                 localStorage.setItem(toggle.storageKey, 'true');
             } else {
                 // special treatment for numv beacuse of the ai
@@ -45,7 +49,8 @@ const initToggler = function () {
                     $(toggle.selector).removeClass('hidden');
                     $(toggle.selector).fadeIn(delay);
                 }
-                $(toggle.toggleButton).addClass('active');
+                $(toggle.toggleButton).addClass('active').removeClass('inactive');
+                $(toggle.toggleButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
                 localStorage.setItem(toggle.storageKey, 'false');
             }
         });
@@ -75,11 +80,14 @@ const initToggler = function () {
             ai(false);
         }
 
-        $('#toggleAiTools').click(function () {
+        $('#toggleAiTools').click(function (e) {
+            e.preventDefault();
             if ($('#toggleAiTools').hasClass('active')) {
                 ai(false);
+                $('#toggleAiTools').css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
             } else {
                 ai(true);
+                $('#toggleAiTools').css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
             }
         });
     }
@@ -162,7 +170,8 @@ const initToggler = function () {
             $('.parsedVerses span.numv').addClass('hidden');
             $('.parsedVerses span.numvai').removeClass('hidden');
             $('button.ai-tool-element').removeClass('hidden');
-            $('#toggleAiTools').addClass('active');
+            $('#toggleAiTools').addClass('active').removeClass('inactive');
+            $('#toggleAiTools').css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
             localStorage.setItem('aiToolsState', 'true');
             const aiTriggers = document.querySelectorAll("a.numvai");
             [...aiTriggers].map(aiTrigger => {
@@ -180,7 +189,8 @@ const initToggler = function () {
             }
             $('.parsedVerses span.numvai').addClass('hidden');
             $('button.ai-tool-element').addClass('hidden');
-            $('#toggleAiTools').removeClass('active');
+            $('#toggleAiTools').removeClass('active').addClass('inactive');
+            $('#toggleAiTools').css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
             localStorage.setItem('aiToolsState', 'false');
         }
     }
@@ -368,5 +378,24 @@ xrefPopovers();
 initQrModal();
 initPdfModal();
 initPlaceModal();
+
+// Initialize media button styling
+function initMediaButtonStyling() {
+    const mediaButton = document.getElementById('mediaButton');
+    if (mediaButton) {
+        const isMediaEnabled = mediaButton.getAttribute('href').includes('?media') || mediaButton.getAttribute('href').includes('&media');
+        if (isMediaEnabled) {
+            $(mediaButton).addClass('inactive').removeClass('active');
+            // Media is currently enabled, so button should show "on" state
+            $(mediaButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+        } else {
+            $(mediaButton).addClass('active').removeClass('inactive');
+            // Media is currently disabled, so button should show "off" state
+            $(mediaButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+        }
+    }
+}
+
+initMediaButtonStyling();
 
 scrollToVerse();
