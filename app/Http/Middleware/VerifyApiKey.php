@@ -23,7 +23,7 @@ class VerifyApiKey
             // Allow request without API key
             Log::info('API request from whitelisted domain', [
                 'domain' => $this->getRequestDomain($request),
-                'ip' => $request->ip(),
+                'ip' => $this->getClientIp($request),
                 'path' => $request->path(),
                 'method' => $request->method(),
             ]);
@@ -37,7 +37,7 @@ class VerifyApiKey
             // Grace period: if API_KEY_REQUIRED is false, allow but log
             if (!config('api.key_required', false)) {
                 Log::info('API request without key (grace period)', [
-                    'ip' => $request->ip(),
+                    'ip' => $this->getClientIp($request),
                     'path' => $request->path(),
                     'method' => $request->method(),
                 ]);
@@ -61,7 +61,7 @@ class VerifyApiKey
         if (!$apiKeyModel) {
             Log::warning('Invalid API key prefix', [
                 'prefix' => $prefix,
-                'ip' => $request->ip(),
+                'ip' => $this->getClientIp($request),
                 'path' => $request->path(),
             ]);
             return response()->json([
@@ -74,7 +74,7 @@ class VerifyApiKey
         if (!Hash::check($apiKey, $apiKeyModel->key_hash)) {
             Log::warning('API key hash mismatch', [
                 'api_key_id' => $apiKeyModel->id,
-                'ip' => $request->ip(),
+                'ip' => $this->getClientIp($request),
                 'path' => $request->path(),
             ]);
             return response()->json([
@@ -87,7 +87,7 @@ class VerifyApiKey
         if (!$apiKeyModel->enabled) {
             Log::warning('Disabled API key used', [
                 'api_key_id' => $apiKeyModel->id,
-                'ip' => $request->ip(),
+                'ip' => $this->getClientIp($request),
                 'path' => $request->path(),
             ]);
             return response()->json([
@@ -108,7 +108,7 @@ class VerifyApiKey
         // Log successful API request
         Log::info('API request with key', [
             'api_key_id' => $apiKeyModel->id,
-            'ip' => $request->ip(),
+            'ip' => $this->getClientIp($request),
             'path' => $request->path(),
             'method' => $request->method(),
             'is_internal' => $apiKeyModel->is_internal,
@@ -161,5 +161,26 @@ class VerifyApiKey
         }
 
         return null;
+    }
+
+    /**
+     * Get the real client IP address, considering Cloudflare headers.
+     */
+    private function getClientIp(Request $request): string
+    {
+        // Cloudflare sets CF-Connecting-IP header with the real client IP
+        $cfIp = $request->header('CF-Connecting-IP');
+        if ($cfIp) {
+            // Handle case where header might contain multiple IPs (comma-separated)
+            $ips = explode(',', $cfIp);
+            $ip = trim($ips[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        // Fall back to Laravel's IP resolution (which considers X-Forwarded-For)
+        $ip = $request->ip();
+        return $ip && filter_var($ip, FILTER_VALIDATE_IP) ? $ip : 'unknown';
     }
 }
