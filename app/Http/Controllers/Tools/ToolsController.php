@@ -67,6 +67,10 @@ class ToolsController extends Controller
             $lines = array_filter(array_map('trim', explode("\n", $input)));
             
             foreach ($lines as $line) {
+                // skip empty lines
+                if (empty($line)) {
+                    continue;
+                }
                 try {
                     $canonicalRef = CanonicalReference::fromString($line);
                     $verseContainers = $this->textService->getTranslatedVerses($canonicalRef, $translation);
