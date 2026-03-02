@@ -66,6 +66,11 @@ class CommentaryEditorController extends Controller
             ];
         }
 
+        // Add reference field from metadata if available
+        if (!isset($commentaryData['reference']) && $commentary->metadata && isset($commentary->metadata['reference'])) {
+            $commentaryData['reference'] = $commentary->metadata['reference'];
+        }
+
         return view('editor.commentaries.show', [
             'commentary' => $commentary,
             'commentaryData' => $commentaryData,

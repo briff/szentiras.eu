@@ -34,6 +34,15 @@
                                         <p class="font-semibold text-gray-800 mb-2">Kommentár a pontos szentírási helyhez:</p>
                                         
                                         <div class="space-y-4" id="exact-commentaries-{{ loop.index0 }}">
+                                            {# Edit button for editors #}
+                                            {% if isEditor and commentaryData.commentary_id is defined %}
+                                            <div class="mb-2 flex items-center justify-end">
+                                                <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
+                                                    <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                            
                                             <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}
@@ -92,6 +101,15 @@
                                     <p class="font-semibold text-gray-800 mb-2">Kapcsolódó kommentár:</p>
                                     {% for commentaryData in relatedCommentaries %}
                                         <div class="space-y-4">
+                                            {# Edit button for editors #}
+                                            {% if isEditor and commentaryData.commentary_id is defined %}
+                                            <div class="mb-2 flex items-center justify-end">
+                                                <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
+                                                    <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                            
                                             <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
                                                 {# Verification state display #}
                                                 {% if commentaryData.verification_level is defined %}

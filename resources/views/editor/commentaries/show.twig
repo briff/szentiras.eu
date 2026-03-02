@@ -10,9 +10,16 @@
                 <span class="badge bg-secondary">{{ book.abbrev }}</span>
             </p>
         </div>
-        <a href="{{ route('editor.commentaries.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Vissza a listához
-        </a>
+        <div class="d-flex gap-2">
+            {% if commentaryData.reference is defined and commentaryData.reference %}
+                <a href="/{{ commentary.translation.abbrev }}/{{ commentaryData.reference }}" class="btn btn-outline-primary" title="Ugrás a szentírási helyhez">
+                    <i class="bi bi-book"></i> Szentírási hely megtekintése
+                </a>
+            {% endif %}
+            <a href="{{ route('editor.commentaries.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Vissza a listához
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
