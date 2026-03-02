@@ -25,11 +25,26 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body"></div>
-            <div class="modal-footer">  
-            <a tabindex="0" id="pdfDownload" class="btn btn-primary"><i class="bi-printer"></i> Nyomtatási kép létrehozása</a>    
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>        
+            <div class="modal-footer">
+            <a tabindex="0" id="pdfDownload" class="btn btn-primary"><i class="bi-printer"></i> Nyomtatási kép létrehozása</a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
             </div>
         </div></div>
+    </div>
+    <div class="modal fade" id="placeModal" tabindex="-1" aria-labelledby="placeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="placeModalLabel">Hely részletei</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="placeModalBody">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Betöltés...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     {% if readingPlanDay %}
     <div>

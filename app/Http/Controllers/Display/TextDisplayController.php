@@ -715,4 +715,39 @@ class TextDisplayController extends Controller
             );
         return $translations;
     }
+
+    public function showPlaceDetails($placeIds)
+    {
+        $ids = explode(',', $placeIds);
+        $places = Place::whereIn('id', $ids)->get();
+        
+        if ($places->isEmpty()) {
+            return response()->json('<p class="text-danger">Hely nem található</p>', 200);
+        }
+
+        $html = '<div class="place-details">';
+        
+        foreach ($places as $place) {
+            $html .= '<div class="place-item mb-3 pb-3 border-bottom">';
+            $html .= '<h6 class="mb-2"><strong>' . htmlspecialchars($place->friendly_id) . '</strong></h6>';
+            
+            if ($place->type) {
+                $html .= '<p class="mb-2"><small class="text-muted">Típus: ' . htmlspecialchars($place->type) . '</small></p>';
+            }
+            
+            if ($place->comment) {
+                $html .= '<p class="mb-2">' . htmlspecialchars($place->comment) . '</p>';
+            }
+            
+            if ($place->lon_lat) {
+                $html .= '<p class="mb-2"><small class="text-muted">Koordináták: ' . htmlspecialchars($place->lon_lat) . '</small></p>';
+            }
+            
+            $html .= '</div>';
+        }
+        
+        $html .= '</div>';
+        
+        return response()->json($html);
+    }
 }

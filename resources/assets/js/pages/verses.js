@@ -281,10 +281,34 @@ function scrollToVerse() {
     }
 }
 
+function initPlaceModal() {
+    const placeModal = document.getElementById('placeModal');
+    if (placeModal) {
+        placeModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const placeIds = button.getAttribute('data-place-ids');
+            const placeModalBody = document.getElementById('placeModalBody');
+            
+            if (placeIds) {
+                fetch(`/place/${placeIds}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        placeModalBody.innerHTML = data;
+                    })
+                    .catch((e) => {
+                        console.log("Error loading place content", e);
+                        placeModalBody.innerHTML = '<p class="text-danger">Hiba a hely adatainak betöltésekor</p>';
+                    });
+            }
+        });
+    }
+}
+
 initToggler();
 footnotePopovers();
 xrefPopovers();
 initQrModal();
 initPdfModal();
+initPlaceModal();
 
 scrollToVerse();

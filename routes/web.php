@@ -67,6 +67,9 @@ Route::get('/hang', '\SzentirasHu\Http\Controllers\Display\AudioBookController@i
 Route::get('/hang/{id}', '\SzentirasHu\Http\Controllers\Display\AudioBookController@show')
     ->where('id', '.+');
 
+/** Places */
+Route::get('/place/{placeIds}', [TextDisplayController::class, 'showPlaceDetails'])->where('placeIds', '[0-9,]+');
+
 /** QR code */
 Route::get('/qr/dialog/{url}', '\SzentirasHu\Http\Controllers\Display\\QrCodeController@dialog')->where('url', '.+');
 Route::get('/qr/img/{url}', '\SzentirasHu\Http\Controllers\Display\\QrCodeController@index')->where('url', '.+');

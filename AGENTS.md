@@ -242,3 +242,11 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - IMPORTANT: Activate `tailwindcss-development` every time you're working with a Tailwind CSS or styling-related task.
 
 </laravel-boost-guidelines>
+
+## Twig Filters
+
+- When using the `map` filter in Twig, always include the arrow function parameter. 
+  - Correct: `items|map(arrow => arrow.property)`
+  - Incorrect: `items|map(attribute='property')` (this syntax is deprecated in modern Twig)
+- The arrow parameter name can be any valid variable name, but `arrow` is conventional.
+
