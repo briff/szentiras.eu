@@ -327,4 +327,21 @@
             }
         }
     </style>
+    
+    <script>
+        // Scroll to memory game table after creation
+        document.addEventListener('DOMContentLoaded', function() {
+            const memoryGameCard = document.querySelector('.card.print-only');
+            if (memoryGameCard) {
+                // Small delay to ensure DOM is fully rendered
+                setTimeout(() => {
+                    // Scroll to the card with smooth behavior
+                    memoryGameCard.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+            }
+        });
+    </script>
 {% endblock %}

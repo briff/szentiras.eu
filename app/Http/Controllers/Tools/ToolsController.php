@@ -67,13 +67,15 @@ class ToolsController extends Controller
             $lines = array_filter(array_map('trim', explode("\n", $input)));
             
             foreach ($lines as $line) {
-                if (empty($line)) {
-                    continue;
-                }
-                
                 try {
                     $canonicalRef = CanonicalReference::fromString($line);
                     $verseContainers = $this->textService->getTranslatedVerses($canonicalRef, $translation);
+                    $count = array_sum(array_map(fn($vc) => count($vc->rawVerses), $verseContainers));
+                    // Check if more than 5 verses are included in this reference
+                    if ($count > 5) {
+                        $errors[] = "Legfeljebb 5 vers adható meg. A '{$line}' referencia " . $count . " versből áll.";
+                        continue;
+                    }
                     
                     $fullText = '';
                     $reference = '';
@@ -112,7 +114,7 @@ class ToolsController extends Controller
                         'first_half' => $firstHalf,
                         'second_half' => $secondHalf
                     ];
-                    
+                        
                 } catch (ParsingException $e) {
                     $errors[] = "Nem sikerült értelmezni: {$line} - {$e->getMessage()}";
                 } catch (\Exception $e) {
