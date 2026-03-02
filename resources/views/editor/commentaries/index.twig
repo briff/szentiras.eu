@@ -132,4 +132,33 @@
         </div>
     {% endif %}
 </div>
+    <!-- Token Usage Summary Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Token Használat</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-2 text-muted">Ma</h6>
+                            <h3 class="card-title">{{ todayTokenUsage|number_format(0, ',', ' ') }}</h3>
+                            <p class="card-text text-muted">token</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6 class="card-subtitle mb-2 text-muted">Tegnap</h6>
+                            <h3 class="card-title">{{ yesterdayTokenUsage|number_format(0, ',', ' ') }}</h3>
+                            <p class="card-text text-muted">token</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}

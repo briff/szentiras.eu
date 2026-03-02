@@ -33,9 +33,15 @@ class CommentaryEditorController extends Controller
 
         $translations = $this->translationService->getAllTranslations();
 
+        // Calculate token usage for today and yesterday
+        $todayTokenUsage = $this->commentaryService->sumTokenUsageForDay(now());
+        $yesterdayTokenUsage = $this->commentaryService->sumTokenUsageForDay(now()->subDay());
+
         return view('editor.commentaries.index', [
             'commentaries' => $commentaries,
             'translations' => $translations,
+            'todayTokenUsage' => $todayTokenUsage,
+            'yesterdayTokenUsage' => $yesterdayTokenUsage,
         ]);
     }
 
