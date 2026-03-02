@@ -19,6 +19,7 @@
                         <th>Státusz</th>
                         <th>Ellenőrzés</th>
                         <th>Versek</th>
+                        <th>Referencia</th>
                         <th>Létrehozva</th>
                         <th>Műveletek</th>
                     </tr>
@@ -64,6 +65,15 @@
                                 {% endfor %}
                                 {{ rangeStrings|join(', ') }}
                             </small>
+                        </td>
+                        <td>
+                            {% if commentary.metadata.reference %}
+                                <a href="/{{ commentary.translation.abbrev }}/{{ commentary.metadata.reference }}">
+                                    <small>{{ commentary.metadata.reference }}</small>
+                                </a>
+                            {% else %}
+                                <small class="text-muted">-</small>
+                            {% endif %}
                         </td>
                         <td>
                             <small class="text-muted">{{ commentary.created_at.format('Y-m-d H:i') }}</small>
