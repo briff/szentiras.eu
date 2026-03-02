@@ -21,6 +21,8 @@ use SzentirasHu\Data\Repository\VerseRepository;
 use SzentirasHu\Data\Repository\ReadingPlanRepository;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Models\Media;
+use SzentirasHu\Data\Entity\Place;
+use SzentirasHu\Data\Entity\PlaceVerse;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
 use View;
@@ -340,6 +342,84 @@ class TextDisplayController extends Controller
                 $parsedCommentaries[] = $parsed;
             }
 
+            // Fetch places for each verse container
+            $parsedPlaces = [];
+            $verseToPlaces = [];
+            $verseTriples = [];
+            $tripleToContainer = [];
+            $containerIndex = 0;
+            foreach ($displayContainers as $verseContainer) {
+                foreach ($verseContainer->getParsedVerses() as $verseData) {
+                    $key = $verseData->book->usx_code . ':' . $verseData->chapter . ':' . $verseData->numv;
+                    $verseTriples[$key] = [
+                        'book_code' => $verseData->book->usx_code,
+                        'chapter_number' => $verseData->chapter,
+                        'verse_number' => $verseData->numv,
+                    ];
+                    $tripleToContainer[$key] = $containerIndex;
+                }
+                $containerIndex++;
+            }
+
+            if (!empty($verseTriples)) {
+                $placeVerses = PlaceVerse::with('place')
+                    ->where(function ($query) use ($verseTriples) {
+                        foreach ($verseTriples as $triple) {
+                            $query->orWhere(function ($q) use ($triple) {
+                                $q->where('book_code', $triple['book_code'])
+                                    ->where('chapter_number', $triple['chapter_number'])
+                                    ->where('verse_number', $triple['verse_number']);
+                            });
+                        }
+                    })
+                    ->get();
+
+                // Group by container index and by verse
+                $placesByContainer = [];
+                foreach ($placeVerses as $placeVerse) {
+                    $key = $placeVerse->book_code . ':' . $placeVerse->chapter_number . ':' . $placeVerse->verse_number;
+                    if (isset($tripleToContainer[$key])) {
+                        $index = $tripleToContainer[$key];
+                        $placesByContainer[$index][] = $placeVerse;
+                        
+                        // Also map by verse gepi for inline display
+                        $gepi = $placeVerse->book_code . '_' . $placeVerse->chapter_number . '_' . $placeVerse->verse_number;
+                        if (!isset($verseToPlaces[$gepi])) {
+                            $verseToPlaces[$gepi] = [];
+                        }
+                        $verseToPlaces[$gepi][] = [
+                            'type' => $placeVerse->place->type,
+                            'friendly_id' => $placeVerse->place->friendly_id,
+                            'comment' => $placeVerse->place->comment,
+                            'lon_lat' => $placeVerse->place->lon_lat,
+                            'place_id' => $placeVerse->place->id,
+                        ];
+                    }
+                }
+
+                // Build parsed places array
+                for ($i = 0; $i < $containerIndex; $i++) {
+                    $places = $placesByContainer[$i] ?? [];
+                    $parsed = [];
+                    foreach ($places as $placeVerse) {
+                        $place = $placeVerse->place;
+                        $parsed[] = [
+                            'type' => $place->type,
+                            'friendly_id' => $place->friendly_id,
+                            'comment' => $place->comment,
+                            'lon_lat' => $place->lon_lat,
+                            'place_id' => $place->id,
+                        ];
+                    }
+                    $parsedPlaces[] = $parsed;
+                }
+            } else {
+                // No verses, fill with empty arrays
+                for ($i = 0; $i < $containerIndex; $i++) {
+                    $parsedPlaces[] = [];
+                }
+            }
+
             $scrollTo = $canonicalRef->toGepi();
 
             $translations = $this->translationRepository->getAllOrderedByDenom();
@@ -348,7 +428,7 @@ class TextDisplayController extends Controller
                 'highlightedGepis' => $highlightedGepis ?? [],
                 'fullContext' => $fullContext,
                 'scrollTo' => $fullContext ? $scrollTo : null,
-                'mediaEnabled' => $mediaEnabled,
+                 'mediaEnabled' => $mediaEnabled,
                 'hasMedia' => $hasMedia,
                 'previousDay' => $previousDay,
                 'readingPlan' => $readingPlanDay ? $readingPlanDay->plan : null,
@@ -358,6 +438,8 @@ class TextDisplayController extends Controller
                 'verseContainers' => $fullContextVerseContainers ?? $verseContainers,
                 'commentaries' => $commentaries,
                 'parsedCommentaries' => $parsedCommentaries,
+                'parsedPlaces' => $parsedPlaces,
+                'verseToPlaces' => $verseToPlaces,
                 'translation' => $translation,
                 'translations' => $translations,
                 'canonicalUrl' => $this->referenceService->getCanonicalUrl($canonicalRef, $translation->id),

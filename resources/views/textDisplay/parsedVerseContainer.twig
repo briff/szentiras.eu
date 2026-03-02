@@ -28,6 +28,19 @@
     {% endif %}
 {% endmacro %}
 
+{% macro placeIcon(verse, verseToPlaces) -%}
+    {% set gepi = verse.book.usx_code ~ '_' ~ verse.chapter ~ '_' ~ verse.numv %}
+    {% if verseToPlaces[gepi] is defined and verseToPlaces[gepi] is not empty %}
+        {% set placeNames = [] %}
+        {% for place in verseToPlaces[gepi] %}
+            {% set placeNames = placeNames|merge([place.friendly_id]) %}
+        {% endfor %}
+        <span class="place-icon ai-tool-element" title="Helyek: {{ placeNames|join(', ') }}">
+            <i class="bi bi-geo-alt-fill" style="color: #28a745; margin-left: 0.25rem;"></i>
+        </span>
+    {%- endif %}
+{%- endmacro %}
+
 <div class="parsedVerses">
 {# In some sources the same verse (verse number 1) appears more than once, so we only display a chapter number if we haven't displayed that one. This handles references like Jer 5;6#}
 {% set lastChapterNumber = 0 %}
@@ -53,7 +66,7 @@
             {% if (lastChapterNumber != verse.chapter) and verse.numv == 1 %}{% if lastWrittenWasInline %}<br>{% endif %}{% set lastChapterNumber = verse.chapter %}<span class="numchapter">{{ verse.chapter }}</span>{% endif %}
             {% if not inPoem %}<p class="poem {{ mark ? 'mark' : '' }}">{% set inPoem = true %}{%endif%}
             {%- if not verseNumberWritten %}{{ _self.numv(verse, mark) }}{% set verseNumberWritten = true %}{% endif %}
-            {% set lastWrittenWasInline = true %}{{ versePart.content|raw }}{% if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}</p>{%else%}<br>{%endif%}
+            {% set lastWrittenWasInline = true %}{{ versePart.content|raw }}{% if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}{{ _self.placeIcon(verse, verseToPlaces) }}</p>{%else%}<br>{%endif%}
         {% elseif  versePart.heading %}
             {%- if inPoem %}</p>{% set inPoem =false %}{% endif -%}
             {%- if versePart.headingLevel < 6 -%}
@@ -68,9 +81,9 @@
             {%- if inPoem %}</p>{% set inPoem =false %}{% endif -%}
             {%- if not verseNumberWritten %}{{ _self.numv(verse, mark) }}{% set verseNumberWritten=true %}{% endif -%}
             {% set lastWrittenWasInline = true %}<span class="{{ mark ? 'mark' : '' }}">{{ versePart.content|raw }} </span>
-            {%- if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}{% endif -%}
+            {%- if versePart.last %}{{ _self.xrefs(verse, translation, mark, hideXrefs) }}{{ _self.placeIcon(verse, verseToPlaces) }}{% endif -%}
             {%- if versePart.newline %}<br>{% endif -%}
-        {%- endif -%}                
+        {%- endif -%}
     {%- endfor -%}
     {% set medias = media[verse.book.usx_code ~ "_" ~ verse.chapter ~ "_" ~ verse.numv] %}
     {% if  medias %}

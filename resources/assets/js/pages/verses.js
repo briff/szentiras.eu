@@ -84,6 +84,11 @@ const initToggler = function () {
         });
     }
 
+    // Initialize place icons visibility based on AI tools state
+    if (localStorage.getItem('aiToolsState') !== 'true') {
+        $('.parsedVerses span.ai-tool-element').addClass('hidden');
+    }
+
     function ai(turnOn) {
         async function getPopoverContent(aiTrigger) {
             if (!aiTrigger.dataset.loaded) {
@@ -156,6 +161,7 @@ const initToggler = function () {
         if (turnOn) {
             $('.parsedVerses span.numv').addClass('hidden');
             $('.parsedVerses span.numvai').removeClass('hidden');
+            $('.parsedVerses span.ai-tool-element').removeClass('hidden');
             $('#toggleAiTools').addClass('active');
             localStorage.setItem('aiToolsState', 'true');
             const aiTriggers = document.querySelectorAll("a.numvai");
@@ -173,6 +179,7 @@ const initToggler = function () {
                 $('.parsedVerses span.numv').removeClass('hidden');
             }
             $('.parsedVerses span.numvai').addClass('hidden');
+            $('.parsedVerses span.ai-tool-element').addClass('hidden');
             $('#toggleAiTools').removeClass('active');
             localStorage.setItem('aiToolsState', 'false');
         }

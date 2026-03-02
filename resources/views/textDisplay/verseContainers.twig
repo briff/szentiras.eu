@@ -9,7 +9,7 @@
         {% include 'textDisplay.breadcrumb' with {'book': verseContainer.book, 'bookRef': verseContainer.bookRef } %}
     </div>
         <div class="mb-2">
-         {% include 'textDisplay.parsedVerseContainer' with { 'verseContainer' : verseContainer, 'translation' : translation} %}
+         {{ include('textDisplay.parsedVerseContainer', { 'verseContainer' : verseContainer, 'translation' : translation, 'verseToPlaces': verseToPlaces}) }}
             {# Commentary section #}
             {% set containerCommentaries = parsedCommentaries[loop.index0] ?? [] %}
             {% set containerReference = verseContainer.bookRef.toString() %}
@@ -20,6 +20,7 @@
             {% set pendingCommentaries = containerCommentaries|filter(c => c.status == 'pending' or c.status == 'processing') %}
 
             <div class="commentary-container" data-reference="{{ containerReference }}" data-translation="{{ translation.abbrev }}" data-container-index="{{ loop.index0 }}">
+                {# Commentary section - no longer in tabs #}
                 {% if containerCommentaries is not empty %}
                     <div class="commentaries mt-2 mb-2 parsedVerses">
                         <details class="overflow-hidden">
@@ -61,8 +62,8 @@
                                                     <ul>
                                                         {% for ref in commentaryData.references %}
                                                             <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
-                                                                {{ ref.ref }}</a>
-                                                                <span class="ml-1">– {{ ref.reason }}</span></li>
+                                                                    {{ ref.ref }}</a>
+                                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
                                                         {% endfor %}
                                                     </ul>
                                                 {% endif %}
@@ -128,8 +129,8 @@
                                                     <ul>
                                                         {% for ref in commentaryData.references %}
                                                             <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
-                                                                {{ ref.ref }}</a>
-                                                                <span class="ml-1">– {{ ref.reason }}</span></li>
+                                                                    {{ ref.ref }}</a>
+                                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
                                                         {% endfor %}
                                                     </ul>
                                                 {% endif %}
