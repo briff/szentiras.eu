@@ -10,7 +10,8 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/assets/less/app.less',
+            input: ['resources/assets/css/tailwind.css',
+                'resources/assets/less/app.less',
                 'resources/assets/js/app.js',
                 'resources/assets/js/editor-media-move.js',
                 'resources/assets/js/commentary-status-polling.js',

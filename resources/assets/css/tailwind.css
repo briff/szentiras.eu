@@ -1,0 +1,8 @@
+@layer components {
+  .tailwind-scope {
+    @apply contents;
+  }
+}
+
+@tailwind components;
+@tailwind utilities;

@@ -26,27 +26,71 @@ Fejezetválasztás <span class="caret"></span></button>
     </div>
 
 
-    {% for chapterId, chapter in chapters %}
-        {%set chapterLink %}/{{ translation.abbrev  }}/{{ book.abbrev }}{{ chapterId }}{% endset %}
-        {%set chapterText %}{{ chapterId }}{% endset %}
-        <h5 class="bookchapter"><a href="{{ chapterLink }}">{{ chapterText }}</a></h5>
-
-        {% set chheadings = headings[chapterId] %}
-        {% if chheadings|length > 0 %}            
-        {%- for heading in chheadings -%}
-            <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}#heading_{{ heading.gepi }}_{{ heading.headingLevel }}' class='link'>{{ heading.content|striptags('<br><a>')|raw  }}&nbsp;</a>
-        {% endfor %}        
-        {% endif %}        
-        
-        {% set leadVerses = chapter.leadVerses %} 
-        <a href={{ chapterLink }} class='leadChapterLink'>
-        {% for numv, verse in leadVerses %}
-            <sup>{{ numv }}</sup>{{ verse|raw }}
+    <div class="tailwind-scope">
+    <div class="flex flex-col gap-4 py-8">
+        {% for chapterId, chapter in chapters %}
+            {%set chapterLink %}/{{ translation.abbrev  }}/{{ book.abbrev }}{{ chapterId }}{% endset %}
+            {%set chapterText %}{{ chapterId }}{% endset %}
+            
+            <!-- Horizontal Bookmark Card -->
+            <div class="group relative">
+                <!-- Bookmark shape with notches -->
+                <div class="relative bg-gradient-to-r from-amber-50 to-amber-100 rounded-sm shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border-t-4 border-amber-700 w-full ">
+                    <!-- Decorative left notch -->
+                    <div class="absolute top-1/2 left-0 transform -translate-y-1/2 w-3 h-8 bg-white rounded-r-lg shadow-sm"></div>
+                    
+                    <!-- Decorative right notch -->
+                    <div class="absolute top-1/2 right-0 transform -translate-y-1/2 w-3 h-8 bg-white rounded-l-lg shadow-sm"></div>
+                    
+                    <!-- Content -->
+                    <div class="flex items-center gap-4 py-3">
+                        <!-- Chapter Number - Left aligned and vertically centered -->
+                        <a href="{{ chapterLink }}" class="flex-shrink-0 pl-6">
+                            <h3 class="text-4xl font-bold text-amber-900 hover:text-amber-700 transition-colors">
+                                {{ chapterText }}
+                            </h3>
+                        </a>
+                        
+                        <!-- Topics and Verses - Right side content -->
+                        <div class="flex-1 flex flex-col">
+                            <!-- Main Topics (Headings) -->
+                            {% set chheadings = headings[chapterId] %}
+                            {% if chheadings|length > 0 %}
+                                <div class="text-amber-800 text-sm mb-1">
+                                    {%- for heading in chheadings -%}
+                                        <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}#heading_{{ heading.gepi }}_{{ heading.headingLevel }}' class='text-amber-800 hover:text-amber-600 transition-colors inline'>
+                                            {{ heading.content|striptags('<br><a>')|raw }}{% if not loop.last %}, {% endif %}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Lead Verses -->
+                            {% set leadVerses = chapter.leadVerses %}
+                            {% if leadVerses|length > 0 %}
+                                <a href="{{ chapterLink }}" class='text-xs text-amber-700 leading-tight line-clamp-2'>
+                                    {% for numv, verse in leadVerses %}
+                                        <sup class="font-semibold">{{ numv }}</sup>{{ verse|raw }}&nbsp;
+                                    {% endfor %}
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Read More Link -->
+                        <div class="flex-shrink-0 pr-6">
+                            <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}' class='inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 font-semibold transition-colors text-sm'>
+                                Olvasás <i class="bi bi-arrow-right-circle-fill"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Decorative bottom element -->
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 opacity-50"></div>
+                </div>
+            </div>
         {% endfor %}
-        </a>
-        <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}' class='link'><i class="bi bi-arrow-right-circle-fill"></i></a><br>
-        <br />
-    {% endfor %}
+    </div>
+    </div>
 
     {% include 'bookAbbrevList' %}
 
