@@ -1,33 +1,66 @@
 {% extends 'layout' %}
 
+{% block extraHead %}
+<style>
+@media (max-width: 767px) {
+    .book-abbrev { font-size: 1.03125rem !important; }
+    .book-name { font-size: 0.9375rem !important; }
+}
+</style>
+{% endblock %}
+
 {% set pageTitle %}
 {{ translation.name }} | Szentírás
 {% endset %}
 
 {% macro bookLink(translation, book) %}
-    <div><a href="/{{ translation.abbrev }}/{{ book.abbrev }}" class="link">{{ book.name }} ({{book.abbrev}})</a></div>
+    <a href="/{{ translation.abbrev }}/{{ book.abbrev }}" style="display: block;">
+        <div style="position: relative; height: 4rem; margin-bottom: 1rem; background: linear-gradient(to bottom right, #78350f, #b45309, #581c0c); border-radius: 0.5rem; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 4px solid #b45309; transition: all 0.3s ease;">
+            <!-- Fur texture background -->
+            <div style="position: absolute; inset: 0; opacity: 0.4; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><filter id=%22noise%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 result=%22noise%22/></filter><rect width=%22100%22 height=%22100%22 fill=%22%23000%22 filter=%22url(%23noise)%22/></svg>'); background-size: 50px 50px;"></div>
+            
+            <!-- Shine effect for fur -->
+            <div style="position: absolute; inset: 0; background: linear-gradient(to right, transparent, white, transparent); opacity: 0.2; transition: opacity 0.3s ease;"></div>
+            
+            <!-- Gold engraved abbreviation and title -->
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; padding: 0.75rem 1rem;">
+                <div class="book-abbrev" style="font-size: 1.375rem; font-weight: bold; color: #fcd34d; text-shadow: 2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(255,255,255,0.2); flex-shrink: 0;">
+                    {{ book.abbrev }}
+                </div>
+                <div class="book-name" style="font-size: 1.25rem; color: #fef3c7; margin-left: 0.75rem; font-weight: 600; letter-spacing: 0.05em; line-height: 1.4;">
+                    {{ book.name }}
+                </div>
+            </div>
+        </div>
+    </a>
 {% endmacro %}
 
 {% macro tocContent(translation, book, bookHeaders) %}
     {% set headers =  bookHeaders[book.abbrev] %}
     {% if headers %}
-        {% for chapterId, chapter in headers.headings %}
-        <div class="tocItem">            
-        {%set chapterLink %}/{{ translation.abbrev  }}/{{ book.abbrev }}{{ chapterId }}{% endset %}
-        {%set chapterText %}{{ chapterId }}{% endset %}
-            <div class="chapterNumber">
-                <strong><a href="{{ chapterLink}}">{{ chapterText }}</a></strong>
+        <div style="margin-top: 1rem; margin-bottom: 1.5rem; background: linear-gradient(to bottom right, #fef3c7, #fef9e7, #fef3c7); border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 2px solid #fde68a; padding: 1.5rem; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><defs><pattern id=%22paper%22 x=%220%22 y=%220%22 width=%22100%22 height=%22100%22 patternUnits=%22userSpaceOnUse%22><line x1=%220%22 y1=%220%22 x2=%22100%22 y2=%220%22 stroke=%22%23d4a574%22 stroke-width=%220.5%22 opacity=%220.3%22/></pattern></defs><rect width=%22100%22 height=%22100%22 fill=%22url(%23paper)%22/></svg>'); background-size: 100% 2px;">
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for chapterId, chapter in headers.headings %}
+                <div class="tocItem" style="background-color: rgba(255, 255, 255, 0.6); border-radius: 0.375rem; padding: 0.75rem; border-left: 4px solid #b45309; transition: background-color 0.3s ease;">
+                    {%set chapterLink %}/{{ translation.abbrev  }}/{{ book.abbrev }}{{ chapterId }}{% endset %}
+                    {%set chapterText %}{{ chapterId }}{% endset %}
+                    <div class="chapterNumber" style="margin-bottom: 0.5rem;">
+                        <strong><a href="{{ chapterLink }}" style="color: #78350f; font-weight: bold; font-size: 1.125rem; text-decoration: none;">{{ chapterText }}</a></strong>
+                    </div>
+                    {% set chheadings = headers.headings[chapterId] %}
+                    <div class="chapterHeadings" style="font-size: 0.875rem;">
+                        {% if chheadings|length > 0 %}
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                {%- for heading in chheadings -%}
+                                    <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}#heading_{{ heading.gepi }}_{{ heading.headingLevel }}' style='color: #b45309; text-decoration: none; transition: color 0.3s ease;'>{{ heading.content|striptags('<br><a>')|raw  }}</a>{% if not loop.last %}<span style="color: #fbbf24;">●</span>{% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-        {% set chheadings = headers.headings[chapterId] %}
-        <div class="chapterHeadings">
-            {% if chheadings|length > 0 %}            
-                {%- for heading in chheadings -%}
-                        <a href='/{{ translation.abbrev }}/{{ book.abbrev }}{{ chapterId}}#heading_{{ heading.gepi }}_{{ heading.headingLevel }}' class='link'>{{ heading.content|striptags('<br><a>')|raw  }}</a>{% if not loop.last %} ● {% endif %}
-                {% endfor %}                        
-            {% endif %}        
         </div>
-        </div>
-        {% endfor %}
     {% endif %}
 {% endmacro %}
 
@@ -37,31 +70,39 @@
     {% include 'bookAbbrevList' with { 'translation' : translation } %}
       
     {% include 'quickChapterSelector' %}
-    <div class="mb-2">
-    <a data-url="/{{ translation.abbrev }}?toc" tabindex="0" class="btn btn-info {{ toc ? "hidden" : "" }}" role="button" id="showToc"><i class="bi-bookmarks"></i> Teljes tartalomjegyzék</a>
-    <a data-url="/{{ translation.abbrev }}" tabindex="0" class="btn btn-info {{ not toc ? "hidden": '' }}" role="button" id="hideToc"><i class="bi-bookmark"></i> Csak könyvnevek</a>
-    </div>
-    <div class="mb-3">
-                <h4>Újszövetség</h4>
-                    {% for book in books|filter(book => not book.old_testament) %}
+    
+    <div class="tailwind-scope">
+        <div class="mb-4 flex gap-3">
+            <a data-url="/{{ translation.abbrev }}?toc" tabindex="0" class="btn btn-info {{ toc ? "hidden" : "" }}" role="button" id="showToc"><i class="bi-bookmarks"></i> Teljes tartalomjegyzék</a>
+            <a data-url="/{{ translation.abbrev }}" tabindex="0" class="btn btn-info {{ not toc ? "hidden": '' }}" role="button" id="hideToc"><i class="bi-bookmark"></i> Csak könyvnevek</a>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-amber-900 mb-6 pb-3 border-b-4 border-amber-600">Újszövetség</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {% for book in books|filter(book => not book.old_testament) %}
+                    <div>
                         {{ _self.bookLink(translation, book) }}
                         {{ _self.tocContent(translation, book, bookHeaders) }}
-                    {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-amber-900 mb-6 pb-3 border-b-4 border-amber-600">Ószövetség</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {% for book in books|filter(book => book.old_testament) %}
+                    <div>
+                        {{ _self.bookLink(translation, book) }}
+                        {{ _self.tocContent(translation, book, bookHeaders) }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <span id="data" data-translation="{{ translation.abbrev }}"></span>
     </div>
-                   
-    {% for book in books|filter(book => book.old_testament) %}
-        {% if loop.first %}
-            <h4>Ószövetség</h4>
-        {% endif %}
-    {% endfor %}
-
-    <ul class="list-unstyled">
-        {% for book in books|filter(book => book.old_testament) %}
-            {{ _self.bookLink(translation, book) }}
-            {{ _self.tocContent(translation, book, bookHeaders) }}
-        {% endfor %}
-    </ul>
-    <span id="data" data-translation="{{ translation.abbrev }}"></span>
 {% endblock %}
 
 {% set js=['pages/translation'] %}
