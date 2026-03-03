@@ -7,6 +7,7 @@ export default {
     extend: {},
   },
   plugins: [],
+  darkMode: ['selector', '[data-theme="dark"]'], // Use data-theme attribute for dark mode (Bootstrap compatible)
   corePlugins: {
     preflight: false, // Disable Tailwind's base styles to avoid conflicts with Bootstrap
   },

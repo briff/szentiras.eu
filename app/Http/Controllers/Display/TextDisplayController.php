@@ -728,7 +728,7 @@ class TextDisplayController extends Controller
         $html = '<div class="place-details">';
         
         // Create a single map container for all places
-        $html .= '<div class="place-map-container mb-3" id="placeMapContainer" style="height: 400px; width: 400px; border: 1px solid #ccc; border-radius: 4px;"></div>';
+        $html .= '<div class="place-map-container mb-3" id="placeMapContainer"></div>';
         
         // Add license attribution
         $html .= '<div class="mt-2 small text-muted">';

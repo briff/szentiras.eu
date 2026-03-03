@@ -361,7 +361,15 @@ function initPlaceModal() {
                     .then(response => response.json())
                     .then(data => {
                         placeModalBody.innerHTML = data;
-                        initPlaceMaps();
+                        // Wait for modal to be fully shown before initializing map
+                        setTimeout(() => {
+                            initPlaceMaps();
+                            // Invalidate map size to ensure proper centering
+                            const mapContainer = document.getElementById('placeMapContainer');
+                            if (mapContainer && mapContainer._leaflet_map) {
+                                mapContainer._leaflet_map.invalidateSize();
+                            }
+                        }, 100);
                     })
                     .catch((e) => {
                         console.log("Error loading place content", e);

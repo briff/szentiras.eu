@@ -2,6 +2,32 @@
   .tailwind-scope {
     @apply contents;
   }
+  
+  #placeMapContainer {
+    @apply w-full h-64 border border-gray-300 rounded;
+  }
+  
+  @screen sm {
+    #placeMapContainer {
+      @apply h-80;
+    }
+  }
+  
+  @screen md {
+    #placeMapContainer {
+      @apply h-96;
+    }
+  }
+  
+  @screen lg {
+    #placeMapContainer {
+      @apply h-96;
+    }
+  }
+  
+  .modal-body {
+    @apply flex justify-center p-0;
+  }
 }
 
 @tailwind components;
