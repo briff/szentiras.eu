@@ -7,6 +7,7 @@ use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
 use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
 use SzentirasHu\Http\Controllers\Editor\ApiKeyController;
+use SzentirasHu\Http\Controllers\Editor\ThemeController;
 use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
 use SzentirasHu\Http\Controllers\Editor\ContactMessageEditorController;
 use SzentirasHu\Http\Controllers\Contact\ContactController;
@@ -150,6 +151,19 @@ Route::middleware('editor')->group(function () {
         Route::put('/{apiKey}', [ApiKeyController::class, 'update'])->name('update');
         Route::delete('/{apiKey}', [ApiKeyController::class, 'destroy'])->name('destroy');
     });
+
+    // Themes editor
+    Route::prefix('editor/themes')->name('editor.themes.')->group(function () {
+        Route::get('/', [ThemeController::class, 'index'])->name('index');
+        Route::get('/create', [ThemeController::class, 'create'])->name('create');
+        Route::post('/', [ThemeController::class, 'store'])->name('store');
+        Route::post('/test-similarity', [ThemeController::class, 'testSimilarity'])->name('testSimilarity');
+        Route::get('/{theme}', [ThemeController::class, 'show'])->name('show');
+        Route::get('/{theme}', [ThemeController::class, 'show'])->name('show');
+        Route::get('/{theme}/edit', [ThemeController::class, 'edit'])->name('edit');
+        Route::put('/{theme}', [ThemeController::class, 'update'])->name('update');
+        Route::delete('/{theme}', [ThemeController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // Commentary generation route - allows editors OR logged-in users when config permits
@@ -182,6 +196,7 @@ Route::get('/{TRANSLATION_ABBREV}', '\SzentirasHu\Http\Controllers\Display\\Text
 
 Route::get('/{TRANSLATION_ABBREV}/{REFERENCE}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showTranslatedReferenceText')
     ->middleware(RedirectLowerCaseTranslationAbbrev::class)
+    ->name('textDisplay.show')
     ->where(['TRANSLATION_ABBREV' => Config::get('settings.translationAbbrevRegex'),
         'REFERENCE' => '[^/]+']);
 

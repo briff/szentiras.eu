@@ -31,6 +31,16 @@ class GreekVerseEmbedding extends Model
 {
     public $timestamps = false;
 
+    protected $fillable = [
+        'source',
+        'gepi',
+        'usx_code',
+        'chapter',
+        'verse',
+        'model',
+        'embedding',
+    ];
+
     protected $casts = [
         'embedding' => Vector::class,
     ];

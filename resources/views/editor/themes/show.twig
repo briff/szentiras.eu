@@ -1,0 +1,178 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Téma részletei</h1>
+    <p class="text-muted">Téma információk és a legközelebbi versek a kiválasztott fordításhoz</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="themes-show">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ theme.hungarian_keyword }}</h5>
+                    <p class="card-text text-muted">
+                        {% if theme.photo_keywords %}
+                            Angol kulcsszavak: <strong>{{ theme.photo_keywords }}</strong>
+                        {% else %}
+                            Nincsenek angol kulcsszavak.
+                        {% endif %}
+                    </p>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Magyar kulcsszó</dt>
+                        <dd class="col-sm-8">{{ theme.hungarian_keyword }}</dd>
+
+                        <dt class="col-sm-4">Beágyazási vektor</dt>
+                        <dd class="col-sm-8">
+                            {% if theme.embedding %}
+                                <span class="badge bg-info">{{ theme.embedding.toArray()|length }} dimenzió</span>
+                                <small class="text-muted">(generálva: {{ theme.updated_at|date('Y‑m‑d H:i') }})</small>
+                            {% else %}
+                                <span class="badge bg-warning">Nincs generálva</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Létrehozva</dt>
+                        <dd class="col-sm-8">{{ theme.created_at|date('Y‑m‑d H:i') }}</dd>
+
+                        <dt class="col-sm-4">Utoljára módosítva</dt>
+                        <dd class="col-sm-8">{{ theme.updated_at|date('Y‑m‑d H:i') }}</dd>
+                    </dl>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="{{ route('editor.themes.edit', theme.id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Szerkesztés
+                    </a>
+                    <form action="{{ route('editor.themes.destroy', theme.id) }}" method="POST" onsubmit="return confirm('Biztosan törölni szeretnéd ezt a témát?');">
+                        {{ csrf_field() }}
+                        {{ method_field('DELETE') }}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Törlés
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Legközelebbi versek</h5>
+                    <form method="GET" class="d-flex align-items-center gap-2">
+                        <label for="translation" class="form-label mb-0">Fordítás:</label>
+                        <select name="translation" id="translation" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            {% for abbrev, name in translations %}
+                                <option value="{{ abbrev }}" {{ selectedTranslation == abbrev ? 'selected' : '' }}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <a href="?translation={{ selectedTranslation }}" class="btn btn-sm btn-outline-secondary" title="Gyorsítótár törlése">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </form>
+                </div>
+                <div class="card-body">
+                    {% if verses is not empty %}
+                        <p class="text-muted">
+                            A következő {{ verses|length }} vers mutatja a legnagyobb hasonlóságot a témához a(z) <strong>{{ selectedTranslation }}</strong> fordításban.
+                            A hasonlóság koszinusz‑távolság alapján számított érték (1 = tökéletes egyezés).
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hasonlóság</th>
+                                        <th>Hivatkozás</th>
+                                        <th>Szöveg</th>
+                                        <th>Művelet</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for verse in verses %}
+                                        {% set excerpt = verse.embeddedExcerpt %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary">{{ (verse.similarity * 100)|number_format(1) }}%</span>
+                                                <br><small class="text-muted">távolság: {{ (1 - verse.similarity)|number_format(3) }}</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ excerpt.reference }}</strong>
+                                                <br><small class="text-muted">{{ excerpt.translation_abbrev }} – {{ excerpt.usx_code }}</small>
+                                            </td>
+                                            <td>
+                                                {% if verse.verseContainers is defined and verse.verseContainers|length > 0 %}
+                                                    {% set firstContainer = verse.verseContainers|first %}
+                                                    {% set firstVerse = firstContainer.rawVerses|first|first %}
+                                                    {{ firstVerse.text|striptags|slice(0, 100) }}{% if firstVerse.text|length > 100 %}…{% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">(szöveg nem elérhető)</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('textDisplay.show', {TRANSLATION_ABBREV: excerpt.translation_abbrev, REFERENCE: excerpt.reference}) }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="bi bi-book"></i> Megnyitás
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Az eredmények 24 órára gyorsítótárazva vannak. A fordítás váltásával vagy a frissítés gombbal új lekérdezést indíthatsz.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Nem található egyetlen hasonló vers sem a(z) <strong>{{ selectedTranslation }}</strong> fordításban.
+                            Lehetséges, hogy a beágyazási vektor nem áll rendelkezésre, vagy a távolság túl nagy.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-lightbulb"></i> Használati útmutató
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li><i class="bi bi-check-circle text-success"></i> A magyar kulcsszó alapján generált vektor segítségével találjuk meg a leginkább illeszkedő verseket.</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Az angol kulcsszavakat később a fotókereső API‑nak lehet elküldeni.</li>
+                        <li><i class="bi bi-check-circle text-success"></i> A témákat a Bibliavers‑generátor funkcióban fogjuk felhasználni.</li>
+                        <li><i class="bi bi-check-circle text-success"></i> A hasonlóság értéke 0‑1 között mozog (1 = tökéletes egyezés).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-gear"></i> Technikai információk
+                </div>
+                <div class="card-body">
+                    <dl class="row small mb-0">
+                        <dt class="col-sm-6">Beágyazási modell</dt>
+                        <dd class="col-sm-6">{{ config('settings.ai.embeddingModel') }}</dd>
+
+                        <dt class="col-sm-6">Dimenziók száma</dt>
+                        <dd class="col-sm-6">{{ config('settings.ai.embeddingDimensions') }}</dd>
+
+                        <dt class="col-sm-6">Távolság metrika</dt>
+                        <dd class="col-sm-6">koszinusz‑távolság</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ route('editor.themes.index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Vissza a listához
+        </a>
+    </div>
+</div>
+{% endblock %}

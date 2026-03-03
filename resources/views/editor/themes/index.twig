@@ -1,0 +1,240 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Témák kezelése</h1>
+    <p class="text-muted">Témák létrehozása, szerkesztése és törlése. Minden témához tartozik egy magyar kulcsszó, egy beágyazási vektor és angol kulcsszavak a fotókereséshez.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="themes-editor">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ route('editor.themes.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Új téma
+            </a>
+        </div>
+        <div class="text-muted">
+            <small>Témák száma: {{ themes.total() }}</small>
+        </div>
+    </div>
+
+    <!-- Similarity Testing Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-search"></i> Hasonlóság tesztelése
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small">Adjon meg egy vagy több gepi-t (vesszővel elválasztva), és a rendszer megkeresi a hasonló témákat a beágyazási vektorok alapján.</p>
+            
+            <form id="similarityTestForm" class="mb-3">
+                <div class="mb-3">
+                    <label for="gepis" class="form-label">Gepi(k)</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="gepis"
+                        name="gepis"
+                        placeholder="pl. MAT1_1, 1PE_2_3"
+                        required
+                    >
+                    <small class="form-text text-muted">Vesszővel elválasztott gepi értékek</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="limit" class="form-label">Eredmények száma</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="limit"
+                        name="limit"
+                        value="10"
+                        min="1"
+                        max="50"
+                    >
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Keresés
+                </button>
+            </form>
+
+            <!-- Results Section -->
+            <div id="resultsContainer" style="display: none;">
+                <hr>
+                <h6>Eredmények:</h6>
+                <div id="resultsContent"></div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" style="display: none;" class="text-center">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Betöltés...</span>
+                </div>
+                <span class="ms-2">Keresés folyamatban...</span>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" style="display: none;" class="alert alert-danger" role="alert"></div>
+        </div>
+    </div>
+
+    {% if themes.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Magyar kulcsszó</th>
+                        <th>Angol kulcsszavak</th>
+                        <th>Létrehozva</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for theme in themes %}
+                    <tr>
+                        <td>
+                            <strong>{{ theme.hungarian_keyword }}</strong>
+                        </td>
+                        <td>
+                            {% if theme.photo_keywords %}
+                                <small>{{ theme.photo_keywords|slice(0, 50) }}{% if theme.photo_keywords|length > 50 %}…{% endif %}</small>
+                            {% else %}
+                                <span class="text-muted">–</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ theme.created_at|date('Y‑m‑d H:i') }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ route('editor.themes.show', theme.id) }}" class="btn btn-outline-primary" title="Részletek">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ route('editor.themes.edit', theme.id) }}" class="btn btn-outline-secondary" title="Szerkesztés">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ route('editor.themes.destroy', theme.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Biztosan törölni szeretnéd ezt a témát?');">
+                                    {{ csrf_field() }}
+                                    {{ method_field('DELETE') }}
+                                    <button type="submit" class="btn btn-outline-danger" title="Törlés">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if themes.hasPages() %}
+            <div class="d-flex justify-content-center mt-4">
+                {{ themes.links() }}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Még nincs téma. Hozz létre egyet a fenti gombbal.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.getElementById('similarityTestForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const gepis = document.getElementById('gepis').value;
+    const limit = document.getElementById('limit').value;
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const resultsContent = document.getElementById('resultsContent');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    // Reset UI
+    resultsContainer.style.display = 'none';
+    errorMessage.style.display = 'none';
+    loadingIndicator.style.display = 'block';
+    
+    try {
+        const response = await fetch('{{ route("editor.themes.testSimilarity") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({
+                gepis: gepis,
+                limit: limit,
+            }),
+        });
+        
+        const data = await response.json();
+        loadingIndicator.style.display = 'none';
+        
+        if (!response.ok) {
+            errorMessage.textContent = data.error || 'Hiba történt a keresés során.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Build results HTML
+         const results = data.results;
+         let html = '';
+         
+         // Display gepi information
+         html += `<div class="mb-3">`;
+         html += `<p class="mb-2"><strong>Feldolgozott gepik:</strong> ${results.gepis_count}</p>`;
+         
+         if (results.gepis_found.length > 0) {
+             html += `<div class="mb-2">`;
+             html += `<small class="text-success"><strong>Megtalálva:</strong> ${results.gepis_found.join(', ')}</small>`;
+             html += `</div>`;
+         }
+         
+         if (results.gepis_not_found.length > 0) {
+             html += `<div class="mb-2">`;
+             html += `<small class="text-danger"><strong>Nem találva:</strong> ${results.gepis_not_found.join(', ')}</small>`;
+             html += `</div>`;
+         }
+         
+         html += `</div>`;
+         
+         // Display themes
+         if (results.themes.length === 0) {
+             html += `<div class="alert alert-info small">Nincsenek hasonló témák.</div>`;
+         } else {
+             html += `<div class="table-responsive">`;
+             html += `<table class="table table-sm table-hover">`;
+             html += `<thead class="table-light"><tr><th>Téma</th><th>Angol kulcsszavak</th><th>Hasonlóság</th></tr></thead>`;
+             html += `<tbody>`;
+             
+             results.themes.forEach(theme => {
+                 const similarity = (theme.similarity * 100).toFixed(1);
+                 const photoKeywords = theme.photo_keywords ? theme.photo_keywords.substring(0, 50) + (theme.photo_keywords.length > 50 ? '…' : '') : '–';
+                 html += `<tr>`;
+                 html += `<td><strong>${theme.hungarian_keyword}</strong></td>`;
+                 html += `<td><small>${photoKeywords}</small></td>`;
+                 html += `<td><span class="badge bg-success">${similarity}%</span></td>`;
+                 html += `</tr>`;
+             });
+             
+             html += `</tbody></table></div>`;
+         }
+        
+        resultsContent.innerHTML = html;
+        resultsContainer.style.display = 'block';
+    } catch (error) {
+        loadingIndicator.style.display = 'none';
+        errorMessage.textContent = 'Hálózati hiba: ' + error.message;
+        errorMessage.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

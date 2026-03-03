@@ -1,0 +1,75 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Téma szerkesztése</h1>
+    <p class="text-muted">Módosítsd a téma tulajdonságait</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="themes-edit">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    {% if errors.any() %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Hiba az adatok mentésekor:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for field, messages in errors.messages %}
+                                {% for message in messages %}
+                                    <li>{{ message }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <form action="{{ route('editor.themes.update', theme.id) }}" method="POST">
+                        {{ csrf_field() }}
+                        {{ method_field('PUT') }}
+
+                        <div class="mb-3">
+                            <label for="hungarian_keyword" class="form-label">Magyar kulcsszó <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control {% if errors.has('hungarian_keyword') %}is-invalid{% endif %}" id="hungarian_keyword" name="hungarian_keyword" value="{{ old('hungarian_keyword', theme.hungarian_keyword) }}" required>
+                            {% if errors.has('hungarian_keyword') %}
+                                <div class="invalid-feedback d-block">
+                                    {{ errors.first('hungarian_keyword') }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Ha megváltoztatod, új beágyazási vektor generálódik (OpenAI hívás).</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="photo_keywords" class="form-label">Angol kulcsszavak (fotókereséshez)</label>
+                            <textarea class="form-control {% if errors.has('photo_keywords') %}is-invalid{% endif %}" id="photo_keywords" name="photo_keywords" rows="3">{{ old('photo_keywords', theme.photo_keywords ?? '') }}</textarea>
+                            {% if errors.has('photo_keywords') %}
+                                <div class="invalid-feedback d-block">
+                                    {{ errors.first('photo_keywords') }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Angol kulcsszavak listája, vesszővel elválasztva.</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Információ:</strong> A beágyazási vektor dimenziója: {{ theme.embedding ? theme.embedding.toArray()|length : 'ismeretlen' }}. Legutóbbi frissítés: {{ theme.updated_at|date('Y‑m‑d H:i') }}.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('editor.themes.show', theme.id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Mégse
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Módosítások mentése
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -208,13 +208,38 @@ class SemanticSearchService {
         $model = Config::get("settings.ai.embeddingModel");
         $vector = GreekVerseEmbedding::query()
             ->where("gepi", $gepi)
-            ->where("source", $source)            
+            ->where("source", $source)
             ->where("model", $model)
             ->first();
         if (empty($vector)) {
             return null;
         }
-        return $vector->embedding;    
+        return $vector->embedding;
+    }
+
+    /**
+     * Find the closest verses for a given theme.
+     *
+     * @param \SzentirasHu\Data\Entity\Theme $theme
+     * @param string $translationAbbrev
+     * @param int $limit
+     * @return \SzentirasHu\Service\Search\SemanticSearchResult[]
+     */
+    public function findClosestVersesForTheme(\SzentirasHu\Data\Entity\Theme $theme, string $translationAbbrev, int $limit = 10)
+    {
+        $params = new SemanticSearchParams();
+        $params->translationAbbrev = $translationAbbrev;
+        $params->usxCodes = []; // all books
+
+        $response = $this->findNeighbors(
+            $params,
+            $theme->embedding->toArray(),
+            EmbeddedExcerptScope::Verse,
+            $limit,
+            \Pgvector\Laravel\Distance::Cosine
+        );
+
+        return $response->results;
     }
 
     /**

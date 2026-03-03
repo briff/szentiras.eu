@@ -1,0 +1,52 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Új téma létrehozása</h1>
+    <p class="text-muted">Töltsd ki az alábbi űrlapot az új téma létrehozásához. A magyar kulcsszó alapján automatikusan generálódik egy beágyazási vektor.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="themes-create">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ route('editor.themes.store') }}" method="POST">
+                        {{ csrf_field() }}
+
+                        <div class="mb-3">
+                            <label for="hungarian_keyword" class="form-label">Magyar kulcsszó <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="hungarian_keyword" name="hungarian_keyword" required
+                                   placeholder="pl. Isten dicsősége, imádság, bűnbánat">
+                            <div class="form-text">Egyedi kifejezés magyarul, amely alapján a témához kapcsolódó verseket keresünk. Legfeljebb 255 karakter.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="photo_keywords" class="form-label">Angol kulcsszavak (fotókereséshez)</label>
+                            <textarea class="form-control" id="photo_keywords" name="photo_keywords" rows="3"
+                                      placeholder="prayer, hands, cross, light (vesszővel elválasztva)"></textarea>
+                            <div class="form-text">Angol kulcsszavak listája, vesszővel elválasztva. Ezeket a fotókereső API-nak fogjuk elküldeni.</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Fontos:</strong> A téma létrehozása után a magyar kulcsszó alapján az OpenAI beágyazási API segítségével generálunk egy vektort. Ez eltarthat néhány másodpercig.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ route('editor.themes.index') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Vissza a listához
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Téma létrehozása
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
