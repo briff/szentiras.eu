@@ -79,7 +79,7 @@ class AiController extends Controller
             $pureTexts[] = [
                 'translationAbbrev' => $translationAbbrev,
                 'reference' => $canonicalReference->toString(),
-                'text' => $this->textService->getPureText($canonicalReference, $translation, false),
+                'text' => $this->textService->getPureText($canonicalReference, $translation, 'none'),
                 'greekSimilarity' => $greekSimilarity
             ];
         }
@@ -87,7 +87,7 @@ class AiController extends Controller
         foreach ($allTranslations as $otherTranslation) {
             if ($otherTranslation->abbrev != $translationAbbrev) {
                 $translatedReference = $this->referenceService->translateReference($canonicalReference, $otherTranslation->id)->toString();
-                $otherText = $this->textService->getPureText(CanonicalReference::fromString($reference, $otherTranslation->id), $otherTranslation, false);
+                $otherText = $this->textService->getPureText(CanonicalReference::fromString($reference, $otherTranslation->id), $otherTranslation, 'none');
                 if (!empty($otherText)) {
                     $vector2 = $this->semanticSearchService->retrieveVector($translatedReference, $otherTranslation->abbrev);
                     if ($vector1 && $vector2) {
@@ -123,7 +123,7 @@ class AiController extends Controller
                     "reference" => $excerpt->reference,
                     "translationAbbrev" => $excerpt->translation_abbrev,
                     "similarity" => 1 - $excerpt->neighbor_distance,
-                    "text" => $this->textService->getPureText(CanonicalReference::fromString($excerpt->reference, $translation->id), $translation, false)
+                    "text" => $this->textService->getPureText(CanonicalReference::fromString($excerpt->reference, $translation->id), $translation, 'none')
                 ];
                 
                 // Extract book abbreviation from reference to determine OT/NT
@@ -239,7 +239,7 @@ class AiController extends Controller
                 $greekText = implode(' ', $explodedGreekText);
                 $book = $this->bookService->getBookByUsxCodeTranslation($greekVerse->usx_code, $translation->abbrev);
                 $ref = CanonicalReference::fromString("{$book->abbrev} {$greekVerse->chapter},{$greekVerse->verse}", $translation->id);
-                $pureText = $this->textService->getPureText($ref, $translation, false);
+                $pureText = $this->textService->getPureText($ref, $translation, 'none');
                 $instances[] = ["book" => $book, "greekVerse" => $greekVerse, "greekText" => $greekText, "pureText" => $pureText, "ref" => $ref];
             }
         }

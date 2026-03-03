@@ -423,7 +423,7 @@ class CommentaryService
         bool $useBatch = false,
         ?int $commentaryId = null
     ): array {
-        $verseText = $this->textService->getPureText($reference, $translation);
+        $verseText = $this->textService->getPureText($reference, $translation, 'markdown');
 
         // if no text, throw an exception to avoid generating empty commentary
         if (empty($verseText)) {

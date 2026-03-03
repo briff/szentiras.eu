@@ -96,10 +96,20 @@ class TextService
     /**
      * @param $canonicalRef CanonicalReference | string
      * @param Translation $translation
+     * @param string|bool|null $headingType One of: null (default = plain), 'plain', 'markdown', 'none'
      * @return string
      */
-    public function getPureText($canonicalRef, $translation, $includeHeadings = true)
+    public function getPureText($canonicalRef, $translation, $headingType = null)
     {
+        // Legacy boolean support
+        if (is_bool($headingType)) {
+            $headingType = $headingType ? 'plain' : 'none';
+        }
+        // Normalize: null -> plain
+        if ($headingType === null) {
+            $headingType = 'plain';
+        }
+        
         if (is_string($canonicalRef)) {
             $canonicalRef = CanonicalReference::fromString($canonicalRef);
         }
@@ -108,12 +118,12 @@ class TextService
         foreach ($verseContainers as $verseContainer) {
             $verses = $verseContainer->getParsedVerses();
             foreach ($verses as $verse) {
-                $verseText = $verse->getText($includeHeadings);
+                $verseText = $verse->getText($headingType);
                 $verseText = preg_replace('/<[^>]*>/', ' ', $verseText);
                 $text .= $verseText . ' ';
             }
         }
-        return $text;
+        return trim($text);
     }
 
     public function getPureTextFromNumbers($bookNumber, $chapterNumber, int $verseNumber, $translation) {

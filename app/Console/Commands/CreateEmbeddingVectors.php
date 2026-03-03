@@ -138,7 +138,7 @@ class CreateEmbeddingVectors extends Command
                 $toVerse = $window[3];
                 $reference = "{$book->abbrev} {$fromChapter},{$fromVerse}-{$toChapter},{$toVerse}";
                 $canonicalReference = CanonicalReference::fromString($reference, $book->translation->id);
-                $text = $this->textService->getPureText($canonicalReference, $book->translation, includeHeadings: false);
+                $text = $this->textService->getPureText($canonicalReference, $book->translation, headingType: 'none');
                 $this->embedExcerpt($canonicalReference, $text, EmbeddedExcerptScope::Range, $book->translation, $book, $fromChapter, $fromVerse, $toChapter, $toVerse);
             }
             if ($this->isFileTarget() || $this->isS3Target()) {
@@ -153,7 +153,7 @@ class CreateEmbeddingVectors extends Command
             $this->progressBar->setMaxSteps($verseCount);
             $chapterReference = "{$book->abbrev} $chapter";
             $canonicalReference = CanonicalReference::fromString($chapterReference, $book->translation->id);
-            $text = $this->textService->getPureText($canonicalReference, $book->translation, includeHeadings: true);
+            $text = $this->textService->getPureText($canonicalReference, $book->translation, headingType: 'markdown');
             if (!$this->option("scope") || $this->option("scope") == "chapter") {
                 $this->loadFiles("chapter", $chapter);
                 $this->embedExcerpt($canonicalReference, $text, EmbeddedExcerptScope::Chapter, $book->translation, $book, $chapter);
@@ -169,7 +169,7 @@ class CreateEmbeddingVectors extends Command
                     $canonicalReference = CanonicalReference::fromString($reference, $book->translation->id);
                     $verseContainers = $this->textService->getTranslatedVerses($canonicalReference, $book->translation);
                     $gepi = array_pop($verseContainers[0]->rawVerses)[0]->gepi ?? null;
-                    $text = $this->textService->getPureText($canonicalReference, $book->translation, includeHeadings: false);
+                    $text = $this->textService->getPureText($canonicalReference, $book->translation, headingType: 'none');
                     $this->embedExcerpt($canonicalReference, $text, EmbeddedExcerptScope::Verse, $book->translation, $book, $chapter, $verse, null, null, $gepi);
                     $verse++;
                 } while (!empty($text));

@@ -66,13 +66,32 @@ class VerseData
         }
     }
 
-    public function getText(bool $includeHeadings = true) : string {        
-        $text = implode(" ",
-            array_map(function($versePart) use ($includeHeadings) {
+    /**
+     * Get the verse text with headings formatted according to headingType.
+     *
+     * @param string|null $headingType One of: null (default = plain), 'plain', 'markdown', 'none'
+     * @return string
+     */
+    public function getText(?string $headingType = null) : string {
+        // Normalize: null -> plain
+        if ($headingType === null) {
+            $headingType = 'plain';
+        }
+        
+        $text = implode(
+            array_map(function($versePart) use ($headingType) {
                 if ($versePart->type == VersePartType::POEM_LINE) {
-                    return $versePart->content;
+                    return $versePart->content . ' ';
                 } else if ($versePart->type == VersePartType::HEADING) {
-                    return $includeHeadings ? "<h{$versePart->headingLevel}>{$versePart->content}</h{$versePart->headingLevel}>" : "";
+                    if ($headingType === 'none') {
+                        return '';
+                    } elseif ($headingType === 'markdown') {
+                        $hashes = str_repeat('#', max(1, $versePart->headingLevel));
+                        return "\n{$hashes} {$versePart->content}\n";
+                    } else {
+                        // plain or any other value
+                        return $versePart->content;
+                    }
                 } else {
                     return $versePart->content;
                 }

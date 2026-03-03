@@ -86,8 +86,8 @@ class ToolsController extends Controller
                     
                     foreach ($verseContainers as $verseContainer) {
                         foreach ($verseContainer->getParsedVerses() as $verse) {
-                            // Get text without headings (false parameter) and strip any remaining HTML tags
-                            $text = strip_tags($verse->getText(false));
+                            // Get text without headings ('none' parameter) and strip any remaining HTML tags
+                            $text = strip_tags($verse->getText('none'));
                             $fullText .= $text . ' ';
                             if (empty($reference)) {
                                 $reference = $verse->book->abbrev . " " . $verse->chapter . ',' . $verse->numv;

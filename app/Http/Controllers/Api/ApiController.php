@@ -179,7 +179,8 @@ class ApiController extends Controller
 
     public function getRef($ref, $translationAbbrev = false)
     {
-        $results = $this->searchRef($ref, $translationAbbrev);
+        $format = Request::input('format');
+        $results = $this->searchRef($ref, $translationAbbrev, $format);
         if (empty($results)) {
             \App::abort(404, "Nincs ilyen hivatkozás");
         } else {
@@ -233,9 +234,10 @@ class ApiController extends Controller
     /**
      * @param $ref
      * @param $translationAbbrev
+     * @param $format
      * @return array
      */
-    private function searchRef($ref, $translationAbbrev)
+    private function searchRef($ref, $translationAbbrev, $format = null)
     {
         if ($translationAbbrev == "*") {
             $translations = $this->translationRepository->getAllOrderedByDenom();
@@ -251,7 +253,7 @@ class ApiController extends Controller
                 if (!empty($text)) {
                     $result['canonicalRef'] = $canonicalRef->toString();
                     $result['canonicalUrl'] = URL::to($this->referenceService->getCanonicalUrl($canonicalRef, $translation->id));
-                    $result['text'] = $this->textService->getPureText($canonicalRef, $translation);
+                    $result['text'] = $this->textService->getPureText($canonicalRef, $translation, $format ?? 'none');
                     $result['translationAbbrev'] = $translation->abbrev;
                     $result['translationName'] = $translation->name;
                     $results[] = $result;

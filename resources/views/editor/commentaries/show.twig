@@ -28,45 +28,81 @@
 <div class="commentary-editor">
     <div class="row">
         <div class="col-lg-8">
-            <!-- Commentary Details -->
+            <!-- Commentary Details with Tabs -->
             <div class="card mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Kommentár szövege</h5>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-edit-text">
-                        <i class="bi bi-pencil"></i> Szerkesztés
-                    </button>
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="commentary-tab" data-bs-toggle="tab" data-bs-target="#commentary-content" type="button" role="tab" aria-controls="commentary-content" aria-selected="true">
+                                <i class="bi bi-pencil"></i> Kommentár szerkesztése
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="source-tab" data-bs-toggle="tab" data-bs-target="#source-content" type="button" role="tab" aria-controls="source-content" aria-selected="false">
+                                <i class="bi bi-file-text"></i> Forrásszöveg
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <!-- Display mode -->
-                    <div class="commentary-text-display" id="commentary-text-display">
-                        {% apply markdown_to_html %}
+                <div class="tab-content">
+                    <!-- Commentary Tab -->
+                    <div class="tab-pane fade show active" id="commentary-content" role="tabpanel" aria-labelledby="commentary-tab">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Kommentár szövege</h5>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-edit-text">
+                                    <i class="bi bi-pencil"></i> Szerkesztés
+                                </button>
+                            </div>
+                            
+                            <!-- Display mode -->
+                            <div class="commentary-text-display" id="commentary-text-display">
+                                {% apply markdown_to_html %}
 {{ commentaryData.commentary_text }}
-                        {% endapply %}
+                                {% endapply %}
+                            </div>
+                            
+                            <!-- Edit mode (hidden by default) -->
+                            <div class="commentary-text-edit" id="commentary-text-edit" style="display: none;">
+                                <form method="POST" action="{{ route('editor.commentaries.update', commentary.id) }}" id="commentary-text-form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="_method" value="PUT">
+                                    
+                                    <div class="mb-3">
+                                        <label for="commentary_text" class="form-label">Kommentár szöveg (Markdown formátumban)</label>
+                                        <textarea class="form-control font-monospace" id="commentary_text" name="commentary_text" rows="15">{{ commentaryData.commentary_text }}</textarea>
+                                        <div class="form-text">
+                                            Használhatja a Markdown formázást: **félkövér**, *dőlt*, `kód`, listák, stb.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-secondary" id="cancel-edit-text">
+                                            <i class="bi bi-x-circle"></i> Mégse
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle"></i> Mentés
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Edit mode (hidden by default) -->
-                    <div class="commentary-text-edit" id="commentary-text-edit" style="display: none;">
-                        <form method="POST" action="{{ route('editor.commentaries.update', commentary.id) }}" id="commentary-text-form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="_method" value="PUT">
-                            
-                            <div class="mb-3">
-                                <label for="commentary_text" class="form-label">Kommentár szöveg (Markdown formátumban)</label>
-                                <textarea class="form-control font-monospace" id="commentary_text" name="commentary_text" rows="15">{{ commentaryData.commentary_text }}</textarea>
-                                <div class="form-text">
-                                    Használhatja a Markdown formázást: **félkövér**, *dőlt*, `kód`, listák, stb.
+                    <!-- Source Text Tab -->
+                    <div class="tab-pane fade" id="source-content" role="tabpanel" aria-labelledby="source-tab">
+                        <div class="card-body">
+                            <h5 class="mb-3">Forrásszöveg</h5>
+                            {% if commentary.source_text %}
+                                <div class="source-text-display">
+                                    {% apply markdown_to_html %}
+{{ commentary.source_text }}
+                                    {% endapply %}
                                 </div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-outline-secondary" id="cancel-edit-text">
-                                    <i class="bi bi-x-circle"></i> Mégse
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle"></i> Mentés
-                                </button>
-                            </div>
-                        </form>
+                            {% else %}
+                                <p class="text-muted mb-0">Nincs forrásszöveg definiálva.</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -453,12 +489,14 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-    .commentary-text-display {
+    .commentary-text-display,
+    .source-text-display {
         line-height: 1.8;
         font-size: 1rem;
     }
 
-    .commentary-text-display p {
+    .commentary-text-display p,
+    .source-text-display p {
         margin-bottom: 1rem;
     }
 
@@ -467,29 +505,40 @@ document.addEventListener('DOMContentLoaded', function() {
     .commentary-text-display h3,
     .commentary-text-display h4,
     .commentary-text-display h5,
-    .commentary-text-display h6 {
+    .commentary-text-display h6,
+    .source-text-display h1,
+    .source-text-display h2,
+    .source-text-display h3,
+    .source-text-display h4,
+    .source-text-display h5,
+    .source-text-display h6 {
         margin-top: 1.5rem;
         margin-bottom: 0.5rem;
         font-weight: 600;
     }
 
     .commentary-text-display ul,
-    .commentary-text-display ol {
+    .commentary-text-display ol,
+    .source-text-display ul,
+    .source-text-display ol {
         margin-bottom: 1rem;
         padding-left: 2rem;
     }
 
-    .commentary-text-display li {
+    .commentary-text-display li,
+    .source-text-display li {
         margin-bottom: 0.5rem;
     }
 
-    .commentary-text-display code {
+    .commentary-text-display code,
+    .source-text-display code {
         padding: 0.2rem 0.4rem;
         border-radius: 3px;
         font-family: 'Courier New', monospace;
     }
 
-    .commentary-text-display blockquote {
+    .commentary-text-display blockquote,
+    .source-text-display blockquote {
         border-left: 4px solid ;
         padding-left: 1rem;
         margin-left: 0;
