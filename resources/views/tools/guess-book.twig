@@ -1,0 +1,212 @@
+{% extends "layout" %}
+
+{% block pageHeader %}
+    <div class="page-header">
+        <h1><i class="bi bi-book-half"></i> Találd ki a könyvet</h1>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid px-0">
+        <div class="row">
+            <div class="col-12">
+                <p class="lead">Találd ki, melyik bibliai könyvből származik a megjelenített igeszakasz!</p>
+                
+                <div class="alert alert-info mt-3">
+                    <h6><i class="bi bi-lightbulb"></i> Játékszabályok</h6>
+                    <ul class="mb-0">
+                        <li>Olvassa el a megjelenített igeszakaszt (fejezet és versszámok nélkül)</li>
+                        <li>Válassza ki, melyik könyvből származik</li>
+                        <li>Minden tippnél látja:
+                            <ul>
+                                <li><span class="badge bg-success">Zöld</span>: Ha a szövetség/szekció/kezdőbetű/könyv megegyezik</li>
+                                <li><span class="badge bg-danger">Piros</span>: Ha nem egyezik</li>
+                            </ul>
+                        </li>
+                        <li>Találja ki a könyvet a lehető legkevesebb próbálkozásból!</li>
+                    </ul>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Beállítások</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/tools/guessbook" id="settingsForm">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="translation_abbrev" class="form-label">
+                                        <i class="bi bi-book"></i> Fordítás:
+                                    </label>
+                                    <select class="form-select" id="translation_abbrev" name="translation_abbrev">
+                                        {% for translation in translations %}
+                                            <option value="{{ translation.abbrev }}" 
+                                                {{ translation.abbrev == selectedTranslation ? 'selected' : '' }}>
+                                                {{ translation.name }} ({{ translation.abbrev }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3 d-flex align-items-end">
+                                    <button type="submit" name="action" value="new_game" class="btn btn-primary">
+                                        <i class="bi bi-arrow-clockwise"></i> Új játék
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% if verses %}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-quote"></i> Igeszakasz</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="verse-text p-3 rounded">
+                            <p class="fs-5 mb-0">{{ verses }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if not won %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-search"></i> Tippelés</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/tools/guessbook" id="guessForm">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="translation_abbrev" value="{{ selectedTranslation }}">
+                            <input type="hidden" name="action" value="guess">
+                            
+                            <div class="mb-3">
+                                <label for="book_id" class="form-label">Válasszon egy könyvet:</label>
+                                <select class="form-select form-select-lg" id="book_id" name="book_id" required>
+                                    <option value="">-- Válasszon --</option>
+                                    {% for book in books %}
+                                        <option value="{{ book.id }}">{{ book.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Tipp leadása
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if guesses|length > 0 %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-list-check"></i> Korábbi tippek ({{ guesses|length }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Könyv</th>
+                                        <th>Szövetség</th>
+                                        <th>Szekció</th>
+                                        <th>Kezdőbetű</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for guess in guesses %}
+                                    <tr>
+                                        <td class="{{ guess.matches.book ? 'table-success' : 'table-danger' }}">
+                                            {{ guess.book.name }}
+                                        </td>
+                                        <td class="{{ guess.matches.testament ? 'table-success' : 'table-danger' }}">
+                                            {{ guess.book.testament == 'old' ? 'Ószövetség' : 'Újszövetség' }}
+                                        </td>
+                                        <td class="{{ guess.matches.section ? 'table-success' : 'table-danger' }}">
+                                            {{ guess.book.section }}
+                                        </td>
+                                        <td class="{{ guess.matches.firstLetter ? 'table-success' : 'table-danger' }}">
+                                            {{ guess.book.firstLetter }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if won %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading"><i class="bi bi-trophy"></i> Gratulálunk!</h4>
+                    <p class="mb-0">Sikeresen kitalálta: <strong>{{ correctBook.name }}</strong></p>
+                    <p class="mb-0">Próbálkozások száma: <strong>{{ guesses|length }}</strong></p>
+                    <hr>
+                    <p class="mb-0">Játsszon egy új játékot az "Új játék" gombra kattintva!</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Override Bootstrap table styles to respect theme */
+        .table > :not(caption) > * > * {
+            background-color: transparent;
+            color: inherit;
+        }
+
+        .table tbody tr {
+            color: black;
+        }
+        
+        /* Light theme table header */
+        .table thead th {
+            background-color: var(--bs-table-bg, white);
+            color: var(--bs-body-color, #212529);
+        }
+        
+        /* Dark theme table header */
+        [data-theme="dark"] .table thead th {
+            background-color: var(--bs-table-bg, #212529);
+            color: var(--bs-body-color, #dee2e6);
+        }
+        
+        .verse-text {
+            font-family: Georgia, serif;
+            line-height: 1.8;
+        }
+        
+        .table-success {
+            background-color: #d1e7dd !important;
+            color: #0a3622;
+            font-weight: 600;
+        }
+        
+        .table-danger {
+            background-color: #f8d7da !important;
+            color: #58151c;
+        }
+        
+        #book_id {
+            border: 2px solid #0d6efd;
+        }
+        
+        #book_id:focus {
+            border-color: #0a58ca;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+    </style>
+
+    <script>
+        // Auto-submit settings form when translation changes
+        document.getElementById('translation_abbrev').addEventListener('change', function() {
+            document.getElementById('settingsForm').submit();
+        });
+    </script>
+{% endblock %}
