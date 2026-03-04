@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlaceVerse wherePlaceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlaceVerse whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlaceVerse whereVerseNumber($value)
+ * @property-read string $reference
  * @mixin Eloquent
  */
 class PlaceVerse extends Eloquent

@@ -1,0 +1,131 @@
+/* Verse Card Creator Styles */
+
+.verse-card-creator {
+    @apply w-full;
+}
+
+.candidate-card {
+    @apply border border-gray-200 rounded-lg overflow-hidden transition-all duration-200;
+    @apply hover:shadow-lg hover:border-blue-600;
+}
+
+.candidate-card:hover {
+    @apply transform -translate-y-1;
+}
+
+.candidate-card img {
+    @apply w-full h-48 object-cover;
+}
+
+.candidate-card .card-body {
+    @apply p-3;
+}
+
+.candidate-card .card-text {
+    @apply text-sm text-gray-600;
+}
+
+.candidate-card .card-text a {
+    @apply text-blue-600 hover:underline;
+}
+
+.candidate-card.selected {
+    @apply border-blue-600 border-2 ring-2 ring-blue-600 ring-opacity-50;
+}
+
+#candidatesGrid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+#finalPreviewImage {
+    @apply w-full rounded-lg shadow-lg;
+    max-height: 600px;
+    object-fit: contain;
+}
+
+#moreButton {
+    @apply px-6 py-2 font-medium;
+}
+
+#moreButton:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+#moreSpinner {
+    @apply inline-block;
+}
+
+/* Loading state */
+#loadingState {
+    @apply flex flex-col items-center justify-center py-12;
+}
+
+/* Error state */
+#errorState {
+    @apply p-4 bg-red-50 border border-red-200 rounded-lg;
+}
+
+#errorState h4 {
+    @apply text-red-800 font-semibold mb-2;
+}
+
+#errorState p {
+    @apply text-red-700;
+}
+
+/* Preview state */
+#finalPreviewState {
+    @apply text-center;
+}
+
+/* Button styles */
+#moreButton {
+    @apply px-6 py-2 font-medium border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+#downloadButton {
+    @apply px-6 py-2 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center;
+}
+
+#newCardButton {
+    @apply px-6 py-2 font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center;
+}
+
+#retryButton {
+    @apply px-3 py-1 text-sm font-medium border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #candidatesGrid {
+        @apply grid-cols-1;
+    }
+
+    #finalPreviewImage {
+        max-height: 400px;
+    }
+}
+
+/* Accessibility */
+.candidate-card:focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-600;
+}
+
+button:focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-600;
+}
+
+/* Animation for state transitions */
+@keyframes fadeIn {
+    from {
+        @apply opacity-0;
+    }
+    to {
+        @apply opacity-100;
+    }
+}
+
+#candidateChooserState,
+#finalPreviewState {
+    animation: fadeIn 0.3s ease-in-out;
+}

@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereLonLat($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereUpdatedAt($value)
+ * @property-read int|null $verse_references_count
  * @mixin Eloquent
  */
 class Place extends Eloquent

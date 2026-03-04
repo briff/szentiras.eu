@@ -148,7 +148,8 @@ class SphinxSearch
     // It seems that Sphinx 3 doesn't handle this API correctly, so we go with a simpler approach
     // Before we had this:  $excerpts = $this->_connection->buildExcerpts($verses, $index, $words, $opts);
     // split the $text to words. Go through $verses, and in each $verse, if any word is found, replace it with <b>$word</b>
-    $words = explode(' ', $text);
+    $text = preg_replace('/\s+/', ' ', $text);
+    $words = explode(' ', trim($text));
     $excerpts = [];
     foreach ($verses as $id => $verse) {
       $excerpt = $this->boldWords($words, $verse);

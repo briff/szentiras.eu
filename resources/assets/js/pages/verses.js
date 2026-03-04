@@ -1,4 +1,5 @@
 import initPdfModal from '../pdfDialog.js';
+import { VerseCardDialog } from '../verseCardDialog.js';
 
 const initToggler = function () {
     var delay = 400;
@@ -25,11 +26,11 @@ const initToggler = function () {
         if (state === 'true') {
             $(toggle.selector).addClass('hidden');
             $(toggle.toggleButton).removeClass('active').addClass('inactive');
-            $(toggle.toggleButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+            $(toggle.toggleButton).css({ 'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd' });
         } else {
             $(toggle.selector).removeClass('hidden');
             $(toggle.toggleButton).addClass('active').removeClass('inactive');
-            $(toggle.toggleButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+            $(toggle.toggleButton).css({ 'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd' });
         }
 
         $(toggle.toggleButton).click(function (e) {
@@ -38,7 +39,7 @@ const initToggler = function () {
                 $(toggle.selector).fadeOut(delay);
                 $(toggle.selector).addClass('hidden');
                 $(toggle.toggleButton).removeClass('active').addClass('inactive');
-                $(toggle.toggleButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+                $(toggle.toggleButton).css({ 'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd' });
                 localStorage.setItem(toggle.storageKey, 'true');
             } else {
                 // special treatment for numv beacuse of the ai
@@ -50,7 +51,7 @@ const initToggler = function () {
                     $(toggle.selector).fadeIn(delay);
                 }
                 $(toggle.toggleButton).addClass('active').removeClass('inactive');
-                $(toggle.toggleButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+                $(toggle.toggleButton).css({ 'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd' });
                 localStorage.setItem(toggle.storageKey, 'false');
             }
         });
@@ -58,12 +59,12 @@ const initToggler = function () {
 
     // Check if we're on the Greek New Testament page
     var isGreekPage = $('.parsedVerses.greek').length > 0;
-    
+
     if (isGreekPage) {
         // Always enable AI tools for Greek New Testament page
         ai(true);
         localStorage.setItem('aiToolsState', 'true');
-        
+
         // Disable the toggle functionality on Greek page only
         $('#toggleAiTools').click(function (e) {
             e.preventDefault();
@@ -84,10 +85,10 @@ const initToggler = function () {
             e.preventDefault();
             if ($('#toggleAiTools').hasClass('active')) {
                 ai(false);
-                $('#toggleAiTools').css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+                $('#toggleAiTools').css({ 'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd' });
             } else {
                 ai(true);
-                $('#toggleAiTools').css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+                $('#toggleAiTools').css({ 'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd' });
             }
         });
     }
@@ -119,7 +120,7 @@ const initToggler = function () {
                             });
                             const filterRadios = popover.tip.querySelectorAll('.btn-check[name^="similarFilter"]');
                             filterRadios.forEach(radio => {
-                                radio.addEventListener('change', function() {
+                                radio.addEventListener('change', function () {
                                     const filterValue = this.value;
                                     popover.tip.querySelectorAll('.similars-container').forEach(container => {
                                         container.style.display = container.dataset.filter === filterValue ? 'block' : 'none';
@@ -129,7 +130,7 @@ const initToggler = function () {
                             const tooltipTriggerList = popover.tip.querySelectorAll(".quality[data-bs-toggle='tooltip']");
                             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
                             const greekWords = popover.tip.querySelectorAll('.greekWord');
-                            [...greekWords].map(greekWord => {  
+                            [...greekWords].map(greekWord => {
                                 greekWord.addEventListener("click", (event) => {
                                     const span = event.target;
                                     $(span).parent().find('.greekWord').removeClass('mark');
@@ -151,13 +152,13 @@ const initToggler = function () {
 
                                 });
                             });
-                        });    
-                        popover.show();                        
+                        });
+                        popover.show();
                     })
                     .catch((e) => {
                         console.log("Error loading content", e);
-                        
-                        setTimeout(() => {  }, 1000);
+
+                        setTimeout(() => { }, 1000);
                         aiTrigger.dataset.loaded = true;
                     });
             } else {
@@ -165,13 +166,13 @@ const initToggler = function () {
                 popover.show();
             }
         }
-    
+
         if (turnOn) {
             $('.parsedVerses span.numv').addClass('hidden');
             $('.parsedVerses span.numvai').removeClass('hidden');
             $('button.ai-tool-element').removeClass('hidden');
             $('#toggleAiTools').addClass('active').removeClass('inactive');
-            $('#toggleAiTools').css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+            $('#toggleAiTools').css({ 'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd' });
             localStorage.setItem('aiToolsState', 'true');
             const aiTriggers = document.querySelectorAll("a.numvai");
             [...aiTriggers].map(aiTrigger => {
@@ -190,7 +191,7 @@ const initToggler = function () {
             $('.parsedVerses span.numvai').addClass('hidden');
             $('button.ai-tool-element').addClass('hidden');
             $('#toggleAiTools').removeClass('active').addClass('inactive');
-            $('#toggleAiTools').css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+            $('#toggleAiTools').css({ 'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd' });
             localStorage.setItem('aiToolsState', 'false');
         }
     }
@@ -282,9 +283,9 @@ function footnotePopovers() {
 }
 
 function scrollToVerse() {
-    const scrollTo  = $('#data').data('scroll-to');
+    const scrollTo = $('#data').data('scroll-to');
     if (scrollTo) {
-        const element = document.getElementById('v_'+scrollTo);
+        const element = document.getElementById('v_' + scrollTo);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
         }
@@ -295,18 +296,18 @@ function initPlaceMaps() {
     // Handle single map with multiple places
     const mapContainer = document.getElementById('placeMapContainer');
     const mapDataScript = document.getElementById('placeMapData');
-    
+
     if (mapContainer && mapDataScript) {
         try {
             const placesData = JSON.parse(mapDataScript.textContent);
-            
+
             if (placesData.length > 0) {
                 // Create map centered on first place
                 const map = L.map(mapContainer).setView([placesData[0].lat, placesData[0].lon], 6);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
-                
+
                 // Add markers for all places
                 const markers = [];
                 placesData.forEach((place) => {
@@ -322,7 +323,7 @@ function initPlaceMaps() {
                         .addTo(map);
                     markers.push(marker);
                 });
-                
+
                 // Fit map bounds to all markers if multiple places
                 if (markers.length > 1) {
                     const group = new L.featureGroup(markers);
@@ -333,7 +334,7 @@ function initPlaceMaps() {
             console.log("Error initializing place map", e);
         }
     }
-    
+
     // Handle legacy individual place maps (if any)
     document.querySelectorAll('.place-map:not(#placeMapContainer)').forEach((mapEl) => {
         const lat = parseFloat(mapEl.dataset.lat);
@@ -355,7 +356,7 @@ function initPlaceModal() {
             const button = event.relatedTarget;
             const placeIds = button.getAttribute('data-place-ids');
             const placeModalBody = document.getElementById('placeModalBody');
-            
+
             if (placeIds) {
                 fetch(`/place/${placeIds}`)
                     .then(response => response.json())
@@ -379,6 +380,38 @@ function initPlaceModal() {
         });
     }
 }
+function initVerseCardModal() {
+    const verseCardModal = document.getElementById('verseCardModal');
+    let opener = null;
+    if (verseCardModal) {
+        verseCardModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            opener = button;
+            const recipient = button.getAttribute('data-bs-view');
+            fetch(`${recipient}`)
+                .then(response => response.text())
+                .then(data => {
+                    const verseCardModalContent = verseCardModal.querySelector('.modal-content');
+                    verseCardModalContent.innerHTML = `${data}`;
+                    // Reinitialize VerseCardDialog after content is loaded
+                    new VerseCardDialog();
+                })
+                .catch((e) => {
+                    console.log("Error loading verse card dialog", e);
+                });
+        });
+        verseCardModal.addEventListener('hide.bs.modal', () => {
+            const active = document.activeElement;
+            if (active && verseCardModal.contains(active)) {
+                active.blur(); // simplest + very effective
+            }
+        });
+        verseCardModal.addEventListener('hidden.bs.modal', () => {
+            (opener || document.getElementById('openVerseCardButton'))?.focus();
+        });
+
+    }
+}
 
 initToggler();
 footnotePopovers();
@@ -386,6 +419,7 @@ xrefPopovers();
 initQrModal();
 initPdfModal();
 initPlaceModal();
+initVerseCardModal();
 
 // Initialize media button styling
 function initMediaButtonStyling() {
@@ -395,11 +429,11 @@ function initMediaButtonStyling() {
         if (isMediaEnabled) {
             $(mediaButton).addClass('inactive').removeClass('active');
             // Media is currently enabled, so button should show "on" state
-            $(mediaButton).css({'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd'});
+            $(mediaButton).css({ 'background-color': 'transparent', 'color': '#0d6efd', 'border': '1px solid #0d6efd' });
         } else {
             $(mediaButton).addClass('active').removeClass('inactive');
             // Media is currently disabled, so button should show "off" state
-            $(mediaButton).css({'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd'});
+            $(mediaButton).css({ 'background-color': '#0d6efd', 'color': 'white', 'border': '1px solid #0d6efd' });
         }
     }
 }

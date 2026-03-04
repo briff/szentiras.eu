@@ -2,6 +2,7 @@
 export default {
   content: [
     './resources/views/textDisplay/book.twig',
+    './resources/views/textDisplay/verseCardCreator.twig'
   ],
   theme: {
     extend: {},

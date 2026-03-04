@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnonymousId whereLastLogin($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnonymousId whereToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AnonymousId whereUpdatedAt($value)
+ * @method static \Database\Factories\Data\Entity\AnonymousIdFactory factory($count = null, $state = [])
  * @mixin \Eloquent
  */
 class AnonymousId extends Model

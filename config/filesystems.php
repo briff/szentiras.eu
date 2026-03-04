@@ -87,6 +87,14 @@ return [
             'report' => false,
         ],
 
+        'ephemeral' => [
+            'driver' => 'local',
+            'root' => storage_path('app/ephemeral'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     'links' => [

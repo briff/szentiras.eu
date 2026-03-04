@@ -1,0 +1,71 @@
+<div class="modal-header">
+    <h5 class="modal-title">Igés kártya – versek kiválasztása</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body" data-csrf-token="{{ csrf_token() }}" data-translation-abbrev="{{ translationAbbrev }}">
+    <!-- Step 1: Verse Selection -->
+    <div id="verseSelectionStep">
+        <p>Válaszd ki azokat a verseket, amelyek alapján témákat szeretnél keresni:</p>
+        
+        <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+            {% for verse in verses %}
+            <div class="list-group-item list-group-item-action">
+                <div class="form-check">
+                    <input class="form-check-input verse-checkbox" type="checkbox"
+                           value="{{ verse.reference }}"
+                           data-text="{{ verse.text }}"
+                           id="verse-{{ loop.index }}">
+                    <label class="form-check-label w-100" for="verse-{{ loop.index }}">
+                        <strong>{{ verse.reference }}</strong>
+                        <div class="text-muted small">{{ verse.text|raw }}</div>
+                    </label>
+                </div>
+            </div>
+            {% else %}
+            <div class="list-group-item">Nincs megjeleníthető vers.</div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-3">
+            <button id="selectAll" class="btn btn-sm btn-outline-secondary">Összes kijelölése</button>
+            <button id="deselectAll" class="btn btn-sm btn-outline-secondary">Kijelölés törlése</button>
+        </div>
+
+        <div class="mt-3">
+            <button id="findThemesBtn" class="btn btn-primary" disabled>
+                Témák keresése a kijelölt versek alapján
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 2: Theme Selection -->
+    <div id="themeSelectionStep" style="display: none;">
+        <div id="themesResult" class="mt-3">
+            <h6>Talált témák:</h6>
+            <div id="themesList" class="list-group"></div>
+        </div>
+        <div class="mt-3">
+            <button id="backToVersesBtn" class="btn btn-sm btn-outline-secondary">
+                Vissza a versekhez
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="loadingState" style="display: none;" class="text-center py-4">
+        <div class="spinner-border mb-3" role="status">
+            <span class="visually-hidden">Betöltés...</span>
+        </div>
+        <p class="text-muted" id="loadingMessage">Feldolgozás...</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" class="alert alert-danger" style="display: none;" role="alert">
+        <h5 class="alert-heading">Hiba történt</h5>
+        <p id="errorMessage"></p>
+        <button id="errorRetryBtn" class="btn btn-sm btn-outline-danger mt-2" type="button">Újra</button>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+</div>

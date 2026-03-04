@@ -63,6 +63,18 @@ Route::get('/informaciok', '\SzentirasHu\Http\Controllers\Home\InfoController@in
 Route::get('/pdf/dialog/{translationAbbrev}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getDialog');
 Route::get('/pdf/ref/{translationId}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getRef');
 
+Route::get('/verse-card/dialog/{translationAbbrev}/{refString}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@getDialog');
+Route::post('/verse-card/find-themes', '\SzentirasHu\Http\Controllers\Display\VerseCardController@findThemes');
+Route::post('/verse-card/create', '\SzentirasHu\Http\Controllers\Display\VerseCardController@createSession')->name('verse-card.create');
+Route::get('/verse-card/creator/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@showCreator')->name('verse-card.creator');
+Route::get('/verse-card/status/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@getStatus')->name('verse-card.status');
+Route::post('/verse-card/more/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@requestMore')->name('verse-card.more');
+Route::post('/verse-card/select/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@selectCandidate')->name('verse-card.select');
+Route::post('/verse-card/update/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@updateAndRender')->name('verse-card.update');
+Route::post('/verse-card/end/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@endSession')->name('verse-card.end');
+Route::get('/verse-card/download/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@download')->name('verse-card.download');
+Route::get('/verse-card/asset/{assetId}/{type}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@serveAsset')->name('verse-card.asset');
+
 /** AUDIO */
 Route::get('/hang', '\SzentirasHu\Http\Controllers\Display\AudioBookController@index');
 

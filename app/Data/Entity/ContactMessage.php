@@ -33,6 +33,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage whereResolvedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage whereSenderAnonymousId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage whereUpdatedAt($value)
+ * @property-read int|null $replies_count
+ * @method static \Database\Factories\Data\Entity\ContactMessageFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage forParticipant(\SzentirasHu\Data\Entity\AnonymousId $participant)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage forReceiver(\SzentirasHu\Data\Entity\AnonymousId $receiver)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage forSender(\SzentirasHu\Data\Entity\AnonymousId $sender)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage resolved()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage rootMessages()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactMessage unresolved()
  * @mixin \Eloquent
  */
 class ContactMessage extends Model

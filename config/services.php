@@ -37,6 +37,11 @@ return [
 
 'anthropic' => [
     'api_key' => env('ANTHROPIC_API_KEY')
+],
+
+'pixabay' => [
+    'key' => env('PIXABAY_API_KEY'),
+    'base_url' => 'https://pixabay.com/api/'
 ]
 
 

@@ -20,6 +20,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read AnonymousId|null $createdBy
+ * @property string|null $deleted_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereCreatedByAnonymousId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereIsInternal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereKeyHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereKeyPrefix($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereLastUsedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereThrottleRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ApiKey whereUsageCount($value)
+ * @mixin \Eloquent
  */
 class ApiKey extends Model
 {
