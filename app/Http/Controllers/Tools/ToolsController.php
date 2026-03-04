@@ -113,6 +113,10 @@ class ToolsController extends Controller
                     $firstHalf = implode(' ', array_slice($words, 0, $halfPoint));
                     $secondHalf = implode(' ', array_slice($words, $halfPoint));
                     
+                    // Normalize card text: capitalize first letter and remove trailing punctuation
+                    $firstHalf = $this->normalizeCardText($firstHalf);
+                    $secondHalf = $this->normalizeCardText($secondHalf);
+                    
                     $verses[] = [
                         'reference' => $reference,
                         'original_input' => $line,
@@ -235,7 +239,7 @@ class ToolsController extends Controller
     /**
      * Get random verses from a book (without chapter/verse numbers and headings)
      */
-    private function getRandomVersesFromBook($book, $translation)
+    private function getRandomVersesFromBook($book, $translation, $minVerses = 2, $maxVerses = 4)
     {
         $maxChapter = $this->bookService->getChapterCount($book, $translation);
         if ($maxChapter === 0) {
@@ -249,8 +253,8 @@ class ToolsController extends Controller
             return '';
         }
         
-        // Get 2-4 random consecutive verses
-        $verseCount = rand(2, min(4, $maxVerse));
+        // Get random consecutive verses
+        $verseCount = rand($minVerses, min($maxVerses, $maxVerse));
         $startVerse = rand(1, max(1, $maxVerse - $verseCount + 1));
         $endVerse = $startVerse + $verseCount - 1;
         
@@ -316,5 +320,114 @@ class ToolsController extends Controller
         }
         
         return 'Egyéb';
+    }
+    
+    /**
+     * Online memory game - play in browser
+     */
+    public function memoryGamePlay(Request $request)
+    {
+        $translations = $this->translationService->getAllTranslations();
+        $selectedTranslation = null;
+        $cards = [];
+        $errors = [];
+        
+        // Set default translation
+        if (!$request->isMethod('post') || !$request->has('translation_abbrev')) {
+            $defaultTranslation = $this->translationService->getDefaultTranslation();
+            $selectedTranslation = $defaultTranslation->abbrev;
+        } else {
+            $selectedTranslation = $request->input('translation_abbrev');
+        }
+        
+        // Generate cards on POST
+        if ($request->isMethod('post') && $request->input('action') === 'generate') {
+            $rows = (int)$request->input('rows', 2);
+            $cols = (int)$request->input('cols', 3);
+            
+            // Validate rows and cols
+            if ($rows < 2) {
+                $errors[] = 'A sorok száma legalább 2 legyen.';
+            }
+            if ($cols < 2) {
+                $errors[] = 'Az oszlopok száma legalább 2 legyen.';
+            }
+            
+            $totalCards = $rows * $cols;
+            if ($totalCards % 2 !== 0) {
+                $errors[] = 'A kártyák száma (' . $totalCards . ') nem páros. Kérem válasszon olyan sort és oszlopot, amelyek szorzata páros!';
+            }
+            
+            if (empty($errors)) {
+                $translation = $this->translationService->getByAbbreviation($selectedTranslation);
+                $books = $this->bookService->getBooksForTranslation($translation);
+                $pairsNeeded = $totalCards / 2;
+                
+                // Generate random verses
+                $attempts = 0;
+                $maxAttempts = 50 + $pairsNeeded; // Prevent infinite loop, allow some retries for short verses
+                while (count($cards) < $pairsNeeded && $attempts < $maxAttempts) {
+                    $attempts++;
+                    $randomBook = $books->random();
+                    $verseText = $this->getRandomVersesFromBook($randomBook, $translation, 1, 2);
+                    
+                    if (empty($verseText)) {
+                        continue;
+                    }
+                    
+                    // Split verse into two halves
+                    $words = explode(' ', $verseText);
+                    $wordCount = count($words);
+                    
+                    if ($wordCount < 6) {
+                        continue; // Too short
+                    }
+                    
+                    $halfPoint = (int)($wordCount / 2);
+                    $firstHalf = implode(' ', array_slice($words, 0, $halfPoint));
+                    $secondHalf = implode(' ', array_slice($words, $halfPoint));
+                    
+                    // Normalize card text: capitalize first letter and remove trailing punctuation
+                    $firstHalf = $this->normalizeCardText($firstHalf);
+                    $secondHalf = $this->normalizeCardText($secondHalf);
+                    
+                    $cards[] = [
+                        'firstHalf' => $firstHalf,
+                        'secondHalf' => $secondHalf,
+                        'pairId' => count($cards)
+                    ];
+                }
+                
+                if (count($cards) < $pairsNeeded) {
+                    $errors[] = 'Nem sikerült elegendő verset találni. Próbálja meg kevesebb kártyával.';
+                    $cards = [];
+                }
+            }
+        }
+        
+        return \View::make("tools/memory-game-play", [
+            'pageTitle' => 'Online memóriajáték - Szentírás.eu',
+            'metaTitle' => 'Online memóriajáték - Szentírás.eu',
+            'translations' => $translations,
+            'selectedTranslation' => $selectedTranslation,
+            'cards' => $cards,
+            'errors' => $errors,
+            'rows' => $request->input('rows', 2),
+            'cols' => $request->input('cols', 3)
+        ]);
+    }
+    
+    /**
+     * Normalize card text: capitalize first letter and remove trailing punctuation
+     */
+    private function normalizeCardText(string $text): string
+    {
+        // Remove trailing punctuation marks
+        $text = rtrim($text, '.,;:!?"\'…');
+        
+        // Capitalize first letter (UTF-8 safe)
+        $text = mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+        
+        return $text;
     }
 }
