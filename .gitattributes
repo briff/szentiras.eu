@@ -2,3 +2,9 @@
 *.css linguist-vendored
 *.less linguist-vendored
 composer.phar -text
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
