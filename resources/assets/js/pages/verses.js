@@ -308,6 +308,13 @@ function initPlaceMaps() {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
 
+                // Add scale bar (léptékjelzősáv)
+                L.control.scale({
+                    imperial: false,
+                    metric: true,
+                    position: 'bottomleft'
+                }).addTo(map);
+
                 // Add markers for all places
                 const markers = [];
                 placesData.forEach((place) => {
@@ -344,6 +351,14 @@ function initPlaceMaps() {
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
+            
+            // Add scale bar (léptékjelzősáv) to individual maps
+            L.control.scale({
+                imperial: false,
+                metric: true,
+                position: 'bottomleft'
+            }).addTo(map);
+            
             L.marker([lat, lon]).addTo(map);
         }
     });
