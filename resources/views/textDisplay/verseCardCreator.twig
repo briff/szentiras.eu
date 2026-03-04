@@ -48,40 +48,40 @@
     <!-- Final preview state -->
     <div id="finalPreviewState" style="display: none;">
         <!-- Final preview image -->
-        <div class="text-center mb-6">
+        <div class="text-center mb-2">
             <img id="finalPreviewImage" src="" alt="Végső előnézet" class="img-fluid rounded shadow-lg" style="max-width: 100%; max-height: 600px; object-fit: contain;">
         </div>
 
         <!-- Edit fields section -->
-        <div id="editFieldsSection" class="mb-6 p-4 bg-light rounded border border-gray-200">
-            <h3 class="h5 mb-4">Szöveg szerkesztése</h3>
+        <div id="editFieldsSection" class="mt-2 mb-6 p-2 rounded border">
+            <h5>Szöveg szerkesztése</h5>
             
-                <form id="editFieldsForm" class="space-y-4">
-                    <div>
-                        <input
-                            type="text"
-                            class="form-control block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            id="verseRefInput"
-                            placeholder="pl. Róm 3:23"
-                            value="{{ session.verse_ref }}"
-                        >
-                    </div>
+                <form id="editFieldsForm" class="space-y-2">
                     <div>
                         <textarea
                             class="form-control block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
                             id="verseTextInput"
                             rows="4"
-                            placeholder="Vers szövege..."
+                            placeholder="Szóljak bár emberek vagy angyalok nyelvén, ha szeretet nincs bennem, csak zengő érc vagyok, vagy pengő cimbalom."
                         >{{ session.verse_text }}</textarea>
+                    </div>
+                    <div>
+                        <input
+                            type="text"
+                            class="form-control block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                            id="verseRefInput"
+                            placeholder="1Kor 13,1"
+                            value="{{ session.verse_ref }}"
+                        >
                     </div>
                 </form>
 
-            <div class="flex gap-2">
+            <div class="flex justify-center gap-2 mt-2">
                 <button id="saveEditsButton" class="btn btn-success px-4 py-2 font-medium" type="button">
                     <i class="bi bi-check-circle me-2"></i>Mentés és újrarenderelés
                 </button>
                 <button id="cancelEditsButton" class="btn btn-outline-secondary px-4 py-2 font-medium" type="button">
-                    <i class="bi bi-x-circle me-2"></i>Mégse
+                    <i class="bi bi-x-circle me-2"></i>Szöveg törlése
                 </button>
             </div>
         </div>

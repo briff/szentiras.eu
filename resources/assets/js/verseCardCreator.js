@@ -464,7 +464,7 @@ class VerseCardCreator {
             // Create container if it doesn't exist
             pixabayLinkContainer = document.createElement('div');
             pixabayLinkContainer.id = 'pixabayLinkContainer';
-            pixabayLinkContainer.className = 'text-center mt-4 text-sm text-gray-600';
+            pixabayLinkContainer.className = 'text-center text-sm';
             
             // Insert after the final preview image container
             const finalPreviewContainer = this.finalPreviewImage.parentElement;
@@ -476,7 +476,7 @@ class VerseCardCreator {
             const userText = pixabayUser ? ` (${pixabayUser})` : '';
             pixabayLinkContainer.innerHTML = `
                 <a href="${pixabayPageUrl}" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline">
+                   class="inline-flex items-center gap-1 hover:underline">
                     <i class="bi bi-link-45deg"></i>
                     Pixabay oldal${userText}
                 </a>
