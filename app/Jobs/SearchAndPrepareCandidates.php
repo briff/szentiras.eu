@@ -130,7 +130,7 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
                 'pixabay_user' => $hit['user'] ?? null,
                 'pixabay_page_url' => $hit['pageURL'] ?? null,
                 'remote_url' => $hit['largeImageURL'] ?? null,
-                'web_format_url' => $hit['webFormatURL'] ?? null,
+                'web_format_url' => $hit['webformatURL'] ?? null,
                 'width' => $hit['imageWidth'] ?? null,
                 'height' => $hit['imageHeight'] ?? null,
                 'disk' => 'ephemeral',
