@@ -12,11 +12,11 @@ use SzentirasHu\Data\Entity\PixabaySearchCache;
 
 class PixabayClient
 {
-    private const DEFAULT_PARAMS = [
+    public const DEFAULT_PARAMS = [
         'safesearch' => true,
         'image_type' => 'photo',
-        'orientation' => 'horizontal',
-        'per_page' => 50,
+        'per_page' => 24,
+        'category' => 'nature,religion,people,places,travel,buildings,music,backgrounds',
         'order' => 'popular',
     ];
 

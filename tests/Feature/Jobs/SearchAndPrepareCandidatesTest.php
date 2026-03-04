@@ -52,16 +52,10 @@ class SearchAndPrepareCandidatesTest extends TestCase
         // Mock PixabayClient
         $mockClient = Mockery::mock(PixabayClient::class);
         $mockClient->shouldReceive('search')
+            ->with(Mockery::on(function ($params) {
+                return $params['q'] === 'nature peace love' && $params['page'] === 1;
+            }))
             ->once()
-            ->with([
-                'q' => 'nature peace love',
-                'page' => 1,
-                'safesearch' => true,
-                'image_type' => 'photo',
-                'orientation' => 'horizontal',
-                'per_page' => 50,
-                'order' => 'popular',
-            ])
             ->andReturn([
                 'hits' => [
                     [
@@ -135,6 +129,9 @@ class SearchAndPrepareCandidatesTest extends TestCase
 
         $mockClient = Mockery::mock(PixabayClient::class);
         $mockClient->shouldReceive('search')
+            ->with(Mockery::on(function ($params) {
+                return $params['page'] === 1;
+            }))
             ->once()
             ->andReturn([
                 'hits' => [
@@ -176,6 +173,9 @@ class SearchAndPrepareCandidatesTest extends TestCase
 
         $mockClient = Mockery::mock(PixabayClient::class);
         $mockClient->shouldReceive('search')
+            ->with(Mockery::on(function ($params) {
+                return $params['page'] === 1;
+            }))
             ->once()
             ->andReturn(['hits' => []]);
 
@@ -199,7 +199,9 @@ class SearchAndPrepareCandidatesTest extends TestCase
 
         $mockClient = Mockery::mock(PixabayClient::class);
         $mockClient->shouldReceive('search')
-            ->once()
+            ->with(Mockery::on(function ($params) {
+                return $params['page'] >= 1;
+            }))
             ->andReturn([
                 'hits' => [
                     ['id' => 1],
@@ -216,6 +218,64 @@ class SearchAndPrepareCandidatesTest extends TestCase
         $session->refresh();
         $this->assertEquals('failed', $session->status);
         $this->assertCount(0, $session->assets);
+    }
+
+    /** @test */
+    public function it_fetches_multiple_pages_when_not_enough_unique_hits_on_first_page()
+    {
+        $session = VerseCardSession::factory()->create([
+            'keywords' => ['test'],
+            'theme_slug' => 'test',
+            'status' => 'searching',
+            'expires_at' => Carbon::now()->addHour(),
+        ]);
+
+        $mockClient = Mockery::mock(PixabayClient::class);
+        
+        // First page has only 2 unique hits
+        $mockClient->shouldReceive('search')
+            ->with(Mockery::on(function ($params) {
+                return $params['page'] === 1;
+            }))
+            ->once()
+            ->andReturn([
+                'hits' => [
+                    ['id' => 1, 'user' => 'artist1', 'pageURL' => '...', 'largeImageURL' => '...'],
+                    ['id' => 2, 'user' => 'artist2', 'pageURL' => '...', 'largeImageURL' => '...'],
+                ],
+            ]);
+
+        // Second page has 3 more hits (we need 2 more to reach 4 total)
+        $mockClient->shouldReceive('search')
+            ->with(Mockery::on(function ($params) {
+                return $params['page'] === 2;
+            }))
+            ->once()
+            ->andReturn([
+                'hits' => [
+                    ['id' => 3, 'user' => 'artist3', 'pageURL' => '...', 'largeImageURL' => '...'],
+                    ['id' => 4, 'user' => 'artist4', 'pageURL' => '...', 'largeImageURL' => '...'],
+                    ['id' => 5, 'user' => 'artist5', 'pageURL' => '...', 'largeImageURL' => '...'],
+                ],
+            ]);
+
+        $this->app->instance(PixabayClient::class, $mockClient);
+
+        $job = new SearchAndPrepareCandidates($session->id);
+        $job->handle($mockClient);
+
+        $session->refresh();
+        $this->assertEquals('downloading', $session->status);
+        $this->assertCount(4, $session->assets);
+        
+        $usedIds = $session->assets()->pluck('pixabay_id')->toArray();
+        $this->assertEqualsCanonicalizing([1, 2, 3, 4], $usedIds);
+        
+        // Verify pagination cursor was updated to page 2
+        $this->assertEquals(2, $session->pixabay_page);
+        
+        // Ensure DownloadCandidateImage jobs were dispatched
+        Queue::assertPushed(\SzentirasHu\Jobs\DownloadCandidateImage::class, 4);
     }
 
     protected function tearDown(): void

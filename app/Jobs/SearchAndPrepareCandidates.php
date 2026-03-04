@@ -68,40 +68,17 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
             return;
         }
 
-        // Build params from session keywords/theme
-        $params = $this->buildSearchParams($session);
-
-        // Call PixabayClient->search()
-        try {
-            $response = $pixabayClient->search($params);
-        } catch (\Throwable $e) {
-            Log::error('Pixabay search failed', [
-                'sessionId' => $this->sessionId,
-                'error' => $e->getMessage(),
-            ]);
-            $session->status = VerseCardSessionStatus::Failed->value;
-            $session->save();
-            return;
-        }
-
-        // Select 4 hits not used in this session
-        $hits = $response['hits'] ?? [];
-        if (empty($hits)) {
-            Log::warning('No hits returned from Pixabay', ['sessionId' => $this->sessionId]);
-            $session->status = VerseCardSessionStatus::Failed->value;
-            $session->save();
-            return;
-        }
-
+        // Get used Pixabay IDs early
         $usedPixabayIds = $this->getUsedPixabayIds($session);
-        $candidateHits = $this->selectCandidateHits($hits, $usedPixabayIds, 4);
+
+        // Fetch candidates, potentially across multiple pages
+        $candidateHits = $this->fetchCandidates($pixabayClient, $session, $usedPixabayIds, 4);
 
         if (count($candidateHits) < 4) {
             Log::warning('Not enough unique hits available', [
                 'sessionId' => $this->sessionId,
                 'available' => count($candidateHits),
             ]);
-            // We could still proceed with fewer, but for simplicity we fail.
             $session->status = VerseCardSessionStatus::Failed->value;
             $session->save();
             return;
@@ -130,15 +107,6 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
             DownloadCandidateImage::dispatch($assetId)->onQueue('image-download');
         }
 
-        // Update session cursor
-        $session->pixabay_page = $this->page;
-        $session->pixabay_offset = count($candidateHits);
-        // If offset reaches per_page limit, move to next page (should not happen with only 4 hits)
-        if ($session->pixabay_offset >= 50) {
-            $session->pixabay_page++;
-            $session->pixabay_offset = 0;
-        }
-
         // Set session status to downloading — UI can now show metadata/placeholders
         $session->status = VerseCardSessionStatus::Downloading->value;
         $session->save();
@@ -150,12 +118,78 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
     }
 
     /**
+     * Fetch candidate hits, fetching additional pages if needed.
+     *
+     * @param PixabayClient $pixabayClient
+     * @param VerseCardSession $session
+     * @param array $usedPixabayIds
+     * @param int $limit
+     * @return array
+     */
+    private function fetchCandidates(
+        PixabayClient $pixabayClient,
+        VerseCardSession $session,
+        array $usedPixabayIds,
+        int $limit
+    ): array {
+        $candidates = [];
+        $currentPage = $this->page;
+        $maxPages = 50; // Pixabay API limit
+
+        while (count($candidates) < $limit && $currentPage <= $maxPages) {
+            $params = $this->buildSearchParams($session, $currentPage);
+
+            try {
+                $response = $pixabayClient->search($params);
+            } catch (\Throwable $e) {
+                Log::error('Pixabay search failed', [
+                    'sessionId' => $this->sessionId,
+                    'page' => $currentPage,
+                    'error' => $e->getMessage(),
+                ]);
+                break;
+            }
+
+            $hits = $response['hits'] ?? [];
+            if (empty($hits)) {
+                Log::info('No more hits available from Pixabay', [
+                    'sessionId' => $this->sessionId,
+                    'page' => $currentPage,
+                ]);
+                break;
+            }
+
+            // Select candidates from this page
+            $pageCount = count($candidates);
+            $needed = $limit - $pageCount;
+            $pageCandidates = $this->selectCandidateHits($hits, $usedPixabayIds, $needed);
+
+            foreach ($pageCandidates as $hit) {
+                $candidates[] = $hit;
+                $usedPixabayIds[] = $hit['id'];
+            }
+
+            // Update session pagination cursor
+            $session->pixabay_page = $currentPage;
+            $session->pixabay_offset = count($pageCandidates);
+
+            // Move to next page if we still need more candidates
+            if (count($candidates) < $limit) {
+                $currentPage++;
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
      * Build search parameters from session keywords and theme.
      *
      * @param VerseCardSession $session
+     * @param int $page
      * @return array
      */
-    private function buildSearchParams(VerseCardSession $session): array
+    private function buildSearchParams(VerseCardSession $session, int $page = 1): array
     {
         $keywords = $session->keywords ?? [];
         $themeSlug = $session->theme_slug;
@@ -169,12 +203,7 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
 
         return [
             'q' => $query,
-            'page' => $this->page,
-            'safesearch' => true,
-            'image_type' => 'photo',
-            'orientation' => 'horizontal',
-            'per_page' => 50,
-            'order' => 'popular',
+            'page' => $page
         ];
     }
 
