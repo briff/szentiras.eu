@@ -67,6 +67,10 @@ class RenderVerseCardJob implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('RenderVerseCardJob started', [
+            'sessionId' => $this->sessionId,
+            'selectedAssetId' => $this->selectedAssetId,
+        ]);
         try {
             /** @var VerseCardSession $session */
             $session = VerseCardSession::query()->whereKey($this->sessionId)->firstOrFail();

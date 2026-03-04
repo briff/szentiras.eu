@@ -123,6 +123,7 @@ services:
       retries: 3
   migrator:
     image: szeu-app-prod
+    user: "33:33" # www-data
     mem_limit: 256m
     env_file:
       - path: ./.env.prod
@@ -139,6 +140,7 @@ services:
     restart: "no"
   horizon:
     image: szeu-app-prod
+    user: "33:33" # www-data
     mem_limit: 384m
     init: true    
     env_file:
