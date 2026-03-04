@@ -60,7 +60,7 @@
                 </div>
 
                 {% if verses %}
-                <div class="card mb-4">
+                <div class="card mb-4" id="igeszakasz-section">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0"><i class="bi bi-quote"></i> Igeszakasz</h5>
                     </div>
@@ -207,6 +207,31 @@
         // Auto-submit settings form when translation changes
         document.getElementById('translation_abbrev').addEventListener('change', function() {
             document.getElementById('settingsForm').submit();
+        });
+
+        // Scroll to igeszakasz section after making a guess
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if guesses|length > 0 %}
+                // Only scroll if there are guesses (meaning a guess was just made)
+                const igeszakaszSection = document.getElementById('igeszakasz-section');
+                if (igeszakaszSection) {
+                    // Use smooth scrolling
+                    igeszakaszSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Optional: add a visual highlight
+                    setTimeout(() => {
+                        igeszakaszSection.style.transition = 'box-shadow 0.3s ease';
+                        igeszakaszSection.style.boxShadow = '0 0 0 4px rgba(13, 110, 253, 0.5)';
+                        
+                        setTimeout(() => {
+                            igeszakaszSection.style.boxShadow = '';
+                        }, 2000);
+                    }, 500);
+                }
+            {% endif %}
         });
     </script>
 {% endblock %}
