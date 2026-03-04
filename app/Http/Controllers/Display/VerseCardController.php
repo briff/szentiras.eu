@@ -178,6 +178,8 @@ class VerseCardController extends Controller
                     'download_url' => route('verse-card.download', ['sessionId' => $session->id]),
                     'width' => $finalAsset->width,
                     'height' => $finalAsset->height,
+                    'pixabay_page_url' => $finalAsset->pixabay_page_url,
+                    'pixabay_user' => $finalAsset->pixabay_user,
                 ]);
             }
         }

@@ -82,7 +82,14 @@ class VerseCardCreator {
                     this.enableCandidateSelection();
                 } else if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
+                    this.displayFinalPreview(
+                        data.final_url,
+                        data.download_url,
+                        data.width,
+                        data.height,
+                        data.pixabay_page_url,
+                        data.pixabay_user
+                    );
                     this.setState('preview');
                 } else if (data.status === 'failed') {
                     this.stopPolling();
@@ -343,7 +350,14 @@ class VerseCardCreator {
             .then(data => {
                 if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
+                    this.displayFinalPreview(
+                        data.final_url,
+                        data.download_url,
+                        data.width,
+                        data.height,
+                        data.pixabay_page_url,
+                        data.pixabay_user
+                    );
                     this.setState('preview');
                     this.hideSelectionProgress();
                 } else {
@@ -374,7 +388,14 @@ class VerseCardCreator {
                 this.updateSelectionProgressMessage(data.status);
                 if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
+                    this.displayFinalPreview(
+                        data.final_url,
+                        data.download_url,
+                        data.width,
+                        data.height,
+                        data.pixabay_page_url,
+                        data.pixabay_user
+                    );
                     this.setState('preview');
                     this.hideSelectionProgress();
                     this.enableEditButtons();
@@ -409,7 +430,7 @@ class VerseCardCreator {
     /**
      * Display final preview
      */
-    displayFinalPreview(finalUrl, downloadUrl, width = null, height = null) {
+    displayFinalPreview(finalUrl, downloadUrl, width = null, height = null, pixabayPageUrl = null, pixabayUser = null) {
         // Force image reload by clearing src first, then setting new src
         this.finalPreviewImage.src = '';
         
@@ -427,6 +448,42 @@ class VerseCardCreator {
             this.finalPreviewImage.src = finalUrl;
         }, 0);
         this.downloadButton.href = downloadUrl;
+        
+        // Create or update Pixabay link
+        this.updatePixabayLink(pixabayPageUrl, pixabayUser);
+    }
+    
+    /**
+     * Update Pixabay link in the final preview state
+     */
+    updatePixabayLink(pixabayPageUrl, pixabayUser) {
+        // Find or create the Pixabay link container
+        let pixabayLinkContainer = document.getElementById('pixabayLinkContainer');
+        
+        if (!pixabayLinkContainer) {
+            // Create container if it doesn't exist
+            pixabayLinkContainer = document.createElement('div');
+            pixabayLinkContainer.id = 'pixabayLinkContainer';
+            pixabayLinkContainer.className = 'text-center mt-4 text-sm text-gray-600';
+            
+            // Insert after the final preview image container
+            const finalPreviewContainer = this.finalPreviewImage.parentElement;
+            finalPreviewContainer.parentNode.insertBefore(pixabayLinkContainer, finalPreviewContainer.nextSibling);
+        }
+        
+        // Update the link content
+        if (pixabayPageUrl) {
+            const userText = pixabayUser ? ` (${pixabayUser})` : '';
+            pixabayLinkContainer.innerHTML = `
+                <a href="${pixabayPageUrl}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline">
+                    <i class="bi bi-link-45deg"></i>
+                    Pixabay oldal${userText}
+                </a>
+            `;
+        } else {
+            pixabayLinkContainer.innerHTML = '';
+        }
     }
 
     /**
