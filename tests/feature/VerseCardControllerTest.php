@@ -27,8 +27,8 @@ class VerseCardControllerTest extends TestCase
         ]);
 
         $response = $this->postJson('/verse-card/create', [
-            'verse_ref' => 'Mt1,1',
-            'verse_text' => 'Test verse text',
+            'verse_refs' => ['Mt1,1'],
+            'verse_texts' => ['Test verse text'],
             'theme_id' => $theme->id,
             'keywords' => ['test', 'keyword'],
         ]);
@@ -45,7 +45,7 @@ class VerseCardControllerTest extends TestCase
         // Verify the session exists in the database
         $session = VerseCardSession::find($sessionId);
         $this->assertNotNull($session);
-        $this->assertEquals('Mt1,1', $session->verse_ref);
+        $this->assertEquals('Mt 1,1', $session->verse_ref);
         $this->assertEquals('Test verse text', $session->verse_text);
         $this->assertEquals($theme->id, $session->theme_slug);
         $this->assertEquals(['test', 'keyword'], $session->keywords);
@@ -66,8 +66,8 @@ class VerseCardControllerTest extends TestCase
         ]);
 
         $response = $this->postJson('/verse-card/create', [
-            'verse_ref' => 'Jn3,16',
-            'verse_text' => 'For God so loved the world',
+            'verse_refs' => ['Jn3,16'],
+            'verse_texts' => ['For God so loved the world'],
             'theme_id' => $theme->id,
             'keywords' => [],
         ]);

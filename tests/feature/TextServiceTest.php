@@ -2,50 +2,11 @@
 
 namespace SzentirasHu\Test;
 
-use Artisan;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use SzentirasHu\Service\Reference\CanonicalReference;
-use SzentirasHu\Test\Common\TestCase;
+use SzentirasHu\Test\Common\FastDatabaseTestCase;
 
-class TextServiceTest extends TestCase
+class TextServiceTest extends FastDatabaseTestCase
 {
-    use RefreshDatabase;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        /* Clean up caches, to not be affected by runtime */
-
-        Artisan::call('route:clear');
-        Artisan::call('config:clear');
-        Artisan::call('view:clear');
-        Artisan::call('cache:clear');
-
-        $this->seed(\Database\Seeders\DatabaseSeeder::class);
-        \Config::set(
-            'translations',
-            array_merge_recursive(
-                \Config::get('translations'),
-                [
-                    'TESTTRANS' => [
-                        'verseTypes' =>
-                        [
-                            'text' => [6, 901],
-                            'heading' => [0 => 5, 1 => 10, 2 => 20, 3 => 30],
-                            'footnote' => [120, 2001, 2002],
-                            'poemLine' => [902],
-                            'xref' => [920]
-                        ],
-                        'textSource' => env('TEXT_SOURCE_KNB'),
-                        'id' => 1001
-                    ]
-                ]
-            )
-        );
-    }
-
-
     public function testSameChapterRangeText() {
         
         /** @var \SzentirasHu\Service\Text\TextService $service */

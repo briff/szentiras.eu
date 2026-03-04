@@ -1,24 +1,17 @@
 <?php
 
 namespace SzentirasHu\Test;
+
 use App;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use SzentirasHu\Test\Common\TestCase;
+use SzentirasHu\Test\Common\FastDatabaseTestCase;
 
 
 /**
-
+ 
  */
 
-class VerseRepositoryTest extends TestCase {
-    use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->seed(\Database\Seeders\DatabaseSeeder::class);
-    }
-
+class VerseRepositoryTest extends FastDatabaseTestCase
+{
     public function testVersesInOrder() {
         $repo = App::make(\SzentirasHu\Data\Repository\VerseRepositoryEloquent::class);
         
@@ -37,4 +30,4 @@ class VerseRepositoryTest extends TestCase {
         $this->assertEquals('Ter', $verse->book->abbrev);
     }
 
-} 
+}

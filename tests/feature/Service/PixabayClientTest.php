@@ -39,31 +39,22 @@ class PixabayClientTest extends TestCase
     public function test_search_returns_cached_response(): void
     {
         $params = ['q' => 'jesus', 'category' => 'religion'];
-        $canonicalParams = [
-            'safesearch' => 'true',
-            'image_type' => 'photo',
-            'orientation' => 'horizontal',
-            'per_page' => 50,
-            'order' => 'popular',
-            'q' => 'jesus',
-            'category' => 'religion',
-        ];
-        ksort($canonicalParams);
-        $cacheKey = sha1(json_encode($canonicalParams));
-
         $cachedResponse = ['total' => 10, 'hits' => []];
 
-        // Mock PixabaySearchCache model
-        $mockCache = Mockery::mock('overload:'.PixabaySearchCache::class);
+        // Mock PixabaySearchCache using alias mock
+        $mockCache = Mockery::mock('alias:' . PixabaySearchCache::class);
         $mockQuery = Mockery::mock();
+        
         $mockCache->shouldReceive('where')
             ->with('cache_key', Mockery::any())
             ->once()
             ->andReturn($mockQuery);
+        
         $mockQuery->shouldReceive('where')
             ->with('expires_at', '>', Mockery::any())
             ->once()
             ->andReturn($mockQuery);
+        
         $mockQuery->shouldReceive('first')
             ->once()
             ->andReturn((object) ['response' => $cachedResponse]);
@@ -76,28 +67,21 @@ class PixabayClientTest extends TestCase
     public function test_search_calls_api_when_cache_missing(): void
     {
         $params = ['q' => 'jesus'];
-        $canonicalParams = [
-            'safesearch' => 'true',
-            'image_type' => 'photo',
-            'orientation' => 'horizontal',
-            'per_page' => 50,
-            'order' => 'popular',
-            'q' => 'jesus',
-        ];
-        ksort($canonicalParams);
-        $cacheKey = sha1(json_encode($canonicalParams));
 
         // Mock cache miss
-        $mockCache = Mockery::mock('overload:'.PixabaySearchCache::class);
+        $mockCache = Mockery::mock('alias:' . PixabaySearchCache::class);
         $mockQuery = Mockery::mock();
+        
         $mockCache->shouldReceive('where')
             ->with('cache_key', Mockery::any())
             ->once()
             ->andReturn($mockQuery);
+        
         $mockQuery->shouldReceive('where')
             ->with('expires_at', '>', Mockery::any())
             ->once()
             ->andReturn($mockQuery);
+        
         $mockQuery->shouldReceive('first')
             ->once()
             ->andReturnNull();
@@ -143,11 +127,19 @@ class PixabayClientTest extends TestCase
         $params = ['q' => 'jesus'];
 
         // Mock cache miss
-        $mockCache = Mockery::mock('overload:'.PixabaySearchCache::class);
+        $mockCache = Mockery::mock('alias:' . PixabaySearchCache::class);
         $mockQuery = Mockery::mock();
-        $mockCache->shouldReceive('where')->andReturn($mockQuery);
-        $mockQuery->shouldReceive('where')->andReturn($mockQuery);
-        $mockQuery->shouldReceive('first')->andReturnNull();
+        
+        $mockCache->shouldReceive('where')
+            ->with('cache_key', Mockery::any())
+            ->andReturn($mockQuery);
+        
+        $mockQuery->shouldReceive('where')
+            ->with('expires_at', '>', Mockery::any())
+            ->andReturn($mockQuery);
+        
+        $mockQuery->shouldReceive('first')
+            ->andReturnNull();
 
         Http::fake([
             'pixabay.com/api/*' => Http::response('Service Unavailable', 503),
@@ -164,11 +156,19 @@ class PixabayClientTest extends TestCase
         $params = ['q' => 'jesus'];
 
         // Mock cache miss
-        $mockCache = Mockery::mock('overload:'.PixabaySearchCache::class);
+        $mockCache = Mockery::mock('alias:' . PixabaySearchCache::class);
         $mockQuery = Mockery::mock();
-        $mockCache->shouldReceive('where')->andReturn($mockQuery);
-        $mockQuery->shouldReceive('where')->andReturn($mockQuery);
-        $mockQuery->shouldReceive('first')->andReturnNull();
+        
+        $mockCache->shouldReceive('where')
+            ->with('cache_key', Mockery::any())
+            ->andReturn($mockQuery);
+        
+        $mockQuery->shouldReceive('where')
+            ->with('expires_at', '>', Mockery::any())
+            ->andReturn($mockQuery);
+        
+        $mockQuery->shouldReceive('first')
+            ->andReturnNull();
 
         Http::fake([
             'pixabay.com/api/*' => Http::response('Bad Request', 400),
