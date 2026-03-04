@@ -304,7 +304,7 @@ function initPlaceMaps() {
             if (placesData.length > 0) {
                 // Create map centered on first place
                 const map = L.map(mapContainer).setView([placesData[0].lat, placesData[0].lon], 6);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
 
