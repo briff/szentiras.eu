@@ -90,9 +90,21 @@ class CommentaryStatusPoller {
         const translation = form.querySelector('input[name="translation"]').value;
         const csrfToken = form.querySelector('input[name="_token"]').value;
 
+        // Find the parent commentary container to get the container index
+        const commentaryContainer = form.closest('.commentary-container');
+        if (!commentaryContainer) {
+            console.error('Could not find parent commentary container for form');
+            return;
+        }
+        
+        const containerIndex = commentaryContainer.dataset.containerIndex;
+        if (!containerIndex) {
+            console.error('Commentary container missing data-container-index attribute');
+            return;
+        }
+
         // Immediately hide the form and show a pending status indicator
         form.style.display = 'none';
-        const containerIndex = 0; // there should be only one form present on page
         const statusContainer = document.getElementById(`status-${containerIndex}`);
         if (statusContainer) {
             statusContainer.innerHTML = this.buildSpinnerHtml();
