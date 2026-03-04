@@ -2,6 +2,7 @@
 
 namespace SzentirasHu\Data\Entity;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Pgvector\Laravel\HasNeighbors;
 use Pgvector\Laravel\Vector;
@@ -43,7 +44,22 @@ use Pgvector\Laravel\Vector;
 class EmbeddedExcerpt extends Model
 {
 
-    use HasNeighbors;
+    use HasFactory, HasNeighbors;
+
+    protected $fillable = [
+        'gepi',
+        'hash',
+        'model',
+        'reference',
+        'chapter',
+        'verse',
+        'to_chapter',
+        'to_verse',
+        'translation_abbrev',
+        'usx_code',
+        'scope',
+        'embedding'        
+    ];
 
     protected $casts = [
         'embedding' => Vector::class,

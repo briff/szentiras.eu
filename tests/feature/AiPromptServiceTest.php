@@ -1,6 +1,6 @@
 <?php
 
-namespace SzentirasHu\Test\Feature;
+namespace SzentirasHu\Test;
 
 use SzentirasHu\Service\Ai\AiPromptService;
 use Illuminate\Contracts\Config\Repository;

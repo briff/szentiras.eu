@@ -23,6 +23,14 @@
             <p class="text-muted">Kattints a képre a kiválasztáshoz</p>
         </div>
 
+        <!-- Progress indicator during selection -->
+        <div id="selectionProgressState" style="display: none;" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <div class="spinner-border mb-3" role="status">
+                <span class="visually-hidden">Feldolgozás...</span>
+            </div>
+            <p id="selectionProgressMessage" class="text-muted mb-0">Végső kép renderelése...</p>
+        </div>
+
         <!-- Candidate thumbnails grid -->
         <div id="candidatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <!-- Candidates will be inserted here -->

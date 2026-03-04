@@ -7,11 +7,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use SzentirasHu\Data\Entity\VerseCardAsset;
 use SzentirasHu\Data\Entity\VerseCardSession;
 use SzentirasHu\Data\Enum\VerseCardSessionStatus;
 use SzentirasHu\Services\PixabayClient;
-use Illuminate\Support\Facades\Log;
 use SzentirasHu\Jobs\DownloadCandidateImage;
 
 class SearchAndPrepareCandidates extends Job implements ShouldQueue
@@ -95,6 +98,9 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
                 'pixabay_user' => $hit['user'] ?? null,
                 'pixabay_page_url' => $hit['pageURL'] ?? null,
                 'remote_url' => $hit['largeImageURL'] ?? null,
+                'web_format_url' => $hit['webFormatURL'] ?? null,
+                'width' => $hit['imageWidth'] ?? null,
+                'height' => $hit['imageHeight'] ?? null,
                 'disk' => 'ephemeral',
                 'expires_at' => $session->expires_at,
             ]);
@@ -102,7 +108,12 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
             $assetIds[] = $asset->id;
         }
 
-        // Dispatch 4 DownloadCandidateImage jobs
+        // Download web format images and create thumbnails
+        foreach ($assetIds as $assetId) {
+            $this->downloadWebFormatImage($assetId);
+        }
+
+        // Dispatch DownloadCandidateImage jobs for resize transformations
         foreach ($assetIds as $assetId) {
             DownloadCandidateImage::dispatch($assetId)->onQueue('image-download');
         }
@@ -245,6 +256,94 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
             }
         }
         return $candidates;
+    }
+
+    /**
+     * Download web format image and create thumbnail.
+     *
+     * @param int $assetId
+     * @return void
+     */
+    private function downloadWebFormatImage(int $assetId): void
+    {
+        $asset = VerseCardAsset::find($assetId);
+        if (! $asset) {
+            Log::error('Asset not found for web format download', ['assetId' => $assetId]);
+            return;
+        }
+
+        $session = $asset->session;
+        if ($session->expires_at && $session->expires_at->isPast()) {
+            Log::warning('Session expired, skipping web format download', ['assetId' => $assetId]);
+            return;
+        }
+
+        $webFormatUrl = $asset->web_format_url;
+        $usedFallback = false;
+
+        if (! $webFormatUrl) {
+            // Fall back to remote_url if web_format_url is missing
+            $webFormatUrl = $asset->remote_url;
+            $usedFallback = true;
+        }
+
+        if (! $webFormatUrl) {
+            Log::error('Asset missing both web_format_url and remote_url, cannot download', ['assetId' => $assetId]);
+            return;
+        }
+
+        // If we fell back to remote_url, update the asset record
+        if ($usedFallback) {
+            Log::info('Using remote_url as fallback for web_format_url', ['assetId' => $assetId]);
+            $asset->web_format_url = $webFormatUrl;
+            $asset->save();
+        }
+        
+
+        // Acquire per-asset Redis lock to prevent duplicate downloads
+        $lock = Cache::lock('download_web_format_' . $asset->id, 300); // 5 minutes
+        if (! $lock->get()) {
+            Log::warning('Duplicate web format download detected, skipping', ['assetId' => $assetId]);
+            return;
+        }
+
+        try {
+            // Stream download to ephemeral/verse-cards/{sessionId}/c/{assetId}_web.jpg
+            $disk = $asset->disk ?: 'ephemeral';
+            $directory = 'verse-cards/' . $session->id . '/c';
+            $filename = $asset->id . '_web.jpg';
+            $path = $directory . '/' . $filename;
+
+            // Ensure directory exists
+            Storage::disk($disk)->makeDirectory($directory);
+
+            // Download with sink
+            $response = Http::timeout(60)
+                ->retry(3, 100)
+                ->sink(Storage::disk($disk)->path($path))
+                ->get($webFormatUrl);
+
+            if (! $response->successful()) {
+                throw new \Exception('HTTP request failed with status ' . $response->status());
+            }
+
+            // Update asset with web format path
+            $asset->path = $path;
+            $asset->save();
+
+            Log::info('Web format image downloaded', [
+                'assetId' => $assetId,
+                'path' => $path,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to download web format image', [
+                'assetId' => $assetId,
+                'webFormatUrl' => $webFormatUrl,
+                'error' => $e->getMessage(),
+            ]);
+        } finally {
+            $lock->release();
+        }
     }
 
     /**

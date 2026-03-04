@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Rules;
+namespace SzentirasHu\Test\Rules;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

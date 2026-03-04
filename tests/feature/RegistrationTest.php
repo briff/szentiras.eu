@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace SzentirasHu\Test;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use SzentirasHu\Data\Entity\AnonymousId;

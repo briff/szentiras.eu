@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Editor;
+namespace SzentirasHu\Test\Editor;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

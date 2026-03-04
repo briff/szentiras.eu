@@ -20,6 +20,8 @@ use Database\Factories\Data\Entity\VerseCardAssetFactory;
  * @property string|null $path
  * @property string|null $thumb_path
  * @property int|null $bytes
+ * @property int|null $width
+ * @property int|null $height
  * @property \Illuminate\Support\Carbon|null $expires_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
@@ -62,6 +64,8 @@ class VerseCardAsset extends Model
         'path',
         'thumb_path',
         'bytes',
+        'width',
+        'height',
         'expires_at',
     ];
 

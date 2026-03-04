@@ -54,7 +54,7 @@ class DownloadCandidateImage extends Job implements ShouldQueue
         // Abort if session expired
         $session = $asset->session;
         if ($session->expires_at && $session->expires_at->isPast()) {
-            Log::warning('Session expired, skipping download', ['assetId' => $this->assetId]);
+            Log::warning('Session expired, skipping resize', ['assetId' => $this->assetId]);
             $asset->state = 'deleted';
             $asset->save();
             return;
@@ -68,73 +68,48 @@ class DownloadCandidateImage extends Job implements ShouldQueue
             return;
         }
 
-        $remoteUrl = $asset->remote_url;
-        if (! $remoteUrl) {
-            Log::error('Asset missing remote_url', ['assetId' => $this->assetId]);
-            $this->markAssetFailed($asset, 'Missing remote URL');
+        // Check if web format image exists
+        $disk = $asset->disk ?: 'ephemeral';
+        if (! $asset->path || ! Storage::disk($disk)->exists($asset->path)) {
+            Log::error('Web format image missing', ['assetId' => $this->assetId]);
+            $this->markAssetFailed($asset, 'Web format image not found');
             return;
         }
 
-        // Acquire per-asset Redis lock to prevent duplicate downloads
-        $lock = Cache::lock('download_asset_' . $asset->id, 300); // 5 minutes
+        // Acquire per-asset Redis lock to prevent duplicate processing
+        $lock = Cache::lock('resize_asset_' . $asset->id, 300); // 5 minutes
         if (! $lock->get()) {
-            Log::warning('Duplicate download detected, skipping', ['assetId' => $this->assetId]);
+            Log::warning('Duplicate resize detected, skipping', ['assetId' => $this->assetId]);
             return;
         }
 
-        // Update state to downloading
+        // Update state to downloading (processing)
         $asset->state = 'downloading';
         $asset->save();
 
         try {
-            // Stream download to ephemeral/verse-cards/{sessionId}/c/{assetId}.jpg
-            $disk = $asset->disk ?: 'ephemeral';
-            $directory = 'verse-cards/' . $session->id . '/c';
-            $filename = $asset->id . '.jpg';
-            $path = $directory . '/' . $filename;
-
-            // Ensure directory exists
-            Storage::disk($disk)->makeDirectory($directory);
-
-            // Download with sink
-            $response = Http::timeout(60)
-                ->retry(3, 100)
-                ->sink(Storage::disk($disk)->path($path))
-                ->get($remoteUrl);
-
-            if (! $response->successful()) {
-                throw new \Exception('HTTP request failed with status ' . $response->status());
-            }
-
-            // Get file size
-            $bytes = Storage::disk($disk)->size($path);
-
-            // Create thumbnail .../{assetId}_t.jpg (max width 520) using Imagick (fast resize)
-            $thumbPath = $this->generateThumbnail($disk, $path, $asset);
+            // Create thumbnail from web format image: .../{assetId}_t.jpg (max width 520)
+            $thumbPath = $this->generateThumbnail($disk, $asset->path, $asset);
 
             // Update asset
-            $asset->path = $path;
             $asset->thumb_path = $thumbPath;
-            $asset->bytes = $bytes;
             $asset->state = 'ready';
             $asset->save();
 
             Log::info('DownloadCandidateImage completed', [
                 'assetId' => $this->assetId,
-                'path' => $path,
+                'path' => $asset->path,
                 'thumb' => $thumbPath,
-                'bytes' => $bytes,
             ]);
 
             // Transition session to Choosing once all candidate assets for this batch are ready
             $this->transitionToChoosingIfReady($session);
         } catch (\Throwable $e) {
-            Log::error('Failed to download or process image', [
+            Log::error('Failed to process image', [
                 'assetId' => $this->assetId,
-                'remoteUrl' => $remoteUrl,
                 'error' => $e->getMessage(),
             ]);
-            $this->markAssetFailed($asset, 'Download failed: ' . $e->getMessage());
+            $this->markAssetFailed($asset, 'Processing failed: ' . $e->getMessage());
         } finally {
             $lock->release();
         }

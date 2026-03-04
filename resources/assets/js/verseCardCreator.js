@@ -37,6 +37,8 @@ class VerseCardCreator {
         this.saveEditsButton = document.getElementById('saveEditsButton');
         this.cancelEditsButton = document.getElementById('cancelEditsButton');
         this.editFieldsSection = document.getElementById('editFieldsSection');
+        this.selectionProgressState = document.getElementById('selectionProgressState');
+        this.selectionProgressMessage = document.getElementById('selectionProgressMessage');
 
         // Ensure buttons are enabled on initialization
         this.enableEditButtons();
@@ -71,14 +73,16 @@ class VerseCardCreator {
                     // Show placeholders with metadata while images download
                     this.displayCandidatePlaceholders(data.candidates);
                     this.setState('candidates');
+                    this.disableCandidateSelection();
                     this.pollingIntervalId = setTimeout(() => this.pollForCandidates(), this.pollInterval);
                 } else if (data.status === 'choosing') {
                     this.stopPolling();
                     this.displayCandidates(data.candidates);
                     this.setState('candidates');
+                    this.enableCandidateSelection();
                 } else if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url);
+                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
                     this.setState('preview');
                 } else if (data.status === 'failed') {
                     this.stopPolling();
@@ -142,9 +146,11 @@ class VerseCardCreator {
                 if (data.status === 'downloading' && data.candidates && data.candidates.length > 0) {
                     // Show placeholders while new batch downloads
                     this.displayCandidatePlaceholders(data.candidates);
+                    this.disableCandidateSelection();
                     this.pollingIntervalId = setTimeout(() => this.pollForMoreCandidates(), this.pollInterval);
                 } else if (data.status === 'choosing' && data.candidates && data.candidates.length >= 4) {
                     this.displayCandidates(data.candidates);
+                    this.enableCandidateSelection();
                     this.isLoadingMore = false;
                     this.moreButton.disabled = false;
                     this.moreSpinner.style.display = 'none';
@@ -215,17 +221,26 @@ class VerseCardCreator {
                 card.appendChild(cardBody);
             }
 
-            // Update attribution
-            let attribution = cardBody.querySelector('p');
-            if (!attribution) {
-                attribution = document.createElement('p');
-                attribution.className = 'text-sm text-gray-600 mb-0';
-                cardBody.appendChild(attribution);
-            }
+            // Clear card body and rebuild
+            cardBody.innerHTML = '';
+
+            // Add attribution
+            const attribution = document.createElement('p');
+            attribution.className = 'text-sm text-gray-600 mb-2';
             if (candidate.pixabay_user && candidate.pixabay_page_url) {
                 attribution.innerHTML = `Pixabay • <a href="${candidate.pixabay_page_url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${this.escapeHtml(candidate.pixabay_user)}</a>`;
             } else {
                 attribution.textContent = 'Pixabay';
+            }
+            cardBody.appendChild(attribution);
+
+            // Add orientation indicator if available
+            if (candidate.orientation) {
+                const orientationDiv = document.createElement('div');
+                orientationDiv.className = 'flex items-center gap-1 text-xs text-gray-500';
+                const icon = this.getOrientationIcon(candidate.orientation);
+                orientationDiv.innerHTML = `${icon} <span>${this.getOrientationLabel(candidate.orientation)}</span>`;
+                cardBody.appendChild(orientationDiv);
             }
         });
     }
@@ -277,14 +292,23 @@ class VerseCardCreator {
                 card.appendChild(cardBody);
             }
 
-            // Update attribution
-            let attribution = cardBody.querySelector('p');
-            if (!attribution) {
-                attribution = document.createElement('p');
-                attribution.className = 'text-sm text-gray-600 mb-0';
-                cardBody.appendChild(attribution);
-            }
+            // Clear card body and rebuild
+            cardBody.innerHTML = '';
+
+            // Add attribution
+            const attribution = document.createElement('p');
+            attribution.className = 'text-sm text-gray-600 mb-2';
             attribution.innerHTML = `Pixabay • <a href="${candidate.pixabay_page_url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${this.escapeHtml(candidate.pixabay_user)}</a>`;
+            cardBody.appendChild(attribution);
+
+            // Add orientation indicator if available
+            if (candidate.orientation) {
+                const orientationDiv = document.createElement('div');
+                orientationDiv.className = 'flex items-center gap-1 text-xs text-gray-500';
+                const icon = this.getOrientationIcon(candidate.orientation);
+                orientationDiv.innerHTML = `${icon} <span>${this.getOrientationLabel(candidate.orientation)}</span>`;
+                cardBody.appendChild(orientationDiv);
+            }
 
             // Add event listeners (safe to add multiple times)
             card.removeEventListener('click', card._clickHandler);
@@ -312,12 +336,16 @@ class VerseCardCreator {
         });
         this.moreButton.disabled = true;
 
+        // Show progress indicator
+        this.showSelectionProgress();
+
         this.fetchSelectCandidate(candidateId)
             .then(data => {
                 if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url);
+                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
                     this.setState('preview');
+                    this.hideSelectionProgress();
                 } else {
                     // Start polling for final preview
                     this.pollForFinalPreview();
@@ -331,6 +359,7 @@ class VerseCardCreator {
                     card.style.opacity = '1';
                 });
                 this.moreButton.disabled = false;
+                this.hideSelectionProgress();
                 this.showError('Hiba történt a kép kiválasztása közben');
             });
     }
@@ -342,13 +371,16 @@ class VerseCardCreator {
         this.fetchSessionStatus()
             .then(data => {
                 this.updateStatusDisplay(data.status);
+                this.updateSelectionProgressMessage(data.status);
                 if (data.status === 'ready') {
                     this.stopPolling();
-                    this.displayFinalPreview(data.final_url, data.download_url);
+                    this.displayFinalPreview(data.final_url, data.download_url, data.width, data.height);
                     this.setState('preview');
+                    this.hideSelectionProgress();
                     this.enableEditButtons();
                 } else if (data.status === 'failed') {
                     this.stopPolling();
+                    this.hideSelectionProgress();
                     // Re-enable candidates
                     this.candidatesGrid.querySelectorAll('.candidate-card').forEach(card => {
                         card.style.pointerEvents = 'auto';
@@ -363,6 +395,7 @@ class VerseCardCreator {
             })
             .catch(error => {
                 console.error('Error polling for final preview:', error);
+                this.hideSelectionProgress();
                 // Re-enable candidates
                 this.candidatesGrid.querySelectorAll('.candidate-card').forEach(card => {
                     card.style.pointerEvents = 'auto';
@@ -376,9 +409,19 @@ class VerseCardCreator {
     /**
      * Display final preview
      */
-    displayFinalPreview(finalUrl, downloadUrl) {
+    displayFinalPreview(finalUrl, downloadUrl, width = null, height = null) {
         // Force image reload by clearing src first, then setting new src
         this.finalPreviewImage.src = '';
+        
+        // Set aspect ratio if dimensions are provided
+        if (width && height) {
+            const aspectRatio = width / height;
+            this.finalPreviewImage.style.aspectRatio = aspectRatio.toString();
+        } else {
+            // Fallback to 4:3 if dimensions not provided
+            this.finalPreviewImage.style.aspectRatio = '4/3';
+        }
+        
         // Use a small delay to ensure the src is cleared before setting new one
         setTimeout(() => {
             this.finalPreviewImage.src = finalUrl;
@@ -574,7 +617,7 @@ class VerseCardCreator {
      */
     getStatusLabel(status) {
         const statusLabels = {
-            'initializing': 'Inicializálás...',
+            'initializing': 'Képek keresése...',
             'downloading': 'Letöltés...',
             'choosing': 'Kiválasztás...',
             'rendering': 'Renderelés...',
@@ -594,7 +637,7 @@ class VerseCardCreator {
         if (!this.statusMessage) return;
 
         const statusLabels = {
-            'initializing': 'Inicializálás...',
+            'initializing': 'Képek keresése...',
             'downloading': 'Képek letöltése...',
             'choosing': 'Képek keresése...',
             'rendering': 'Végső kép renderelése...',
@@ -646,6 +689,69 @@ class VerseCardCreator {
     }
 
     /**
+     * Disable candidate selection (during downloading state)
+     */
+    disableCandidateSelection() {
+        this.candidatesGrid.querySelectorAll('.candidate-card').forEach(card => {
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.5';
+            card.style.cursor = 'not-allowed';
+        });
+        this.moreButton.disabled = true;
+    }
+
+    /**
+     * Enable candidate selection (when choosing state is ready)
+     */
+    enableCandidateSelection() {
+        this.candidatesGrid.querySelectorAll('.candidate-card').forEach(card => {
+            card.style.pointerEvents = 'auto';
+            card.style.opacity = '1';
+            card.style.cursor = 'pointer';
+        });
+        this.moreButton.disabled = false;
+    }
+
+    /**
+     * Show selection progress indicator
+     */
+    showSelectionProgress() {
+        if (this.selectionProgressState) {
+            this.selectionProgressState.style.display = 'block';
+        }
+    }
+
+    /**
+     * Hide selection progress indicator
+     */
+    hideSelectionProgress() {
+        if (this.selectionProgressState) {
+            this.selectionProgressState.style.display = 'none';
+        }
+    }
+
+    /**
+     * Update selection progress message based on status
+     */
+    updateSelectionProgressMessage(status) {
+        if (!this.selectionProgressMessage) return;
+
+        const statusLabels = {
+            'initializing': 'Képek keresése...',
+            'downloading': 'Képek letöltése...',
+            'choosing': 'Képek keresése...',
+            'rendering': 'Végső kép renderelése...',
+            'processing': 'Feldolgozás...',
+            'ready': 'Kész!',
+            'failed': 'Hiba történt',
+            'expired': 'Munkamenet lejárt',
+            'ended': 'Munkamenet befejeződött',
+        };
+
+        this.selectionProgressMessage.textContent = statusLabels[status] || status;
+    }
+
+    /**
      * Escape HTML to prevent XSS
      */
     escapeHtml(text) {
@@ -657,6 +763,31 @@ class VerseCardCreator {
             "'": '&#039;',
         };
         return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    /**
+     * Get SVG icon for image orientation
+     */
+    getOrientationIcon(orientation) {
+        const icons = {
+            'horizontal': '<svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="1" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+            'vertical': '<svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="1" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+            'square': '<svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+            'unknown': '',
+        };
+        return icons[orientation] || icons['unknown'];
+    }
+
+    /**
+     * Get label for image orientation
+     */
+    getOrientationLabel(orientation) {
+        const labels = {
+            'horizontal': 'Vízszintes',
+            'vertical': 'Függőleges',
+            'square': 'Négyzet'
+        };
+        return labels[orientation]??'';
     }
 }
 

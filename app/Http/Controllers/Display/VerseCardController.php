@@ -125,7 +125,7 @@ class VerseCardController extends Controller
         ]);
 
         // Dispatch job to search and prepare initial candidates
-        SearchAndPrepareCandidates::dispatch($session->id);
+        SearchAndPrepareCandidates::dispatch($session->id)->onQueue('pixabay-search');
 
         return response()->json([
             'session_id' => $session->id,
@@ -176,6 +176,8 @@ class VerseCardController extends Controller
                     'status' => VerseCardSessionStatus::Ready->value,
                     'final_url' => $this->getAssetUrl($finalAsset),
                     'download_url' => route('verse-card.download', ['sessionId' => $session->id]),
+                    'width' => $finalAsset->width,
+                    'height' => $finalAsset->height,
                 ]);
             }
         }
@@ -193,6 +195,7 @@ class VerseCardController extends Controller
                     'pixabay_user' => $asset->pixabay_user,
                     'pixabay_page_url' => $asset->pixabay_page_url,
                     'thumb_url' => $asset->state === 'ready' ? $this->getAssetUrl($asset, 'thumb') : null,
+                    'orientation' => $this->getImageOrientation($asset->width, $asset->height),
                 ]);
 
             return response()->json([
@@ -214,6 +217,7 @@ class VerseCardController extends Controller
                     'pixabay_id' => $asset->pixabay_id,
                     'pixabay_user' => $asset->pixabay_user,
                     'pixabay_page_url' => $asset->pixabay_page_url,
+                    'orientation' => $this->getImageOrientation($asset->width, $asset->height),
                 ]);
 
             return response()->json([
@@ -264,7 +268,7 @@ class VerseCardController extends Controller
         ]);
 
         // Dispatch job to search more candidates
-        SearchAndPrepareCandidates::dispatch($session->id);
+        SearchAndPrepareCandidates::dispatch($session->id)->onQueue('pixabay-search');
 
         // Return current status (will be polling)
         return response()->json([
@@ -450,10 +454,29 @@ class VerseCardController extends Controller
     }
 
     /**
+     * Determine image orientation based on width and height.
+     */
+    private function getImageOrientation(?int $width, ?int $height): string
+    {
+        if (!$width || !$height) {
+            return 'unknown';
+        }
+
+        if ($width > $height) {
+            return 'horizontal';
+        } elseif ($height > $width) {
+            return 'vertical';
+        }
+
+        return 'square';
+    }
+
+    /**
      * Format verse references with common prefix compression.
      * E.g., ['Mt6,2', 'Mt6,3'] becomes 'Mt 6,2-3'
      * If verses are not consecutive, uses '.' instead of '-'
      * E.g., ['Mt6,2', 'Mt6,5'] becomes 'Mt 6,2.5'
+     * Single verses without ranges are formatted as 'Mt 6,2'
      */
     private function formatVerseReferences(array $verseRefs): string
     {
@@ -462,7 +485,12 @@ class VerseCardController extends Controller
         }
 
         if (count($verseRefs) === 1) {
-            return $verseRefs[0];
+            $ref = $verseRefs[0];
+            // Normalize single reference to have space between book and chapter
+            if (preg_match('/^([A-Za-z]+)\s*(\d+),(\d+)$/', $ref, $matches)) {
+                return $matches[1] . ' ' . $matches[2] . ',' . $matches[3];
+            }
+            return $ref;
         }
 
         // Parse references to extract book, chapter, and verse

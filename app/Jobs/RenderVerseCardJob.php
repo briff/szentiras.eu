@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Imagine\Imagick\Imagine;
@@ -31,15 +33,32 @@ class RenderVerseCardJob implements ShouldQueue
         $this->onQueue('card-render');
     }
 
-    private const OUT_W = 1600;
-    private const OUT_H = 1200;
+    /**
+     * Predefined output dimensions covering common aspect ratios.
+     * Each dimension is [width, height] with a descriptive aspect ratio.
+     * Ordered by common usage patterns.
+     */
+    private const PRESET_DIMENSIONS = [
+        // Square
+        [1000, 1000],   // 1:1
+        
+        // Portrait (taller than wide)
+        [853, 1280],    // 2:3
+        
+        // Landscape (wider than tall)
+        [1280, 960],    // 4:3
+        [1280, 720],    // 16:9 (common video)
+        [1280, 853],    // 3:2
+        
+        // Extreme aspect ratios
+        [1280, 640],    // 2:1
+        [640, 1280],    // 1:2
+    ];
 
-    // Bottom text-safe panel height
-    private const PANEL_H = 520;
-
-    private const PAD_X      = 90;
-    private const PAD_BOTTOM = 80;  // distance from image bottom to bottom of text block
-    private const LINE_GAP   = 10;
+    // TODO: If we get fullHD pictures, we need calculate this based on actual image dimensions
+    private const PAD_X      = 48;
+    private const PAD_BOTTOM = 32;  // distance from image bottom to bottom of text block
+    private const LINE_GAP   = 8;
 
     private const JPG_QUALITY = 88;
 
@@ -66,8 +85,15 @@ class RenderVerseCardJob implements ShouldQueue
                 ->firstOrFail();
 
             $disk = $selected->disk ?: 'ephemeral';
-            if (!$selected->path || !Storage::disk($disk)->exists($selected->path)) {
-                throw new \RuntimeException("Selected image missing: {$disk}:{$selected->path}");
+
+            // Download full-size remote image if not already downloaded
+            $remoteImagePath = $this->downloadRemoteImage($selected, $session, $disk);
+            if (!$remoteImagePath) {
+                throw new \RuntimeException("Failed to download remote image");
+            }
+
+            if (!Storage::disk($disk)->exists($remoteImagePath)) {
+                throw new \RuntimeException("Remote image missing: {$disk}:{$remoteImagePath}");
             }
 
             $verseText = $this->getVerseText($session);
@@ -76,43 +102,63 @@ class RenderVerseCardJob implements ShouldQueue
             $session->status = VerseCardSessionStatus::Rendering->value;
             $session->save();
 
-            // Ensure overlays exist (generated once)
-            $this->ensureOverlaysExist();
-
             $imagine = new Imagine();
 
-            $sourceAbs = Storage::disk($disk)->path($selected->path);
+            $sourceAbs = Storage::disk($disk)->path($remoteImagePath);
 
             // 1) Load
             $img = $imagine->open($sourceAbs);
 
-            // 2) Cover-crop to OUT_W x OUT_H:
-            // Scale so the image covers the target box, then crop to exact size.
+            // 2) Scale and preserve aspect ratio:
+            // Select output dimensions from presets that best match source aspect ratio
             $srcSize = $img->getSize();
-            $scaleW  = self::OUT_W / $srcSize->getWidth();
-            $scaleH  = self::OUT_H / $srcSize->getHeight();
-            $scale   = max($scaleW, $scaleH);
+            $srcAspect = $srcSize->getWidth() / max(1, $srcSize->getHeight());
+            
+            [$outW, $outH] = $this->selectClosestDimensions($srcAspect);
+            
+            // Scale source to output dimensions using MAX scale to fill without padding
+            $scaleW = $outW / $srcSize->getWidth();
+            $scaleH = $outH / $srcSize->getHeight();
+            $scale = max($scaleW, $scaleH); // Use max to zoom in and fill completely
             $scaledW = (int)ceil($srcSize->getWidth() * $scale);
             $scaledH = (int)ceil($srcSize->getHeight() * $scale);
             $img = $img->resize(new Box($scaledW, $scaledH));
-            // Crop to exact target size from center
-            $cropX = (int)floor(($scaledW - self::OUT_W) / 2);
-            $cropY = (int)floor(($scaledH - self::OUT_H) / 2);
-            $img = $img->crop(new Point($cropX, $cropY), new Box(self::OUT_W, self::OUT_H));
+            
+            // Crop to exact output size from center
+            $cropX = (int)floor(($scaledW - $outW) / 2);
+            $cropY = (int)floor(($scaledH - $outH) / 2);
+            $cropX = max(0, $cropX);
+            $cropY = max(0, $cropY);
+            
+            // Ensure crop box doesn't exceed image bounds
+            $cropW = min($outW, $scaledW - $cropX);
+            $cropH = min($outH, $scaledH - $cropY);
+            
+            $img = $img->crop(new Point($cropX, $cropY), new Box($cropW, $cropH));
+            
+            // Store final dimensions for later use
+            $finalW = $outW;
+            $finalH = $outH;
 
-            // 3) Apply vignette overlay
-            $vignetteAbs = $this->overlayPath("vignette_" . self::OUT_W . "x" . self::OUT_H . ".png");
+            // Calculate panel height as a factor of final height
+            $panelH = (int)($finalH / 2);
+
+            // Ensure overlays exist for the actual output dimensions
+            $this->ensureOverlaysExist($finalW, $finalH, $panelH);
+
+            // 3) Apply vignette overlay (matches actual output dimensions)
+            $vignetteAbs = $this->overlayPath("vignette_{$finalW}x{$finalH}.png");
             $vignette = $imagine->open($vignetteAbs);
             $img->paste($vignette, new Point(0, 0));
 
-            // 4) Apply bottom gradient overlay
-            $gradientAbs = $this->overlayPath("gradient_" . self::OUT_W . "x" . self::PANEL_H . ".png");
+            // 4) Apply bottom gradient overlay (matches actual output dimensions)
+            $gradientAbs = $this->overlayPath("gradient_{$finalW}x{$panelH}.png");
             $gradient = $imagine->open($gradientAbs);
-            $img->paste($gradient, new Point(0, self::OUT_H - self::PANEL_H));
+            $img->paste($gradient, new Point(0, $finalH - $panelH));
 
             // Optional: grain/texture overlay (off by default)
             if ((bool)($this->style['grain'] ?? false)) {
-                $grainAbs = $this->overlayPath("grain_" . self::OUT_W . "x" . self::OUT_H . ".png");
+                $grainAbs = $this->overlayPath("grain_{$finalW}x{$finalH}.png");
                 if (file_exists($grainAbs)) {
                     $grain = $imagine->open($grainAbs);
                     $img->paste($grain, new Point(0, 0));
@@ -120,7 +166,7 @@ class RenderVerseCardJob implements ShouldQueue
             }
 
             // 5) Draw text
-            $this->drawVerseAndReference($img, $verseText, $refText);
+            $this->drawVerseAndReference($img, $verseText, $refText, $finalW, $finalH, $panelH);
 
             // 6) Save JPG
             $final = new VerseCardAsset();
@@ -132,6 +178,8 @@ class RenderVerseCardJob implements ShouldQueue
             $final->pixabay_id = $selected->pixabay_id;
             $final->pixabay_user = $selected->pixabay_user;
             $final->pixabay_page_url = $selected->pixabay_page_url;
+            $final->width = $finalW;
+            $final->height = $finalH;
             $final->save();
 
             $finalPath = "verse-cards/{$session->id}/final/{$final->id}.jpg";
@@ -187,7 +235,7 @@ class RenderVerseCardJob implements ShouldQueue
         return trim((string)($session->verse_ref ?? 'John 3:16'));
     }
 
-    private function drawVerseAndReference(\Imagine\Image\ImageInterface $img, string $verseText, string $refText): void
+    private function drawVerseAndReference(\Imagine\Image\ImageInterface $img, string $verseText, string $refText, int $imgW, int $imgH, int $panelH): void
     {
         $fontVerse = $this->fontPath(self::FONT_VERSE);
         $fontRef   = $this->fontPath(self::FONT_REF);
@@ -198,11 +246,16 @@ class RenderVerseCardJob implements ShouldQueue
         $imagickImg = $img;
         $imagick = $imagickImg->getImagick();
 
-        $maxWidth = self::OUT_W - (2 * self::PAD_X);
+        $maxWidth = $imgW - (2 * self::PAD_X);
 
+        // Scale text size based on image dimensions
+        // Use the smaller dimension (height or width) as the basis for scaling
+        $baseDimension = min($imgW, $imgH);
+        $baselineSize = 1000; // baseline dimension for 52px max size
+        
         // Fit verse to box by decreasing font size
-        $maxSize = (int)($this->style['verse_max_size'] ?? 52);
-        $minSize = (int)($this->style['verse_min_size'] ?? 24);
+        $maxSize = (int)($this->style['verse_max_size'] ?? max(20, (int)($baseDimension * 42 / $baselineSize)));
+        $minSize = (int)($this->style['verse_min_size'] ?? max(10, (int)($baseDimension * 20 / $baselineSize)));
 
         // Gap between verse block and ref line
         $refGap  = 20;
@@ -210,7 +263,7 @@ class RenderVerseCardJob implements ShouldQueue
 
         // Reserve space for ref when fitting verse height
         $roughRefReserve = (int)ceil($maxSize * 0.55 * 1.25) + $refGap;
-        $availableH = max(80, self::PANEL_H - self::PAD_BOTTOM - $roughRefReserve);
+        $availableH = max(80, $panelH - self::PAD_BOTTOM - $roughRefReserve);
 
         $fit = $this->fitWrappedTextGD($verseText, $fontVerse, $maxWidth, $availableH, $maxSize, $minSize);
 
@@ -229,7 +282,7 @@ class RenderVerseCardJob implements ShouldQueue
         $totalBlockH = $verseBlockH + $refGap + $refLineHeight;
 
         // Anchor block so its bottom edge sits PAD_BOTTOM above the image bottom
-        $blockStartY = self::OUT_H - self::PAD_BOTTOM - $totalBlockH;
+        $blockStartY = $imgH - self::PAD_BOTTOM - $totalBlockH;
 
         // Imagick driver: alpha 100 = fully opaque, 0 = fully transparent
         $shadow   = $palette->color([0, 0, 0], 100);      // fully opaque black
@@ -247,7 +300,7 @@ class RenderVerseCardJob implements ShouldQueue
         foreach ($lines as $line) {
             // Center each line horizontally
             $lineW = $this->measureTextWidthGD($line, $fontVerse, $fontSize);
-            $x = (int)floor((self::OUT_W - $lineW) / 2);
+            $x = (int)floor(($imgW - $lineW) / 2);
 
             // shadow
             $drawer->text($line, $verseShadowFont, new Point($x + $dx, $y + $dy));
@@ -265,7 +318,7 @@ class RenderVerseCardJob implements ShouldQueue
 
         // Center ref horizontally
         $refW = $this->measureTextWidthGD($refText, $fontRef, $refSize);
-        $refX = (int)floor((self::OUT_W - $refW) / 2);
+        $refX = (int)floor(($imgW - $refW) / 2);
 
         $drawer->text($refText, $refShadowFont, new Point($refX + $dx, $refY + $dy));
         $drawer->text($refText, $refFont, new Point($refX, $refY));
@@ -374,26 +427,25 @@ class RenderVerseCardJob implements ShouldQueue
         return (int)(max($xs) - min($xs));
     }
 
-    private function ensureOverlaysExist(): void
+    private function ensureOverlaysExist(int $width, int $height, int $panelH): void
     {
         $dir = storage_path('app/verse-card-overlays');
         if (!is_dir($dir)) {
             @mkdir($dir, 0775, true);
         }
 
-        $gradient = $this->overlayPath("gradient_" . self::OUT_W . "x" . self::PANEL_H . ".png");
+        $gradient = $this->overlayPath("gradient_{$width}x{$panelH}.png");
         if (!file_exists($gradient)) {
-            $this->generateBottomGradientPng($gradient, self::OUT_W, self::PANEL_H);
+            $this->generateBottomGradientPng($gradient, $width, $panelH);
         }
 
-        $vignette = $this->overlayPath("vignette_" . self::OUT_W . "x" . self::OUT_H . ".png");
+        $vignette = $this->overlayPath("vignette_{$width}x{$height}.png");
         if (!file_exists($vignette)) {
-            $this->generateVignettePng($vignette, self::OUT_W, self::OUT_H);
+            $this->generateVignettePng($vignette, $width, $height);
         }
-
-        // Optional grain (only if you want it):
-        // $grain = $this->overlayPath("grain_" . self::OUT_W . "x" . self::OUT_H . ".png");
-        // if (!file_exists($grain)) $this->generateGrainPng($grain, self::OUT_W, self::OUT_H);
+        
+        $grain = $this->overlayPath("grain_{$width}x{$height}.png");
+        if (!file_exists($grain)) $this->generateGrainPng($grain, $width, $height);
     }
 
     private function overlayPath(string $file): string
@@ -474,6 +526,44 @@ class RenderVerseCardJob implements ShouldQueue
         imagedestroy($im);
     }
 
+    /**
+     * Generates a grain/texture overlay PNG with semi-transparent noise.
+     * Creates a subtle film grain effect that can be applied over the final image.
+     */
+    private function generateGrainPng(string $path, int $w, int $h): void
+    {
+        $im = imagecreatetruecolor($w, $h);
+        imagesavealpha($im, true);
+        imagealphablending($im, false);
+
+        $transparent = imagecolorallocatealpha($im, 0, 0, 0, 127);
+        imagefilledrectangle($im, 0, 0, $w, $h, $transparent);
+
+        imagealphablending($im, true);
+
+        // Grain intensity: controls opacity of the noise (0-127, where 127 is fully transparent)
+        $grainIntensity = 10; // ~78% transparent, ~22% opaque grain
+
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                // Generate random noise value (0-255)
+                $noise = mt_rand(0, 255);
+
+                // Map noise to opacity: higher noise = more opaque grain
+                // Scale noise (0-255) to alpha range (127 fully transparent to 0 fully opaque)
+                $opacity = (int)round(127 - (($noise / 255) * $grainIntensity));
+                $opacity = max(0, min(127, $opacity));
+
+                // Create grain pixel with white color and calculated opacity
+                $col = imagecolorallocatealpha($im, 255, 255, 255, $opacity);
+                imagesetpixel($im, $x, $y, $col);
+            }
+        }
+
+        imagepng($im, $path);
+        imagedestroy($im);
+    }
+
     private function fontPath(string $relative): string
     {
         $relative = ltrim($relative, '/');
@@ -485,5 +575,96 @@ class RenderVerseCardJob implements ShouldQueue
         if (file_exists($p2)) return $p2;
 
         return $relative; // allow absolute container path
+    }
+
+    /**
+     * Download full-size remote image for rendering.
+     *
+     * @param VerseCardAsset $selected
+     * @param VerseCardSession $session
+     * @param string $disk
+     * @return string|null
+     */
+    private function downloadRemoteImage(VerseCardAsset $selected, VerseCardSession $session, string $disk): ?string
+    {
+        $remoteUrl = $selected->remote_url;
+        if (!$remoteUrl) {
+            Log::error('Asset missing remote_url', ['assetId' => $selected->id]);
+            return null;
+        }
+
+        // Check if already downloaded
+        $remoteImagePath = 'verse-cards/' . $session->id . '/c/' . $selected->id . '_remote.jpg';
+        if (Storage::disk($disk)->exists($remoteImagePath)) {
+            Log::info('Remote image already downloaded', ['assetId' => $selected->id]);
+            return $remoteImagePath;
+        }
+
+        // Acquire per-asset Redis lock to prevent duplicate downloads
+        $lock = Cache::lock('download_remote_' . $selected->id, 600); // 10 minutes
+        if (!$lock->get()) {
+            Log::warning('Duplicate remote download detected, skipping', ['assetId' => $selected->id]);
+            // Check if another process downloaded it
+            if (Storage::disk($disk)->exists($remoteImagePath)) {
+                return $remoteImagePath;
+            }
+            return null;
+        }
+
+        try {
+            $directory = 'verse-cards/' . $session->id . '/c';
+            Storage::disk($disk)->makeDirectory($directory);
+
+            // Download with sink
+            $response = Http::timeout(120)
+                ->retry(3, 100)
+                ->sink(Storage::disk($disk)->path($remoteImagePath))
+                ->get($remoteUrl);
+
+            if (!$response->successful()) {
+                throw new \Exception('HTTP request failed with status ' . $response->status());
+            }
+
+            Log::info('Remote image downloaded', [
+                'assetId' => $selected->id,
+                'path' => $remoteImagePath,
+            ]);
+
+            return $remoteImagePath;
+        } catch (\Throwable $e) {
+            Log::error('Failed to download remote image', [
+                'assetId' => $selected->id,
+                'remoteUrl' => $remoteUrl,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Select the closest preset dimensions based on source aspect ratio.
+     * Finds the preset that minimizes the difference in aspect ratio.
+     *
+     * @param float $srcAspect Source image aspect ratio (width / height)
+     * @return array [width, height]
+     */
+    private function selectClosestDimensions(float $srcAspect): array
+    {
+        $closest = self::PRESET_DIMENSIONS[0];
+        $minDiff = PHP_FLOAT_MAX;
+
+        foreach (self::PRESET_DIMENSIONS as $preset) {
+            $presetAspect = $preset[0] / max(1, $preset[1]);
+            $diff = abs($srcAspect - $presetAspect);
+
+            if ($diff < $minDiff) {
+                $minDiff = $diff;
+                $closest = $preset;
+            }
+        }
+
+        return $closest;
     }
 }

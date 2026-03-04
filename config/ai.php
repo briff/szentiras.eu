@@ -28,7 +28,7 @@ return [
             'model'            => env('AI_COMMENTARY_MODEL', 'gpt-4.1'),
             'temperature'      => env('AI_COMMENTARY_TEMPERATURE', 0.7),
             'max_output_tokens' => env('AI_COMMENTARY_MAX_OUTPUT_TOKENS', 4096),
-            'timeout'          => env('AI_COMMENTARY_TIMEOUT', 60),
+            'timeout'          => env('AI_COMMENTARY_TIMEOUT', 120),
             'verbosity'        => env('AI_COMMENTARY_VERBOSITY', 'low'),
             'reasoning_effort' => env('AI_COMMENTARY_REASONING_EFFORT', 'none'),
             'store' => env('AI_COMMENTARY_STORE', false),

@@ -1,9 +1,10 @@
 <?php
 
-namespace Tests\Feature\Editor;
+namespace SzentirasHu\Test\Editor;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pgvector\Laravel\Vector;
+use SzentirasHu\Data\Entity\EmbeddedExcerpt;
 use SzentirasHu\Data\Entity\Theme;
 use SzentirasHu\Models\GreekVerseEmbedding;
 use SzentirasHu\Service\Editor\EditorService;
@@ -40,14 +41,8 @@ class ThemeTestSimilarityTest extends TestCase
         // Create a test embedding vector (512 dimensions)
         $testVector = new Vector(array_fill(0, 512, 0.1));
         
-        // Create a Greek verse embedding
-        $greekEmbedding = GreekVerseEmbedding::create([
-            'gepi' => '1PE_2_3',
-            'source' => 'BMT',
-            'usx_code' => '1PE',
-            'chapter' => 2,
-            'verse' => 3,
-            'model' => 'text-embedding-3-small',
+        // Create a verse embedding
+        EmbeddedExcerpt::factory()->create([
             'embedding' => $testVector,
         ]);
 
@@ -73,23 +68,23 @@ class ThemeTestSimilarityTest extends TestCase
         $response->assertJsonStructure([
             'success',
             'results' => [
-                '1PE_2_3' => [
-                    'found',
-                    'gepi',
-                    'themes' => [
-                        '*' => [
-                            'id',
-                            'hungarian_keyword',
-                            'photo_keywords',
-                            'similarity',
-                        ],
+                'found',
+                'gepis_count',
+                'gepis_found',
+                'gepis_not_found',
+                'themes' => [
+                    '*' => [
+                        'id',
+                        'hungarian_keyword',
+                        'photo_keywords',
+                        'similarity',
                     ],
                 ],
             ],
         ]);
 
-        $this->assertTrue($response->json('results.1PE_2_3.found'));
-        $this->assertCount(2, $response->json('results.1PE_2_3.themes'));
+        $this->assertTrue($response->json('results.found'));
+        $this->assertCount(2, $response->json('results.themes'));
     }
 
     public function test_similarity_search_with_multiple_gepis(): void
@@ -97,24 +92,18 @@ class ThemeTestSimilarityTest extends TestCase
         $testVector1 = new Vector(array_fill(0, 512, 0.1));
         $testVector2 = new Vector(array_fill(0, 512, 0.2));
 
-        GreekVerseEmbedding::create([
+        EmbeddedExcerpt::factory()->create([
             'gepi' => '1PE_2_3',
-            'source' => 'BMT',
-            'usx_code' => '1PE',
-            'chapter' => 2,
-            'verse' => 3,
-            'model' => 'text-embedding-3-small',
             'embedding' => $testVector1,
         ]);
 
-        GreekVerseEmbedding::create([
+        EmbeddedExcerpt::factory()->create([
             'gepi' => '1JN_1_1',
-            'source' => 'BMT',
             'usx_code' => '1JN',
             'chapter' => 1,
             'verse' => 1,
-            'model' => 'text-embedding-3-small',
             'embedding' => $testVector2,
+            'reference' => '1Jn 1,1',
         ]);
 
         Theme::create([
@@ -133,8 +122,9 @@ class ThemeTestSimilarityTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertTrue($response->json('results.1PE_2_3.found'));
-        $this->assertTrue($response->json('results.1JN_1_1.found'));
+        $this->assertTrue($response->json('results.found'));
+        $this->assertContains('1PE_2_3', $response->json('results.gepis_found'));
+        $this->assertContains('1JN_1_1', $response->json('results.gepis_found'));
     }
 
     public function test_similarity_search_with_nonexistent_gepi(): void
@@ -144,9 +134,8 @@ class ThemeTestSimilarityTest extends TestCase
             'limit' => 10,
         ]);
 
-        $response->assertStatus(200);
-        $this->assertFalse($response->json('results.NONEXISTENT_1_1.found'));
-        $this->assertStringContainsString('not found', $response->json('results.NONEXISTENT_1_1.message'));
+        $response->assertStatus(400);
+        $this->assertStringContainsString('No valid embeddings found', $response->json('error'));
     }
 
     public function test_similarity_search_with_empty_gepis(): void
@@ -173,13 +162,7 @@ class ThemeTestSimilarityTest extends TestCase
     {
         $testVector = new Vector(array_fill(0, 512, 0.1));
 
-        GreekVerseEmbedding::create([
-            'gepi' => '1PE_2_3',
-            'source' => 'BMT',
-            'usx_code' => '1PE',
-            'chapter' => 2,
-            'verse' => 3,
-            'model' => 'text-embedding-3-small',
+        EmbeddedExcerpt::factory()->create([
             'embedding' => $testVector,
         ]);
 
@@ -197,7 +180,7 @@ class ThemeTestSimilarityTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertLessThanOrEqual(5, count($response->json('results.1PE_2_3.themes')));
+        $this->assertLessThanOrEqual(5, count($response->json('results.themes')));
     }
 
     public function test_similarity_search_missing_gepis_parameter(): void
@@ -224,24 +207,18 @@ class ThemeTestSimilarityTest extends TestCase
         $testVector1 = new Vector(array_fill(0, 512, 0.1));
         $testVector2 = new Vector(array_fill(0, 512, 0.2));
 
-        GreekVerseEmbedding::create([
+        EmbeddedExcerpt::factory()->create([
             'gepi' => '1PE_2_3',
-            'source' => 'BMT',
-            'usx_code' => '1PE',
-            'chapter' => 2,
-            'verse' => 3,
-            'model' => 'text-embedding-3-small',
             'embedding' => $testVector1,
         ]);
 
-        GreekVerseEmbedding::create([
+        EmbeddedExcerpt::factory()->create([
             'gepi' => '1JN_1_1',
-            'source' => 'BMT',
             'usx_code' => '1JN',
             'chapter' => 1,
             'verse' => 1,
-            'model' => 'text-embedding-3-small',
             'embedding' => $testVector2,
+            'reference' => '1Jn 1,1',
         ]);
 
         Theme::create([
@@ -255,21 +232,16 @@ class ThemeTestSimilarityTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertTrue($response->json('results.1PE_2_3.found'));
-        $this->assertTrue($response->json('results.1JN_1_1.found'));
+        $this->assertTrue($response->json('results.found'));
+        $this->assertContains('1PE_2_3', $response->json('results.gepis_found'));
+        $this->assertContains('1JN_1_1', $response->json('results.gepis_found'));
     }
 
     public function test_similarity_search_returns_similarity_scores(): void
     {
         $testVector = new Vector(array_fill(0, 512, 0.1));
 
-        GreekVerseEmbedding::create([
-            'gepi' => '1PE_2_3',
-            'source' => 'BMT',
-            'usx_code' => '1PE',
-            'chapter' => 2,
-            'verse' => 3,
-            'model' => 'text-embedding-3-small',
+        EmbeddedExcerpt::factory()->create([
             'embedding' => $testVector,
         ]);
 
@@ -285,7 +257,7 @@ class ThemeTestSimilarityTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $themes = $response->json('results.1PE_2_3.themes');
+        $themes = $response->json('results.themes');
         $this->assertNotEmpty($themes);
         
         foreach ($themes as $theme) {
