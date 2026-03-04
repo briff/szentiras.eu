@@ -305,6 +305,7 @@ class RenderVerseCardJob implements ShouldQueue
             // Center each line horizontally
             $lineW = $this->measureTextWidthGD($line, $fontVerse, $fontSize);
             $x = (int)floor(($imgW - $lineW) / 2);
+            if ($x < 0) $x = 0; // precaution
 
             // shadow
             $drawer->text($line, $verseShadowFont, new Point($x + $dx, $y + $dy));
