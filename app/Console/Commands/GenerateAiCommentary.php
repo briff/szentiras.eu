@@ -169,8 +169,7 @@ class GenerateAiCommentary extends Command
                 // Generate commentary text using batch mode
                 $maxLength = config('ai.configurations.commentary.max_input_length', 8000);
                 $result = $this->commentaryService->generateCommentaryText(
-
-                $canonicalRef,
+                    $canonicalRef,
                     $translation,
                     $this->aiPromptService,
                     $maxLength,
@@ -178,6 +177,12 @@ class GenerateAiCommentary extends Command
                     true, // useBatch
                     $commentary->id // commentaryId
                 );
+
+                // Save source text to commentary for batch processing
+                if (!empty($result['source_text'])) {
+                    $commentary->source_text = $result['source_text'];
+                    $commentary->save();
+                }
 
                 $this->info("Pending commentary created with ID {$commentary->id}. Batch job submitted.");
                 $this->info("Coverage: " . $commentary->ranges->map->toString()->implode(', '));
