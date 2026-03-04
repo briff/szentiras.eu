@@ -74,8 +74,40 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
         // Get used Pixabay IDs early
         $usedPixabayIds = $this->getUsedPixabayIds($session);
 
-        // Fetch candidates, potentially across multiple pages
-        $candidateHits = $this->fetchCandidates($pixabayClient, $session, $usedPixabayIds, 4);
+        try {
+            // Fetch candidates, potentially across multiple pages
+            $candidateHits = $this->fetchCandidates($pixabayClient, $session, $usedPixabayIds, 4);
+        } catch (\Throwable $e) {
+            // Check if this is a retryable error from Pixabay API
+            $statusCode = $e->getCode();
+            $message = $e->getMessage();
+            
+            // Retryable errors: 5xx server errors, 429 rate limit, and connection errors (code 0)
+            $isRetryable = $statusCode >= 500 || $statusCode === 429 || $statusCode === 0;
+            
+            if ($isRetryable) {
+                Log::warning('Pixabay API retryable error, releasing job back to queue', [
+                    'sessionId' => $this->sessionId,
+                    'statusCode' => $statusCode,
+                    'error' => $message,
+                    'delay' => 2,
+                ]);
+                
+                // Release job back to queue with 2-second delay
+                $this->release(2);
+                return;
+            }
+            
+            // For non-retryable errors, log and mark session as failed
+            Log::error('Pixabay API fatal error', [
+                'sessionId' => $this->sessionId,
+                'statusCode' => $statusCode,
+                'error' => $message,
+            ]);
+            $session->status = VerseCardSessionStatus::Failed->value;
+            $session->save();
+            return;
+        }
 
         if (count($candidateHits) < 4) {
             Log::warning('Not enough unique hits available', [
@@ -150,16 +182,7 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
         while (count($candidates) < $limit && $currentPage <= $maxPages) {
             $params = $this->buildSearchParams($session, $currentPage);
 
-            try {
-                $response = $pixabayClient->search($params);
-            } catch (\Throwable $e) {
-                Log::error('Pixabay search failed', [
-                    'sessionId' => $this->sessionId,
-                    'page' => $currentPage,
-                    'error' => $e->getMessage(),
-                ]);
-                break;
-            }
+            $response = $pixabayClient->search($params);
 
             $hits = $response['hits'] ?? [];
             if (empty($hits)) {
