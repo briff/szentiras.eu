@@ -93,6 +93,23 @@ class UsxCodesTest extends TestCase
         $this->checkReturnedAbbrev('noSuchTranslation', 'noSuchUsx', null);
     }
 
+    public function testGetUsxFromBookAbbrevAndTranslationCaseInsensitive(): void
+    {
+        // Test uppercase versions that are not in mapping
+        $this->checkReturnedkUsxCode('default', '1KIR', '1KI');
+        $this->checkReturnedkUsxCode('default', 'TER', 'GEN');
+        $this->checkReturnedkUsxCode('default', '1MÓZ', 'GEN');
+        $this->checkReturnedkUsxCode('default', 'SIRÁK', 'SIR');
+        // Test mixed case
+        $this->checkReturnedkUsxCode('default', 'TeR', 'GEN');
+        $this->checkReturnedkUsxCode('default', '1KiR', '1KI');
+        // Ensure translation-specific case insensitivity
+        $this->checkReturnedkUsxCode('RUF', 'SIR', 'LAM');
+        $this->checkReturnedkUsxCode('RUF', 'sIr', 'LAM');
+        $this->checkReturnedkUsxCode('SZIT', 'SIR', 'SIR');
+        $this->checkReturnedkUsxCode('SZIT', 'sIr', 'SIR');
+    }
+
     private function checkReturnedkUsxCode(string $translation, string $bookAbbrev, ?string $expectedUsxCode): void
     {
         $this->assertEquals(
