@@ -362,7 +362,7 @@ class TextDisplayController extends Controller
             }
 
             if (!empty($verseTriples)) {
-                $placeVerses = PlaceVerse::with('place')
+                $placeVerses = PlaceVerse::with(['place' => fn ($query) => $query->withCoordinates()])
                     ->where(function ($query) use ($verseTriples) {
                         foreach ($verseTriples as $triple) {
                             $query->orWhere(function ($q) use ($triple) {
@@ -377,11 +377,16 @@ class TextDisplayController extends Controller
                 // Group by container index and by verse
                 $placesByContainer = [];
                 foreach ($placeVerses as $placeVerse) {
+                    // Skip places without coordinates
+                    if (!$placeVerse->place || !$placeVerse->place->lon_lat) {
+                        continue;
+                    }
+
                     $key = $placeVerse->book_code . ':' . $placeVerse->chapter_number . ':' . $placeVerse->verse_number;
                     if (isset($tripleToContainer[$key])) {
                         $index = $tripleToContainer[$key];
                         $placesByContainer[$index][] = $placeVerse;
-                        
+
                         // Also map by verse gepi for inline display
                         $gepi = $placeVerse->book_code . '_' . $placeVerse->chapter_number . '_' . $placeVerse->verse_number;
                         if (!isset($verseToPlaces[$gepi])) {
@@ -719,7 +724,7 @@ class TextDisplayController extends Controller
     public function showPlaceDetails($placeIds)
     {
         $ids = explode(',', $placeIds);
-        $places = Place::whereIn('id', $ids)->get();
+        $places = Place::whereIn('id', $ids)->withCoordinates()->get();
         
         if ($places->isEmpty()) {
             return response()->json('<p class="text-danger">Hely nem található</p>', 200);

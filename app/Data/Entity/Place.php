@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereLonLat($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Place whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Place withCoordinates()
  * @property-read int|null $verse_references_count
  * @mixin Eloquent
  */
@@ -46,5 +47,13 @@ class Place extends Eloquent
     public function verseReferences(): HasMany
     {
         return $this->hasMany(PlaceVerse::class);
+    }
+
+    /**
+     * Only returns places that have longitude/latitude coordinates.
+     */
+    public function scopeWithCoordinates($query)
+    {
+        return $query->whereNotNull('lon_lat');
     }
 }
