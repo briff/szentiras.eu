@@ -14,6 +14,7 @@ use SzentirasHu\Data\Entity\VerseCardAsset;
 use SzentirasHu\Data\Entity\VerseCardSession;
 use SzentirasHu\Data\Enum\VerseCardSessionStatus;
 use SzentirasHu\Service\Imagine\ImagineFacade as Imagine;
+use SzentirasHu\Services\PixabayImageStorage;
 
 class DownloadCandidateImage extends Job implements ShouldQueue
 {
@@ -39,9 +40,10 @@ class DownloadCandidateImage extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
+     * @param PixabayImageStorage $imageStorage
      * @return void
      */
-    public function handle(): void
+    public function handle(PixabayImageStorage $imageStorage): void
     {
         Log::info('DownloadCandidateImage started', ['assetId' => $this->assetId]);
 
@@ -89,7 +91,7 @@ class DownloadCandidateImage extends Job implements ShouldQueue
 
         try {
             // Create thumbnail from web format image: .../{assetId}_t.jpg (max width 520)
-            $thumbPath = $this->generateThumbnail($disk, $asset->path, $asset);
+            $thumbPath = $this->generateThumbnail($disk, $asset->path, $asset, $imageStorage);
 
             // Update asset
             $asset->thumb_path = $thumbPath;
@@ -145,13 +147,29 @@ class DownloadCandidateImage extends Job implements ShouldQueue
      * @param string $disk
      * @param string $originalPath
      * @param VerseCardAsset $asset
+     * @param PixabayImageStorage $imageStorage
      * @return string|null
      */
-    private function generateThumbnail(string $disk, string $originalPath, VerseCardAsset $asset): ?string
+    private function generateThumbnail(string $disk, string $originalPath, VerseCardAsset $asset, PixabayImageStorage $imageStorage): ?string
     {
+        // Determine thumbnail path based on Pixabay ID
+        if (! $asset->pixabay_id) {
+            Log::error('Asset missing pixabay_id, cannot store thumbnail in common folder', ['assetId' => $asset->id]);
+            return null;
+        }
+
+        $thumbPath = $imageStorage->getImagePath($asset->pixabay_id, 'thumb');
+        $storage = Storage::disk($disk);
+
+        // If thumbnail already exists, return its path
+        if ($storage->exists($thumbPath)) {
+            Log::info('Thumbnail already exists in common storage', ['assetId' => $asset->id, 'path' => $thumbPath]);
+            return $thumbPath;
+        }
+
         try {
             $imagine = app('imagine');
-            $image = $imagine->open(Storage::disk($disk)->path($originalPath));
+            $image = $imagine->open($storage->path($originalPath));
 
             // Calculate dimensions preserving aspect ratio, max width 520
             $size = $image->getSize();
@@ -171,10 +189,15 @@ class DownloadCandidateImage extends Job implements ShouldQueue
                 \Imagine\Image\ImageInterface::THUMBNAIL_OUTBOUND
             );
 
-            $thumbFilename = $asset->id . '_t.jpg';
-            $thumbPath = 'verse-cards/' . $asset->session_id . '/c/' . $thumbFilename;
-            $thumbnail->save(Storage::disk($disk)->path($thumbPath), ['quality' => 85]);
+            // Ensure directory exists
+            $storage->makeDirectory(dirname($thumbPath));
 
+            $thumbnail->save($storage->path($thumbPath), ['quality' => 85]);
+
+            Log::info('Thumbnail generated and saved to common storage', [
+                'assetId' => $asset->id,
+                'path' => $thumbPath,
+            ]);
             return $thumbPath;
         } catch (\Throwable $e) {
             Log::error('Failed to generate thumbnail', [

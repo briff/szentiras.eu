@@ -15,6 +15,7 @@ use SzentirasHu\Data\Entity\VerseCardAsset;
 use SzentirasHu\Data\Entity\VerseCardSession;
 use SzentirasHu\Data\Enum\VerseCardSessionStatus;
 use SzentirasHu\Services\PixabayClient;
+use SzentirasHu\Services\PixabayImageStorage;
 use SzentirasHu\Jobs\DownloadCandidateImage;
 
 class SearchAndPrepareCandidates extends Job implements ShouldQueue
@@ -51,9 +52,10 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
      * Execute the job.
      *
      * @param PixabayClient $pixabayClient
+     * @param PixabayImageStorage $imageStorage
      * @return void
      */
-    public function handle(PixabayClient $pixabayClient): void
+    public function handle(PixabayClient $pixabayClient, PixabayImageStorage $imageStorage): void
     {
         Log::info('SearchAndPrepareCandidates started', ['sessionId' => $this->sessionId]);
 
@@ -142,7 +144,7 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
 
         // Download web format images and create thumbnails
         foreach ($assetIds as $assetId) {
-            $this->downloadWebFormatImage($assetId);
+            $this->downloadWebFormatImage($assetId, $imageStorage);
         }
 
         // Dispatch DownloadCandidateImage jobs for resize transformations
@@ -285,9 +287,10 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
      * Download web format image and create thumbnail.
      *
      * @param int $assetId
+     * @param PixabayImageStorage $imageStorage
      * @return void
      */
-    private function downloadWebFormatImage(int $assetId): void
+    private function downloadWebFormatImage(int $assetId, PixabayImageStorage $imageStorage): void
     {
         $asset = VerseCardAsset::find($assetId);
         if (! $asset) {
@@ -321,52 +324,30 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
             $asset->web_format_url = $webFormatUrl;
             $asset->save();
         }
-        
 
-        // Acquire per-asset Redis lock to prevent duplicate downloads
-        $lock = Cache::lock('download_web_format_' . $asset->id, 300); // 5 minutes
-        if (! $lock->get()) {
-            Log::warning('Duplicate web format download detected, skipping', ['assetId' => $assetId]);
+        // Determine storage path based on Pixabay ID
+        if (! $asset->pixabay_id) {
+            Log::error('Asset missing pixabay_id, cannot store in common folder', ['assetId' => $assetId]);
             return;
         }
 
-        try {
-            // Stream download to ephemeral/verse-cards/{sessionId}/c/{assetId}_web.jpg
-            $disk = $asset->disk ?: 'ephemeral';
-            $directory = 'verse-cards/' . $session->id . '/c';
-            $filename = $asset->id . '_web.jpg';
-            $path = $directory . '/' . $filename;
+        $disk = $asset->disk ?: 'ephemeral';
+        $path = $imageStorage->getImagePath($asset->pixabay_id, 'web');
 
-            // Ensure directory exists
-            Storage::disk($disk)->makeDirectory($directory);
-
-            // Download with sink
-            $response = Http::timeout(60)
-                ->retry(3, 100)
-                ->sink(Storage::disk($disk)->path($path))
-                ->get($webFormatUrl);
-
-            if (! $response->successful()) {
-                throw new \Exception('HTTP request failed with status ' . $response->status());
-            }
-
-            // Update asset with web format path
-            $asset->path = $path;
-            $asset->save();
-
-            Log::info('Web format image downloaded', [
-                'assetId' => $assetId,
-                'path' => $path,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Failed to download web format image', [
-                'assetId' => $assetId,
-                'webFormatUrl' => $webFormatUrl,
-                'error' => $e->getMessage(),
-            ]);
-        } finally {
-            $lock->release();
+        // Download if missing (storage service handles locking and existence check)
+        if (! $imageStorage->downloadIfMissing($webFormatUrl, $path, $disk)) {
+            Log::error('Failed to download web format image', ['assetId' => $assetId]);
+            return;
         }
+
+        // Update asset with web format path
+        $asset->path = $path;
+        $asset->save();
+
+        Log::info('Web format image downloaded', [
+            'assetId' => $assetId,
+            'path' => $path,
+        ]);
     }
 
     /**

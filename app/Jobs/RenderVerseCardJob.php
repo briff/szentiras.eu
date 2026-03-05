@@ -19,6 +19,7 @@ use Imagine\Image\Palette\RGB;
 use SzentirasHu\Data\Entity\VerseCardAsset;
 use SzentirasHu\Data\Entity\VerseCardSession;
 use SzentirasHu\Data\Enum\VerseCardSessionStatus;
+use SzentirasHu\Services\PixabayImageStorage;
 use Throwable;
 
 class RenderVerseCardJob implements ShouldQueue
@@ -65,7 +66,7 @@ class RenderVerseCardJob implements ShouldQueue
     private const FONT_VERSE = 'assets/fonts/NotoSerif-Regular.ttf';
     private const FONT_REF   = 'assets/fonts/NotoSans-Regular.ttf';
 
-    public function handle(): void
+    public function handle(PixabayImageStorage $imageStorage): void
     {
         Log::info('RenderVerseCardJob started', [
             'sessionId' => $this->sessionId,
@@ -91,7 +92,7 @@ class RenderVerseCardJob implements ShouldQueue
             $disk = $selected->disk ?: 'ephemeral';
 
             // Download full-size remote image if not already downloaded
-            $remoteImagePath = $this->downloadRemoteImage($selected, $session, $disk);
+            $remoteImagePath = $this->downloadRemoteImage($selected, $session, $disk, $imageStorage);
             if (!$remoteImagePath) {
                 throw new \RuntimeException("Failed to download remote image");
             }
@@ -588,9 +589,10 @@ class RenderVerseCardJob implements ShouldQueue
      * @param VerseCardAsset $selected
      * @param VerseCardSession $session
      * @param string $disk
+     * @param PixabayImageStorage $imageStorage
      * @return string|null
      */
-    private function downloadRemoteImage(VerseCardAsset $selected, VerseCardSession $session, string $disk): ?string
+    private function downloadRemoteImage(VerseCardAsset $selected, VerseCardSession $session, string $disk, PixabayImageStorage $imageStorage): ?string
     {
         $remoteUrl = $selected->remote_url;
         if (!$remoteUrl) {
@@ -598,54 +600,26 @@ class RenderVerseCardJob implements ShouldQueue
             return null;
         }
 
-        // Check if already downloaded
-        $remoteImagePath = 'verse-cards/' . $session->id . '/c/' . $selected->id . '_remote.jpg';
-        if (Storage::disk($disk)->exists($remoteImagePath)) {
-            Log::info('Remote image already downloaded', ['assetId' => $selected->id]);
-            return $remoteImagePath;
-        }
-
-        // Acquire per-asset Redis lock to prevent duplicate downloads
-        $lock = Cache::lock('download_remote_' . $selected->id, 600); // 10 minutes
-        if (!$lock->get()) {
-            Log::warning('Duplicate remote download detected, skipping', ['assetId' => $selected->id]);
-            // Check if another process downloaded it
-            if (Storage::disk($disk)->exists($remoteImagePath)) {
-                return $remoteImagePath;
-            }
+        // Determine storage path based on Pixabay ID
+        if (!$selected->pixabay_id) {
+            Log::error('Asset missing pixabay_id, cannot store in common folder', ['assetId' => $selected->id]);
             return null;
         }
 
-        try {
-            $directory = 'verse-cards/' . $session->id . '/c';
-            Storage::disk($disk)->makeDirectory($directory);
+        $path = $imageStorage->getImagePath($selected->pixabay_id, 'full');
 
-            // Download with sink
-            $response = Http::timeout(120)
-                ->retry(3, 100)
-                ->sink(Storage::disk($disk)->path($remoteImagePath))
-                ->get($remoteUrl);
-
-            if (!$response->successful()) {
-                throw new \Exception('HTTP request failed with status ' . $response->status());
-            }
-
-            Log::info('Remote image downloaded', [
-                'assetId' => $selected->id,
-                'path' => $remoteImagePath,
-            ]);
-
-            return $remoteImagePath;
-        } catch (\Throwable $e) {
-            Log::error('Failed to download remote image', [
-                'assetId' => $selected->id,
-                'remoteUrl' => $remoteUrl,
-                'error' => $e->getMessage(),
-            ]);
+        // Download if missing (storage service handles locking and existence check)
+        if (!$imageStorage->downloadIfMissing($remoteUrl, $path, $disk)) {
+            Log::error('Failed to download remote image', ['assetId' => $selected->id]);
             return null;
-        } finally {
-            $lock->release();
         }
+
+        Log::info('Remote image downloaded', [
+            'assetId' => $selected->id,
+            'path' => $path,
+        ]);
+
+        return $path;
     }
 
     /**

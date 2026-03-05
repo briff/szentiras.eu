@@ -60,6 +60,7 @@ class VerseCardAsset extends Model
         'pixabay_user',
         'pixabay_page_url',
         'remote_url',
+        'web_format_url',
         'disk',
         'path',
         'thumb_path',
