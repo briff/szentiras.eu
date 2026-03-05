@@ -228,14 +228,13 @@ class SearchAndPrepareCandidates extends Job implements ShouldQueue
     private function buildSearchParams(VerseCardSession $session, int $page = 1): array
     {
         $keywords = $session->keywords ?? [];
-        $themeSlug = $session->theme_slug;
 
-        // Combine theme and keywords into a query string
-        $queryParts = [$themeSlug];
+        // Combine keywords into a query string
+        $queryParts = [];
         foreach ($keywords as $keyword) {
             $queryParts[] = $keyword;
         }
-        $query = implode(' ', $queryParts);
+        $query = implode(', ', $queryParts);
 
         return [
             'q' => $query,
