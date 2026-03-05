@@ -117,11 +117,8 @@ class SearchService
         $verseContainer = new VerseContainer($verse->book);
         $verseContainer->addVerse($verse);
         $parsedVerses = $verseContainer->getParsedVerses();
-        if ($parsedVerses[0]->getHeadingText()) {
-            return $parsedVerses[0]->getHeadingText();
-        } else {
-            return $parsedVerses[0]->getText();
-        }
+        $result = strip_tags($parsedVerses[0]->getHeadingText()??$parsedVerses[0]->getText());
+        return $result;
     }
 
     public function getDetailedResults($searchParams)
