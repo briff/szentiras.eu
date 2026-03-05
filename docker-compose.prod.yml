@@ -3,7 +3,7 @@ name: szeu-prod
 services:
   traefik:
     image: traefik:v3.3
-    mem_limit: 128m
+    mem_limit: 192m
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -108,8 +108,8 @@ services:
       retries: 3      
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly no --maxmemory 150mb --maxmemory-policy allkeys-lru
-    mem_limit: 192m    
+    command: redis-server --appendonly no --maxmemory 92mb --maxmemory-policy allkeys-lru
+    mem_limit: 96m    
     env_file:
       - path: ./.env.prod
         required: false
