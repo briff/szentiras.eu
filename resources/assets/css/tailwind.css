@@ -28,6 +28,18 @@
   .modal-body {
     @apply flex justify-center p-0;
   }
+
+  #placeModalBody .place-details {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #placeModalBody #placeMapContainer {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
 }
 
 @tailwind components;
