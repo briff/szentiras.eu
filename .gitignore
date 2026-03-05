@@ -26,3 +26,4 @@ PROVISIONED
 .vscode
 generated
 .env.deploy
+.claude
