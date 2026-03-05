@@ -1,0 +1,238 @@
+{% extends "layout" %}
+
+{% block pageHeader %}
+    <div class="page-header">
+        <h1><i class="bi bi-text-paragraph"></i> Szó a következő versből</h1>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid px-0">
+        <div class="row">
+            <div class="col-12">
+                <p class="lead">Találd ki, melyik szó szerepel a következő versben!</p>
+                
+                <!-- Score display and game controls -->
+                {% if currentVerse %}
+                <div class="text-center mb-3">
+                    <span class="badge bg-primary" style="font-size: 1.2rem;">
+                        <i class="bi bi-trophy"></i> Pontszám: {{ score }}
+                    </span>
+                    <div class="mt-2">
+                        <a href="/tools/word-from-next-verse?reset=1" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Új játék kezdése
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center mb-3">
+                    <span class="badge bg-secondary" style="font-size: 1.2rem;">
+                        <i class="bi bi-trophy"></i> Pontszám: 0
+                    </span>
+                </div>
+                {% endif %}
+                
+                {% if currentVerse %}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-book"></i> Jelenlegi vers</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="verse-text lead text-center py-3">
+                            {{ currentVerse }}
+                        </div>
+                        <div class="text-center text-muted mt-3">
+                            <i class="bi bi-bookmark"></i> {{ currentReference }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-question-circle"></i> Kérdés</h5>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="text-center mb-4">Melyik szó szerepel a következő versben?</h4>
+                        <p class="text-center text-muted mb-4">
+                            <small>({{ nextReference }})</small>
+                        </p>
+                        
+                        {% if not answered %}
+                        <form method="POST" action="/tools/word-from-next-verse">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="translation_abbrev" value="{{ selectedTranslation }}">
+                            <input type="hidden" name="action" value="answer">
+                            
+                            <div class="options-container">
+                                {% for option in options %}
+                                    <button type="submit" 
+                                            name="selected_word" 
+                                            value="{{ option }}"
+                                            class="option-button">
+                                        {{ option }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </form>
+                        {% else %}
+                        <!-- Show feedback after answer -->
+                        <div class="options-container">
+                            {% for option in options %}
+                                <div class="option-button 
+                                    {% if option == correctWord %}option-correct{% endif %}
+                                    {% if option != correctWord %}option-disabled{% endif %}">
+                                    {{ option }}
+                                    {% if option == correctWord %}
+                                        <i class="bi bi-check-circle-fill ms-2"></i>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if feedback %}
+                        <div class="alert {% if correct %}alert-success{% else %}alert-danger{% endif %} mt-4 text-center">
+                            <h5 class="mb-0">{{ feedback }}</h5>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="text-center mt-4">
+                            <form method="POST" action="/tools/word-from-next-verse">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="translation_abbrev" value="{{ selectedTranslation }}">
+                                <input type="hidden" name="action" value="next_question">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-arrow-right-circle"></i> Következő kérdés
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-play-circle"></i> Játék indítása</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/tools/word-from-next-verse">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="new_game">
+                            
+                            <div class="mb-3">
+                                <label for="translation_abbrev" class="form-label">
+                                    <i class="bi bi-book"></i> Válassz fordítást:
+                                </label>
+                                <select class="form-select" id="translation_abbrev" name="translation_abbrev" required>
+                                    {% for translation in translations %}
+                                        <option value="{{ translation.abbrev }}" 
+                                            {{ translation.abbrev == selectedTranslation ? 'selected' : '' }}>
+                                            {{ translation.name }} ({{ translation.abbrev }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-play-fill"></i> Játék indítása
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-info text-dark">
+                        <h5 class="mb-0"><i class="bi bi-question-circle"></i> Játékszabályok</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Válassz egy fordítást és indítsd el a játékot</li>
+                            <li>Megjelenik egy bibliai vers</li>
+                            <li>4 szóból kell kiválasztanod azt, amelyik a <strong>következő versben</strong> szerepel</li>
+                            <li>A helyes válasz 1 pontot ér</li>
+                            <li>A rossz válaszok a környező versekből származnak</li>
+                            <li>Próbáld meg minél több pontot összegyűjteni!</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .verse-text {
+            font-size: 1.3rem;
+            line-height: 1.8;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 576px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .option-button {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            border: 3px solid #007bff;
+            background-color: white;
+            color: #007bff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        
+        .option-button:hover:not(.option-disabled) {
+            background-color: #007bff;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .option-button:active:not(.option-disabled) {
+            transform: scale(0.98);
+        }
+        
+        .option-correct {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+            cursor: default;
+        }
+        
+        .option-disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        
+        [data-theme="dark"] .option-button {
+            background-color: #2d3748;
+            border-color: #4da3ff;
+            color: #4da3ff;
+        }
+        
+        [data-theme="dark"] .option-button:hover:not(.option-disabled) {
+            background-color: #4da3ff;
+            color: #1a202c;
+        }
+        
+        [data-theme="dark"] .option-correct {
+            background-color: #38a169 !important;
+            border-color: #38a169 !important;
+        }
+    </style>
+{% endblock %}

@@ -122,6 +122,7 @@ Route::match(['get', 'post'], '/tools/guessbook', [ToolsController::class, 'gues
 Route::match(['get', 'post'], '/tools/memory-game-play', [ToolsController::class, 'memoryGamePlay']);
 Route::match(['get', 'post'], '/tools/guess-word', [ToolsController::class, 'guessWord']);
 Route::match(['get', 'post'], '/tools/verse-scramble', [ToolsController::class, 'verseScramble']);
+Route::match(['get', 'post'], '/tools/word-from-next-verse', [ToolsController::class, 'wordFromNextVerse']);
 
 
 // User inbox routes (require anonymous login)

@@ -721,4 +721,277 @@ class ToolsController extends Controller
             'correctVerse' => $won ? $gameState['verse'] : null
         ]);
     }
+    
+    /**
+     * Word from next verse game
+     */
+    public function wordFromNextVerse(Request $request)
+    {
+        $translations = $this->translationService->getAllTranslations();
+        $selectedTranslation = null;
+        
+        // Reset game if requested
+        if ($request->has('reset')) {
+            $request->session()->forget('word_from_next_verse_state');
+            return redirect('/tools/word-from-next-verse');
+        }
+        
+        // Get game state first to check if we have an active game
+        $gameState = $request->session()->get('word_from_next_verse_state', null);
+        
+        // Set translation - prefer active game's translation, then request param, then default
+        if ($gameState && isset($gameState['translation'])) {
+            $selectedTranslation = $gameState['translation'];
+        } elseif ($request->has('translation_abbrev')) {
+            $selectedTranslation = $request->input('translation_abbrev');
+        } else {
+            $defaultTranslation = $this->translationService->getDefaultTranslation();
+            $selectedTranslation = $defaultTranslation->abbrev;
+        }
+
+        $translation = $this->translationService->getByAbbreviation($selectedTranslation);
+        $books = $this->bookService->getBooksForTranslation($translation);
+        
+        // Initialize feedback variables
+        $feedback = null;
+        $correct = false;
+        
+        // If page is accessed via GET and question was answered, generate new question automatically
+        if (!$request->isMethod('post') && $gameState && !empty($gameState['answered'])) {
+            $request->merge(['action' => 'next_question']);
+        }
+        
+        // Start new game or generate new question
+        if ($request->input('action') === 'new_game' || $request->input('action') === 'next_question' 
+            || !$gameState || ($request->has('translation_abbrev') && $gameState['translation'] !== $selectedTranslation)) {
+            
+            $questionData = $this->generateWordFromNextVerseQuestion($books, $translation);
+            
+            if ($questionData) {
+                $gameState = [
+                    'currentVerse' => $questionData['currentVerse'],
+                    'currentReference' => $questionData['currentReference'],
+                    'nextVerse' => $questionData['nextVerse'],
+                    'nextReference' => $questionData['nextReference'],
+                    'correctWord' => $questionData['correctWord'],
+                    'options' => $questionData['options'],
+                    'translation' => $selectedTranslation,
+                    'score' => $request->input('action') === 'next_question' ? ($gameState['score'] ?? 0) : 0,
+                    'answered' => false
+                ];
+                $request->session()->put('word_from_next_verse_state', $gameState);
+            }
+        }
+        
+        // Check answer
+        if ($request->input('action') === 'answer' && $gameState && !$gameState['answered']) {
+            $userAnswer = $request->input('selected_word');
+            
+            if ($userAnswer === $gameState['correctWord']) {
+                $feedback = 'Helyes! 🎉';
+                $correct = true;
+                $gameState['score'] = ($gameState['score'] ?? 0) + 1;
+            } else {
+                $feedback = 'Helytelen! A helyes válasz: ' . $gameState['correctWord'];
+                $correct = false;
+            }
+            
+            $gameState['answered'] = true;
+            $request->session()->put('word_from_next_verse_state', $gameState);
+        }
+        
+        return \View::make("tools/word-from-next-verse", [
+            'pageTitle' => 'Szó a következő versből - Szentírás.eu',
+            'metaTitle' => 'Szó a következő versből - Szentírás.eu',
+            'translations' => $translations,
+            'selectedTranslation' => $selectedTranslation,
+            'currentVerse' => $gameState['currentVerse'] ?? null,
+            'currentReference' => $gameState['currentReference'] ?? null,
+            'nextReference' => $gameState['nextReference'] ?? null,
+            'options' => $gameState['options'] ?? [],
+            'correctWord' => ($gameState && !empty($gameState['answered'])) ? $gameState['correctWord'] : null,
+            'feedback' => $feedback,
+            'correct' => $correct,
+            'score' => $gameState['score'] ?? 0,
+            'answered' => $gameState['answered'] ?? false
+        ]);
+    }
+    
+    /**
+     * Generate a question for word from next verse game
+     */
+    private function generateWordFromNextVerseQuestion($books, $translation)
+    {
+        $maxAttempts = 50;
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            $attempts++;
+            
+            // Select a random book
+            $randomBook = $books->random();
+            $maxChapter = $this->bookService->getChapterCount($randomBook, $translation);
+            
+            if ($maxChapter === 0) {
+                continue;
+            }
+            
+            $randomChapter = rand(1, $maxChapter);
+            $maxVerse = $this->bookService->getVerseCount($randomBook, $randomChapter, $translation);
+            
+            if ($maxVerse < 2) {
+                continue;
+            }
+            
+            // Select a random verse (not the last one)
+            $randomVerse = rand(1, $maxVerse - 1);
+            
+            try {
+                // Get current verse
+                $currentRef = "{$randomBook->abbrev} {$randomChapter},{$randomVerse}";
+                $currentCanonicalRef = CanonicalReference::fromString($currentRef);
+                $currentVerseContainers = $this->textService->getTranslatedVerses($currentCanonicalRef, $translation);
+                
+                // Get next verse
+                $nextVerse = $randomVerse + 1;
+                $nextRef = "{$randomBook->abbrev} {$randomChapter},{$nextVerse}";
+                $nextCanonicalRef = CanonicalReference::fromString($nextRef);
+                $nextVerseContainers = $this->textService->getTranslatedVerses($nextCanonicalRef, $translation);
+                
+                $currentText = $this->extractVerseText($currentVerseContainers);
+                $nextText = $this->extractVerseText($nextVerseContainers);
+                
+                if (empty($currentText) || empty($nextText)) {
+                    continue;
+                }
+                
+                // Extract words from next verse
+                $nextWords = $this->extractWords($nextText);
+                $nextWords = array_filter($nextWords, fn($w) => mb_strlen($w) >= 4);
+                $nextWords = array_unique($nextWords);
+                $nextWords = array_values($nextWords);
+                
+                if (count($nextWords) < 1) {
+                    continue;
+                }
+                
+                // Select correct word from next verse
+                $correctWord = $nextWords[array_rand($nextWords)];
+                
+                // Get words from surrounding verses for wrong options
+                $wrongWords = $this->getWrongWordOptions($randomBook, $randomChapter, $randomVerse, 
+                                                         $translation, $currentText, $nextText, $correctWord);
+                
+                if (count($wrongWords) < 3) {
+                    continue;
+                }
+                
+                // Create options array and shuffle
+                $options = array_merge([$correctWord], array_slice($wrongWords, 0, 3));
+                shuffle($options);
+                
+                return [
+                    'currentVerse' => $currentText,
+                    'currentReference' => $currentRef,
+                    'nextVerse' => $nextText,
+                    'nextReference' => $nextRef,
+                    'correctWord' => $correctWord,
+                    'options' => $options
+                ];
+                
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Extract clean text from verse containers
+     */
+    private function extractVerseText($verseContainers)
+    {
+        $fullText = '';
+        foreach ($verseContainers as $verseContainer) {
+            foreach ($verseContainer->getParsedVerses() as $verse) {
+                $text = strip_tags($verse->getText('none'));
+                $fullText .= $text . ' ';
+            }
+        }
+        return trim($fullText);
+    }
+    
+    /**
+     * Extract words from text (remove punctuation, get unique words >= 4 chars)
+     */
+    private function extractWords($text)
+    {
+        // Remove punctuation and numbers
+        $cleanText = preg_replace('/[^\p{L}\s]/u', '', $text);
+        // Split by whitespace
+        $words = preg_split('/\s+/u', $cleanText);
+        // Filter and clean
+        $words = array_map('trim', $words);
+        $words = array_filter($words, fn($w) => !empty($w));
+        
+        return array_values($words);
+    }
+    
+    /**
+     * Get wrong word options from surrounding verses
+     */
+    private function getWrongWordOptions($book, $chapter, $currentVerseNum, $translation, $currentText, $nextText, $correctWord)
+    {
+        $wrongWords = [];
+        $maxVerse = $this->bookService->getVerseCount($book, $chapter, $translation);
+        
+        // Get words from current verse
+        $currentWords = $this->extractWords($currentText);
+        $currentWords = array_filter($currentWords, fn($w) => mb_strlen($w) >= 4);
+        
+        // Get words from next verse (excluding correct word)
+        $nextWords = $this->extractWords($nextText);
+        $nextWords = array_filter($nextWords, fn($w) => mb_strlen($w) >= 4 && mb_strtolower($w) !== mb_strtolower($correctWord));
+        
+        // Combine and filter
+        $candidateWords = array_merge($currentWords, $nextWords);
+        $candidateWords = array_unique($candidateWords);
+        $candidateWords = array_values($candidateWords);
+        
+        // Try to get more words from surrounding verses
+        $versesToCheck = [];
+        if ($currentVerseNum > 1) {
+            $versesToCheck[] = $currentVerseNum - 1;
+        }
+        if ($currentVerseNum + 2 <= $maxVerse) {
+            $versesToCheck[] = $currentVerseNum + 2;
+        }
+        
+        foreach ($versesToCheck as $verseNum) {
+            try {
+                $ref = "{$book->abbrev} {$chapter},{$verseNum}";
+                $canonicalRef = CanonicalReference::fromString($ref);
+                $verseContainers = $this->textService->getTranslatedVerses($canonicalRef, $translation);
+                $text = $this->extractVerseText($verseContainers);
+                
+                $words = $this->extractWords($text);
+                $words = array_filter($words, fn($w) => mb_strlen($w) >= 4);
+                
+                $candidateWords = array_merge($candidateWords, $words);
+            } catch (\Exception $e) {
+                // Skip this verse
+            }
+        }
+        
+        // Filter out correct word and duplicates
+        $candidateWords = array_filter($candidateWords, fn($w) => mb_strtolower($w) !== mb_strtolower($correctWord));
+        $candidateWords = array_unique($candidateWords);
+        $candidateWords = array_values($candidateWords);
+        
+        // Shuffle and return
+        shuffle($candidateWords);
+        
+        return $candidateWords;
+    }
 }
