@@ -162,6 +162,10 @@ fi
 # 6. Restart app services (keep traefik running to minimise downtime)
 echo "6. Restarting app services (traefik kept running)..."
 
+# Put application into maintenance mode before fiddling with the services to prevent errors for users during the transition. If app container isn't running, just continue with the deploy.
+echo "   Putting application into maintenance mode..."
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml exec -T app php artisan down 2>/dev/null || echo '   ℹ️  App container not running or already in maintenance mode'"
+
 # Bring up infrastructure services first (database, redis, sphinx) if not already running
 $SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d database redis sphinx memcached"
 
@@ -198,6 +202,21 @@ fi
 $SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && APP_DOMAIN=szentiras.eu docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans 2>/dev/null || true"
 
 echo "   ✅ Containers started successfully"
+
+# Bring application out of maintenance mode
+echo "   Bringing application out of maintenance mode..."
+for i in {1..10}; do
+    if $SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml exec -T app php artisan up 2>/dev/null"; then
+        echo "   ✅ Maintenance mode disabled"
+        break
+    else
+        if [ $i -eq 10 ]; then
+            echo "   ⚠️  Failed to disable maintenance mode after 10 attempts"
+        else
+            sleep 3
+        fi
+    fi
+done
 
 # 8. Verify services are running
 echo "8. Verifying services..."
