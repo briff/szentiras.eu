@@ -15,6 +15,12 @@ use SzentirasHu\Http\Controllers\Contact\InboxController;
 use SzentirasHu\Http\Controllers\Home\HomeController;
 use SzentirasHu\Http\Controllers\MediaController;
 use SzentirasHu\Http\Controllers\Tools\ToolsController;
+use SzentirasHu\Http\Controllers\Tools\MemoryGameController;
+use SzentirasHu\Http\Controllers\Tools\OnlineMemoryGameController;
+use SzentirasHu\Http\Controllers\Tools\GuessTheBookController;
+use SzentirasHu\Http\Controllers\Tools\GuessTheMissingWordController;
+use SzentirasHu\Http\Controllers\Tools\VerseScrambleController;
+use SzentirasHu\Http\Controllers\Tools\WordFromNextVerseController;
 use SzentirasHu\Http\Middleware\RedirectLowerCaseTranslationAbbrev;
 use SzentirasHu\Models\Media;
 
@@ -116,13 +122,13 @@ Route::get('/contact/thankyou', [ContactController::class, 'thankYou'])->name('c
 
 // Tools routes
 Route::get('/tools', [ToolsController::class, 'index'])->name('tools.index');
-Route::get('/tools/memorygame', [ToolsController::class, 'memoryGameCreator'])->name('tools.memoryGame');
-Route::post('/tools/memorygame', [ToolsController::class, 'memoryGameCreator'])->name('tools.memoryGame.process');
-Route::match(['get', 'post'], '/tools/guessbook', [ToolsController::class, 'guessBook']);
-Route::match(['get', 'post'], '/tools/memory-game-play', [ToolsController::class, 'memoryGamePlay']);
-Route::match(['get', 'post'], '/tools/guess-word', [ToolsController::class, 'guessWord']);
-Route::match(['get', 'post'], '/tools/verse-scramble', [ToolsController::class, 'verseScramble']);
-Route::match(['get', 'post'], '/tools/word-from-next-verse', [ToolsController::class, 'wordFromNextVerse']);
+Route::get('/tools/memorygame', [MemoryGameController::class, 'index'])->name('tools.memoryGame');
+Route::post('/tools/memorygame', [MemoryGameController::class, 'index'])->name('tools.memoryGame.process');
+Route::match(['get', 'post'], '/tools/guessbook', [GuessTheBookController::class, 'index']);
+Route::match(['get', 'post'], '/tools/memory-game-play', [OnlineMemoryGameController::class, 'index']);
+Route::match(['get', 'post'], '/tools/guess-word', [GuessTheMissingWordController::class, 'index']);
+Route::match(['get', 'post'], '/tools/verse-scramble', [VerseScrambleController::class, 'index']);
+Route::match(['get', 'post'], '/tools/word-from-next-verse', [WordFromNextVerseController::class, 'index']);
 
 
 // User inbox routes (require anonymous login)
