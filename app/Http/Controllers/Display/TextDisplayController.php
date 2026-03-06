@@ -427,6 +427,19 @@ class TextDisplayController extends Controller
 
             $scrollTo = $canonicalRef->toGepi();
 
+            // Handle comparison translation
+            $compareAbbrev = request()->query('compare');
+            $compareTranslation = null;
+            $compareVerseContainers = null;
+
+            if ($compareAbbrev) {
+                $compareTranslation = $this->translationRepository->getByAbbrev($compareAbbrev);
+                if ($compareTranslation && $allTranslation->contains($compareTranslation) && $compareAbbrev !== $translationAbbrev) {
+                    $compareCanonicalRef = CanonicalReference::fromString($reference, $compareTranslation->id);
+                    $compareVerseContainers = $this->textService->getTranslatedVerses($compareCanonicalRef, $compareTranslation);
+                }
+            }
+
             $translations = $this->translationRepository->getAllOrderedByDenom();
             return View::make('textDisplay.verses')->with([
                 'fullChaptersIncluded' => $fullChaptersIncluded,
@@ -467,14 +480,14 @@ class TextDisplayController extends Controller
                                 break;
                             }
                         }
-                        
+
                         // Special handling for GNT translation
                         $link = $this->referenceService->getCanonicalUrl($canonicalRef, $otherTranslation->id);
                         if ($otherTranslation->abbrev === 'GNT' && $allBooksExistInTranslation) {
                             // For GNT, we need to link to the GreekTextController with the full reference
                             $link = "/GNT/{$canonicalRef->toString()}";
                         }
-                        
+
                         return [
                             'id' => $otherTranslation->id,
                             'link' => $link,
@@ -485,7 +498,9 @@ class TextDisplayController extends Controller
                 )->sortBy(function ($translationLink) {
                     // Put GNT at the end
                     return $translationLink['abbrev'] === 'GNT' ? 1 : 0;
-                })->values()
+                })->values(),
+                'compareTranslation' => $compareTranslation,
+                'compareVerseContainers' => $compareVerseContainers
             ]);
         } catch (ParsingException $e) {
             // as this doesn't look like a valid reference

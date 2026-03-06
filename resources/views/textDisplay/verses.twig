@@ -82,8 +82,21 @@
         <a class="btn btn-info" id="fullContextButton" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}" title="Csak a hivatkozás szövegének megjelenítése">
             <i class="bi-chevron-contract"></i> Csak a hivatkozás szövegének megjelenítése</a>
     {% endif %}
-    <span id="data" {% if scrollTo %} data-scroll-to="{{ scrollTo }}" {% endif %}></span>    
-    {{ include('textDisplay.verseContainers') }}
+    <span id="data" {% if scrollTo %} data-scroll-to="{{ scrollTo }}" {% endif %}></span>
+    {% if compareTranslation and compareVerseContainers %}
+        <div class="row">
+            <div class="col-lg-6">
+                <h5>{{ translation.name }}</h5>
+                {{ include('textDisplay.verseContainers') }}
+            </div>
+            <div class="col-lg-6">
+                <h5>{{ compareTranslation.name }}</h5>
+                {{ include('textDisplay.compareVerseContainers') }}
+            </div>
+        </div>
+    {% else %}
+        {{ include('textDisplay.verseContainers') }}
+    {% endif %}
     {% if previousDay %}
         <a href="/tervek/{{ previousDay.plan_id }}/{{ previousDay.day_number }}" class="btn btn-primary btn-default"><i class="bi bi-chevron-left"></i> Előző nap</a>
     {% endif %}
@@ -150,6 +163,28 @@
                         <i class="bi-images"></i>
                     </a>
                 {% endif %}
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm {% if compareTranslation %}active{% else %}inactive{% endif %}" data-bs-toggle="dropdown" title="Fordítások összehasonlítása" style="{% if compareTranslation %}background-color: #0d6efd; color: white;{% else %}background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;{% endif %}">
+                        <i class="bi-columns-gap"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if compareTranslation %}
+                            <li><span class="dropdown-item-text"><strong>{{ compareTranslation.name }}</strong></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}">
+                                <i class="bi-x"></i> Összehasonlítás bezárása
+                            </a></li>
+                        {% else %}
+                            {% for otherTranslation in translationLinks %}
+                                {% if otherTranslation.id != translation.id and otherTranslation.enabled %}
+                                    <li><a class="dropdown-item" href="{{ url('/' ~ canonicalUrl ~ '?compare=' ~ otherTranslation.abbrev ~ (mediaEnabled ? '&media' : '')) }}">
+                                        {{ otherTranslation.abbrev }}
+                                    </a></li>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
