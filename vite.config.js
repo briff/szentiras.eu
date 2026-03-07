@@ -7,6 +7,10 @@ export default defineConfig({
             host: 'localhost'
         },
         host: '0.0.0.0',
+        watch: {
+            ignored: ['**/storage/framework/views/**', '**/vendor/**']
+        },
+        
     },
     plugins: [
         laravel({
