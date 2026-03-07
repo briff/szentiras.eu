@@ -12,6 +12,20 @@
             <div class="col-12">
                 <p class="lead">Rakd össze helyes sorrendbe a bibliai vers szavait!</p>
                 
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                    <form method="POST" action="/tools/verse-scramble" class="d-inline ms-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="translation_abbrev" value="{{ selectedTranslation }}">
+                        <input type="hidden" name="action" value="new_game">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="bi bi-arrow-clockwise"></i> Próbáld újra
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                
                 {% if scrambledWords|length > 0 %}
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
