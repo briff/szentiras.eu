@@ -207,14 +207,14 @@ class FetchDailyReadingTest extends TestCase
             'processed_refs' => ['Mik7,14-15', 'Lk15,1-3'],
         ]);
 
-        $this->assertEquals('Mik7,14-15;Lk15,1-3', $reading->getCombinedRefString());
+        $this->assertEquals('Mik7,14-15;Lk15,1-3', $reading->combinedRefString);
     }
 
     public function test_get_combined_ref_string_returns_empty_when_no_refs(): void
     {
         $reading = DailyReading::factory()->make(['processed_refs' => null]);
 
-        $this->assertEquals('', $reading->getCombinedRefString());
+        $this->assertEquals('', $reading->combinedRefString);
     }
 
     // -------------------------------------------------------------------------

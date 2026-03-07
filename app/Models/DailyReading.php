@@ -2,6 +2,7 @@
 
 namespace SzentirasHu\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $error_message
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read string $combinedRefString
  * @mixin \Eloquent
  */
 class DailyReading extends Model
@@ -64,12 +66,10 @@ class DailyReading extends Model
     /**
      * Get the combined reference string for the reading page URL.
      */
-    public function getCombinedRefString(): string
+    protected function combinedRefString(): Attribute
     {
-        if (empty($this->processed_refs)) {
-            return '';
-        }
-
-        return implode(';', $this->processed_refs);
+        return Attribute::make(
+            get: fn () => empty($this->processed_refs) ? '' : implode(';', $this->processed_refs),
+        );
     }
 }
