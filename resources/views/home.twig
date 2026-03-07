@@ -49,57 +49,70 @@
                         <i class="bi-grid-3x3-gap me-2"></i>
                         További lehetőségek
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
+                    <div class="card-body py-2">
+                        <div class="row g-2 row-cols-1 row-cols-md-2 row-cols-xl-5">
                            
-                            <div class="col-12 col-md-6 col-lg-3">
+                            <div class="col">
                                 <div class="card h-100 border-0" style="background-color: #f0ede8;">
-                                    <div class="card-body text-center">
-                                        <div class="d-flex align-items-center justify-content-center mb-3">
-                                            <i class="bi-calendar-week display-5 me-3" style="color: #7a9e87;"></i>
-                                            <h5 class="card-title mb-0" style="color: #4a5568;">Olvasási tervek</h5>
+                                    <div class="card-body text-center p-2">
+                                        <div class="d-flex align-items-center justify-content-center mb-2">
+                                            <i class="bi-puzzle fs-3 me-2" style="color: #9b7eb8;"></i>
+                                            <h6 class="card-title mb-0" style="color: #4a5568;">Eszközök</h6>
                                         </div>
-                                        <p class="card-text d-none d-md-block" style="color: #718096;">Napi olvasási tervek a Bibliából</p>
-                                        <a href="/tervek" class="btn" style="color: #7a9e87; border-color: #7a9e87; background: transparent;">Megnyitás</a>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <div class="card h-100 border-0" style="background-color: #f0ede8;">
-                                    <div class="card-body text-center">
-                                        <div class="d-flex align-items-center justify-content-center mb-3">
-                                            <i class="bi-search-heart display-5 me-3" style="color: #b08d6a;"></i>
-                                            <h5 class="card-title mb-0" style="color: #4a5568;">MI Keresés</h5>
-                                        </div>
-                                        <p class="card-text d-none d-md-block" style="color: #718096;">Keresés mesterséges intelligenciával</p>
-                                        <a href="/ai-search" class="btn" style="color: #b08d6a; border-color: #b08d6a; background: transparent;">Megnyitás</a>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <div class="card h-100 border-0" style="background-color: #f0ede8;">
-                                    <div class="card-body text-center">
-                                        <div class="d-flex align-items-center justify-content-center mb-3">
-                                            <i class="bi-info-circle display-5 me-3" style="color: #7b9bb5;"></i>
-                                            <h5 class="card-title mb-0" style="color: #4a5568;">Információk</h5>
-                                        </div>
-                                        <p class="card-text d-none d-md-block" style="color: #718096;">A projektről és használati útmutató</p>
-                                        <a href="/informaciok" class="btn" style="color: #7b9bb5; border-color: #7b9bb5; background: transparent;">Megnyitás</a>
+                                        <p class="card-text d-none d-md-block small" style="color: #718096;">Játékok és segédletek a Biblia tanulmányozásához</p>
+                                        <a href="{{ route('tools.index') }}" class="btn btn-sm" style="color: #9b7eb8; border-color: #9b7eb8; background: transparent;">Megnyitás</a>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-6 col-lg-3">
+                            <div class="col">
                                 <div class="card h-100 border-0" style="background-color: #f0ede8;">
-                                    <div class="card-body text-center">
-                                        <div class="d-flex align-items-center justify-content-center mb-3">
-                                            <i class="bi-tools display-5 me-3" style="color: #8b8fa8;"></i>
-                                            <h5 class="card-title mb-0" style="color: #4a5568;">Fejlesztőknek</h5>
+                                    <div class="card-body text-center p-2">
+                                        <div class="d-flex align-items-center justify-content-center mb-2">
+                                            <i class="bi-calendar-week fs-3 me-2" style="color: #7a9e87;"></i>
+                                            <h6 class="card-title mb-0" style="color: #4a5568;">Olvasási tervek</h6>
                                         </div>
-                                        <p class="card-text d-none d-md-block" style="color: #718096;">API és fejlesztői dokumentáció</p>
-                                        <a href="/api" class="btn" style="color: #8b8fa8; border-color: #8b8fa8; background: transparent;">Megnyitás</a>
+                                        <p class="card-text d-none d-md-block small" style="color: #718096;">Napi olvasási tervek a Bibliából</p>
+                                        <a href="/tervek" class="btn btn-sm" style="color: #7a9e87; border-color: #7a9e87; background: transparent;">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col">
+                                <div class="card h-100 border-0" style="background-color: #f0ede8;">
+                                    <div class="card-body text-center p-2">
+                                        <div class="d-flex align-items-center justify-content-center mb-2">
+                                            <i class="bi-search-heart fs-3 me-2" style="color: #b08d6a;"></i>
+                                            <h6 class="card-title mb-0" style="color: #4a5568;">MI Keresés</h6>
+                                        </div>
+                                        <p class="card-text d-none d-md-block small" style="color: #718096;">Keresés mesterséges intelligenciával</p>
+                                        <a href="/ai-search" class="btn btn-sm" style="color: #b08d6a; border-color: #b08d6a; background: transparent;">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col">
+                                <div class="card h-100 border-0" style="background-color: #f0ede8;">
+                                    <div class="card-body text-center p-2">
+                                        <div class="d-flex align-items-center justify-content-center mb-2">
+                                            <i class="bi-info-circle fs-3 me-2" style="color: #7b9bb5;"></i>
+                                            <h6 class="card-title mb-0" style="color: #4a5568;">Információk</h6>
+                                        </div>
+                                        <p class="card-text d-none d-md-block small" style="color: #718096;">A projektről és használati útmutató</p>
+                                        <a href="/informaciok" class="btn btn-sm" style="color: #7b9bb5; border-color: #7b9bb5; background: transparent;">Megnyitás</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col">
+                                <div class="card h-100 border-0" style="background-color: #f0ede8;">
+                                    <div class="card-body text-center p-2">
+                                        <div class="d-flex align-items-center justify-content-center mb-2">
+                                            <i class="bi-tools fs-3 me-2" style="color: #8b8fa8;"></i>
+                                            <h6 class="card-title mb-0" style="color: #4a5568;">Fejlesztőknek</h6>
+                                        </div>
+                                        <p class="card-text d-none d-md-block small" style="color: #718096;">API és fejlesztői dokumentáció</p>
+                                        <a href="/api" class="btn btn-sm" style="color: #8b8fa8; border-color: #8b8fa8; background: transparent;">Megnyitás</a>
                                     </div>
                                 </div>
                             </div>

@@ -132,18 +132,20 @@ Route::match(['get', 'post'], '/tools/verse-scramble', [VerseScrambleController:
 Route::match(['get', 'post'], '/tools/word-from-next-verse', [WordFromNextVerseController::class, 'index']);
 
 // Quiz game routes
-Route::get('/quiz', [QuizGameController::class, 'index'])->name('quiz.index');
-Route::post('/quiz/create', [QuizGameController::class, 'createGame'])->name('quiz.create');
-Route::get('/quiz/teacher/{roomCode}', [QuizGameController::class, 'teacherView'])->name('quiz.teacher');
-Route::get('/quiz/player/{roomCode}', [QuizGameController::class, 'playerView'])->name('quiz.player');
-Route::get('/quiz/animals/{roomCode}', [QuizGameController::class, 'getAvailableAnimals'])->name('quiz.animals');
-Route::post('/quiz/join/{roomCode}', [QuizGameController::class, 'joinGame'])->name('quiz.join');
-Route::post('/quiz/start/{roomCode}', [QuizGameController::class, 'startGame'])->name('quiz.start');
-Route::post('/quiz/answer/{roomCode}', [QuizGameController::class, 'submitAnswer'])->name('quiz.answer');
-Route::post('/quiz/results/{roomCode}', [QuizGameController::class, 'showResults'])->name('quiz.results');
-Route::post('/quiz/next/{roomCode}', [QuizGameController::class, 'nextQuestion'])->name('quiz.next');
-Route::get('/quiz/state/{roomCode}', [QuizGameController::class, 'getGameState'])->name('quiz.state');
-Route::post('/quiz/end/{roomCode}', [QuizGameController::class, 'endGame'])->name('quiz.end');
+Route::prefix('quiz')->name('quiz.')->group(function () {
+    Route::get('/', [QuizGameController::class, 'index'])->name('index');
+    Route::post('/create', [QuizGameController::class, 'createGame'])->name('create');
+    Route::get('/teacher/{roomCode}', [QuizGameController::class, 'teacherView'])->name('teacher');
+    Route::get('/player/{roomCode}', [QuizGameController::class, 'playerView'])->name('player');
+    Route::get('/animals/{roomCode}', [QuizGameController::class, 'getAvailableAnimals'])->name('animals');
+    Route::post('/join/{roomCode}', [QuizGameController::class, 'joinGame'])->name('join');
+    Route::post('/start/{roomCode}', [QuizGameController::class, 'startGame'])->name('start');
+    Route::post('/answer/{roomCode}', [QuizGameController::class, 'submitAnswer'])->name('answer');
+    Route::post('/results/{roomCode}', [QuizGameController::class, 'showResults'])->name('results');
+    Route::post('/next/{roomCode}', [QuizGameController::class, 'nextQuestion'])->name('next');
+    Route::get('/state/{roomCode}', [QuizGameController::class, 'getGameState'])->name('state');
+    Route::post('/end/{roomCode}', [QuizGameController::class, 'endGame'])->name('end');
+});
 
 // User inbox routes (require anonymous login)
 Route::middleware('anonymousId')->group(function () {
