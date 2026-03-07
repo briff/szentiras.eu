@@ -17,7 +17,7 @@ WORKDIR /var/www/html
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
-    curl
+    cron curl
 # Add extensions not included in the base image
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN install-php-extensions gd gmp memcached pdo_pgsql pdo_mysql xdebug zip pcntl imagick exif
@@ -36,6 +36,9 @@ RUN echo "<?php return [ 'hash' => '$GIT_COMMIT_HASH' ];" > config/version.php
 
 RUN chown -R www-data:www-data bootstrap/cache
 RUN chown -R www-data:www-data storage
+
+RUN echo '* * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/log/laravel-scheduler.log 2>&1' > /etc/cron.d/laravel-scheduler \
+    && chmod 0644 /etc/cron.d/laravel-scheduler
 
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 RUN a2enmod rewrite headers
