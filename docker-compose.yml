@@ -26,6 +26,7 @@ services:
       - sphinx_trigger:/opt/sphinx/trigger
     networks:
       - szeu-network
+      - internal
     ports:
       - "${APP_EXTERNAL_PORT:-8080}:80"
       - "${XDEBUG_EXTERNAL_PORT:-9003}:9003"
@@ -52,7 +53,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
     networks:
-      - szeu-network
+      - internal
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./docker/database:/docker-entrypoint-initdb.d
@@ -75,7 +76,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
     networks:
-      - szeu-network
+      - internal
     volumes:
       - ./docker/testing/database:/docker-entrypoint-initdb.d
     healthcheck:
@@ -101,7 +102,7 @@ services:
       database:
         condition: service_healthy
     networks:
-      - szeu-network
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "searchd --config /etc/sphinxsearch/sphinx.conf --status"]
       start_period: 20s
@@ -138,7 +139,7 @@ services:
       composer:
         condition: service_completed_successfully
     networks:
-      - szeu-network
+      - internal
   migrator_testing:
     image: szeu-app-dev
     env_file:
@@ -154,19 +155,19 @@ services:
       composer:
         condition: service_completed_successfully
     networks:
-      - szeu-network      
+      - internal
     command: php artisan migrate:refresh --seed --seeder="Database\\Seeders\\DatabaseSeeder" --env=testing
   memcached:
     image: memcached:1.6
     command:
       - --memory-limit=32
     networks:
-      - szeu-network
+      - internal
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     networks:
-      - szeu-network
+      - internal
     volumes:
       - redis-data:/data
     healthcheck:
@@ -189,7 +190,7 @@ services:
       migrator:
         condition: service_completed_successfully
     networks:
-      - szeu-network
+      - internal
     command: php artisan horizon
     restart: unless-stopped
     healthcheck:
@@ -224,3 +225,4 @@ volumes:
   # hunspellpipe:
 networks:
   szeu-network:
+  internal:

@@ -14,7 +14,6 @@ public/build
 .phpunit.cache
 _ide_helper*
 .env
-.env.docker
-.env.prod
+.env.*
 .devcontainer
 dist
