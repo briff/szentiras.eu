@@ -37,7 +37,7 @@ RUN echo "<?php return [ 'hash' => '$GIT_COMMIT_HASH' ];" > config/version.php
 RUN chown -R www-data:www-data bootstrap/cache
 RUN chown -R www-data:www-data storage
 
-RUN echo '* * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/log/laravel-scheduler.log 2>&1' > /etc/cron.d/laravel-scheduler \
+RUN printf 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0 * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/laravel-scheduler.log 2>&1\n' > /etc/cron.d/laravel-scheduler \
     && chmod 0644 /etc/cron.d/laravel-scheduler
 
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
