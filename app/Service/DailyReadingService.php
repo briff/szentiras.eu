@@ -105,8 +105,25 @@ class DailyReadingService
         $celebrationName = $celebration['name'] ?? null;
         $rawParts = $celebration['parts'] ?? [];
 
+        // Flatten nested arrays (e.g. multiple forms of the same reading offered as an array)
+        // and skip alternative/short forms identified by a "cause" key.
+        $flatParts = [];
+        foreach ($rawParts as $part) {
+            if (isset($part[0])) {
+                // Nested array of reading variants – keep only the first (full) form
+                foreach ($part as $variant) {
+                    if (!isset($variant['cause'])) {
+                        $flatParts[] = $variant;
+                        break;
+                    }
+                }
+            } else {
+                $flatParts[] = $part;
+            }
+        }
+
         // Filter parts that have a non-null ref and are not purely verse texts
-        $relevantParts = array_values(array_filter($rawParts, function (array $part): bool {
+        $relevantParts = array_values(array_filter($flatParts, function (array $part): bool {
             return !empty($part['ref']);
         }));
 

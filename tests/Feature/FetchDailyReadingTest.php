@@ -248,5 +248,101 @@ class FetchDailyReadingTest extends TestCase
 
         Queue::assertNotPushed(QueueDailyReadingCommentariesJob::class);
     }
+
+    // -------------------------------------------------------------------------
+    // Nested parts / cause filtering
+    // -------------------------------------------------------------------------
+
+    public function test_service_flattens_nested_parts_and_uses_full_form(): void
+    {
+        $response = $this->sampleResponse;
+        $response['celebration'][0]['parts'][] = [
+            ['short_title' => 'evangélium', 'ref' => 'Jn 4,5-42'],
+            ['cause' => 'rövidebb forma', 'short_title' => 'evangélium', 'ref' => 'Jn 4,5-15'],
+        ];
+
+        Http::fake([
+            'szentjozsefhackathon.github.io/*' => Http::response($response, 200),
+        ]);
+
+        /** @var DailyReadingService $service */
+        $service = app(DailyReadingService::class);
+        $result = $service->fetchAndStore(new \DateTimeImmutable('2026-03-07'));
+
+        $this->assertNotNull($result);
+        // Only the full form ref (Jn 4,5-42) should appear, not the short form
+        $combinedRefs = implode(' ', $result->processed_refs);
+        $this->assertStringContainsString('Jn4,5-42', $combinedRefs);
+        $this->assertStringNotContainsString('Jn4,5-15', $combinedRefs);
+    }
+
+    public function test_service_does_not_duplicate_reading_from_nested_variants(): void
+    {
+        $response = $this->sampleResponse;
+        $response['celebration'][0]['parts'][] = [
+            ['short_title' => 'evangélium', 'ref' => 'Jn 4,5-42'],
+            ['cause' => 'rövidebb forma', 'short_title' => 'evangélium', 'ref' => 'Jn 4,5-15'],
+        ];
+
+        Http::fake([
+            'szentjozsefhackathon.github.io/*' => Http::response($response, 200),
+        ]);
+
+        /** @var DailyReadingService $service */
+        $service = app(DailyReadingService::class);
+        $result = $service->fetchAndStore(new \DateTimeImmutable('2026-03-07'));
+
+        $this->assertNotNull($result);
+        $this->assertCount(4, $result->processed_refs);
+    }
+
+    // -------------------------------------------------------------------------
+    // Artisan command --recreate option
+    // -------------------------------------------------------------------------
+
+    public function test_command_recreate_option_deletes_existing_record_before_fetch(): void
+    {
+        DailyReading::factory()->create([
+            'date' => '2026-03-07',
+            'status' => DailyReading::STATUS_FETCHED,
+            'celebration_name' => 'old name',
+        ]);
+
+        Http::fake([
+            'szentjozsefhackathon.github.io/*' => Http::response($this->sampleResponse, 200),
+        ]);
+
+        $this->artisan('szentiras:fetch-daily-reading', [
+            '--date' => '2026-03-07',
+            '--sync' => true,
+            '--recreate' => true,
+        ])->assertSuccessful();
+
+        $this->assertDatabaseCount('daily_readings', 1);
+        $this->assertDatabaseHas('daily_readings', [
+            'date' => '2026-03-07',
+            'celebration_name' => 'nagyböjti idő 2. hét, szombat',
+        ]);
+    }
+
+    public function test_command_without_recreate_does_not_delete_existing_record(): void
+    {
+        DailyReading::factory()->create([
+            'date' => '2026-03-07',
+            'status' => DailyReading::STATUS_FETCHED,
+        ]);
+
+        Http::fake([
+            'szentjozsefhackathon.github.io/*' => Http::response($this->sampleResponse, 200),
+        ]);
+
+        $this->artisan('szentiras:fetch-daily-reading', [
+            '--date' => '2026-03-07',
+            '--sync' => true,
+        ])->assertSuccessful();
+
+        // Record updated in place, still only one row
+        $this->assertDatabaseCount('daily_readings', 1);
+    }
 }
 

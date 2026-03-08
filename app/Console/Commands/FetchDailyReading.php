@@ -4,12 +4,14 @@ namespace SzentirasHu\Console\Commands;
 
 use Illuminate\Console\Command;
 use SzentirasHu\Jobs\FetchDailyReadingJob;
+use SzentirasHu\Models\DailyReading;
 
 class FetchDailyReading extends Command
 {
     protected $signature = 'szentiras:fetch-daily-reading
                             {--date= : Date in Y-m-d format (defaults to today)}
-                            {--sync : Run synchronously instead of dispatching a job}';
+                            {--sync : Run synchronously instead of dispatching a job}
+                            {--recreate : Delete the existing record for the date before fetching}';
 
     protected $description = 'Fetch daily reading data, store refs, and queue commentary generation.';
 
@@ -22,6 +24,13 @@ class FetchDailyReading extends Command
         } catch (\Exception $e) {
             $this->error("Invalid date format: {$dateString}. Use Y-m-d.");
             return self::FAILURE;
+        }
+
+        if ($this->option('recreate')) {
+            $deleted = DailyReading::query()->where('date', $dateString)->delete();
+            if ($deleted) {
+                $this->info("Deleted existing daily reading record for {$dateString}.");
+            }
         }
 
         if ($this->option('sync')) {
