@@ -25,6 +25,7 @@ services:
       - letsencrypt:/letsencrypt
     networks:
       - traefik
+    restart: unless-stopped
   app:
     image: szeu-app-prod
     mem_limit: 1024m
@@ -66,6 +67,7 @@ services:
     networks:
       - traefik
       - internal
+    restart: unless-stopped
   sphinx:
     image: macbre/sphinxsearch:3.7.1
     volumes:
@@ -89,6 +91,7 @@ services:
       timeout: 5s
       retries: 3      
     command: sh -c "/opt/sphinx/start.sh"
+    restart: unless-stopped
   database:
     image: pgvector/pgvector:pg17
     mem_limit: 1024m
@@ -101,6 +104,7 @@ services:
       - ./docker/database:/docker-entrypoint-initdb.d
       - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
       start_period: 1m
@@ -118,6 +122,7 @@ services:
       - internal
     volumes:
       - redis-data:/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -172,7 +177,8 @@ services:
     command: ["memcached", "-m", "192", "-I", "2m"]
     networks:
       - internal
-    mem_limit: 192m      
+    mem_limit: 192m
+    restart: unless-stopped
   maintenance:
     image: nginx:alpine
     mem_limit: 32m
@@ -186,6 +192,7 @@ services:
       - traefik.http.routers.maintenance.rule=Host(`${APP_DOMAIN}`) || Host(`www.${APP_DOMAIN}`)
       - traefik.http.routers.maintenance.priority=1
       - traefik.http.services.maintenance.loadbalancer.server.port=80
+    restart: unless-stopped
 volumes:
   db-data:
   storage:
