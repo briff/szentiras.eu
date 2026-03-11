@@ -980,3 +980,42 @@ div.illustration {
         max-width: fit-content;
     }
 }
+
+/* Quiz Player Info Header - Theme Support */
+.player-info-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+:root[data-theme="dark"] .player-info-header {
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #444;
+}
+
+.player-info-icon-box {
+    width: 40px;
+    height: 40px;
+    background-color: #ffffff;
+    border: 2px solid #000;
+    border-radius: 5px;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+:root[data-theme="dark"] .player-info-icon-box {
+    background-color: #3a3a3a;
+    border-color: #666;
+}
+
+.player-info-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2e2e2e;
+}
+
+:root[data-theme="dark"] .player-info-name {
+    color: #e0e0e0;
+}

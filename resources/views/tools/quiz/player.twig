@@ -50,6 +50,16 @@
         
         <!-- Question Screen -->
         <div id="questionScreen" style="display: none;">
+            <!-- Player Info Header -->
+            <div class="sticky-top player-info-header shadow-sm py-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="player-info-icon-box">
+                        <img id="playerInfoIcon" style="max-width: 100%; max-height: 100%;" alt="">
+                    </div>
+                    <span class="player-info-name" id="playerInfoName"></span>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-12 text-center py-3">
                     <h4 class="mb-3">
@@ -96,6 +106,16 @@
         
         <!-- Answer Submitted Screen -->
         <div id="answerSubmittedScreen" style="display: none;">
+            <!-- Player Info Header -->
+            <div class="sticky-top player-info-header shadow-sm py-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="player-info-icon-box">
+                        <img id="playerInfoIcon2" style="max-width: 100%; max-height: 100%;" alt="">
+                    </div>
+                    <span class="player-info-name" id="playerInfoName2"></span>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-12 text-center py-5">
                     <div class="mb-4">
@@ -111,6 +131,16 @@
         
         <!-- Results Screen -->
         <div id="resultsScreen" style="display: none;">
+            <!-- Player Info Header -->
+            <div class="sticky-top player-info-header shadow-sm py-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="player-info-icon-box">
+                        <img id="playerInfoIcon3" style="max-width: 100%; max-height: 100%;" alt="">
+                    </div>
+                    <span class="player-info-name" id="playerInfoName3"></span>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-12 text-center py-4">
                     <h3 class="mb-4">Eredmények</h3>
@@ -140,6 +170,16 @@
         
         <!-- Final Results Screen -->
         <div id="finalScreen" style="display: none;">
+            <!-- Player Info Header -->
+            <div class="sticky-top player-info-header shadow-sm py-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="player-info-icon-box">
+                        <img id="playerInfoIcon4" style="max-width: 100%; max-height: 100%;" alt="">
+                    </div>
+                    <span class="player-info-name" id="playerInfoName4"></span>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-12 text-center py-4">
                     <h2 class="display-4 mb-4">🎉 Vége! 🎉</h2>
@@ -257,6 +297,7 @@
         let animalsRefreshInterval = null;
         let hasAnswered = false;
         let previousQuestionNumber = 0;
+        let animalSvgCache = {}; // Cache for all animal SVGs
         
         // Helper functions
         function getAnimalName(animalId) {
@@ -273,10 +314,55 @@
         }
         
         function getAnimalSvgUrl(animalId) {
+            // Return cached SVG as data URL if available
+            if (animalSvgCache[animalId]) {
+                // Use URI encoding instead of base64 to handle UTF-8 properly
+                const encoded = encodeURIComponent(animalSvgCache[animalId])
+                    .replace(/'/g, '%27')
+                    .replace(/"/g, '%22');
+                return `data:image/svg+xml,${encoded}`;
+            }
+            // Fallback to URL if not cached
             return `/animals/${animalId}.svg`;
         }
         
+        function updatePlayerInfoHeaders() {
+            // Update all player info headers with current animal
+            const animalUrl = getAnimalSvgUrl(selectedAnimalId);
+            const animalName = getAnimalName(selectedAnimalId);
+            
+            ['playerInfoIcon', 'playerInfoIcon2', 'playerInfoIcon3', 'playerInfoIcon4'].forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) elem.src = animalUrl;
+            });
+            
+            ['playerInfoName', 'playerInfoName2', 'playerInfoName3', 'playerInfoName4'].forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) elem.textContent = animalName;
+            });
+        }
+        
+        async function loadAllAnimalSvgs() {
+            try {
+                console.log('Loading all animal SVGs in bulk...');
+                const response = await fetch('/quiz/animals-svgs');
+                const data = await response.json();
+                
+                if (data.success) {
+                    animalSvgCache = data.svgs;
+                    console.log(`Loaded ${Object.keys(animalSvgCache).length} animal SVGs`);
+                } else {
+                    console.error('Failed to load animal SVGs:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading animal SVGs:', error);
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', async () => {
+            // Load all animal SVGs first for performance
+            await loadAllAnimalSvgs();
+            
             // Check if already joined
             const savedPlayer = sessionStorage.getItem(`quiz_player_${roomCode}`);
             
@@ -350,11 +436,10 @@
             grid.innerHTML = availableAnimals.map(animal => `
                 <button type="button" class="animal-choice" 
                         data-id="${animal.id}"
-                        data-name="${animal.name}" 
-                        data-svg-url="${animal.svg_url}"
+                        data-name="${animal.name}"
                         style="background-color: white; height: 120px; border: 3px solid #ddd; border-radius: 10px; cursor: pointer; transition: all 0.2s; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;"
                         title="${animal.name}">
-                    <img src="${animal.svg_url}" style="max-width: 60px; max-height: 60px; margin-bottom: 5px;" alt="${animal.name}">
+                    <img src="${getAnimalSvgUrl(animal.id)}" style="max-width: 60px; max-height: 60px; margin-bottom: 5px;" alt="${animal.name}">
                     <span style="font-size: 0.8rem; color: #333; font-weight: bold;">${animal.name}</span>
                 </button>
             `).join('');
@@ -492,6 +577,7 @@
             document.getElementById('resultsScreen').style.display = 'none';
             document.getElementById('finalScreen').style.display = 'none';
             
+            updatePlayerInfoHeaders();
             hasAnswered = false;
             questionStartTime = Date.now();
             
@@ -536,6 +622,8 @@
             document.getElementById('answerSubmittedScreen').style.display = 'block';
             document.getElementById('resultsScreen').style.display = 'none';
             document.getElementById('finalScreen').style.display = 'none';
+            
+            updatePlayerInfoHeaders();
         }
         
         function showResultsScreen() {
@@ -549,6 +637,7 @@
             document.getElementById('resultsScreen').style.display = 'block';
             document.getElementById('finalScreen').style.display = 'none';
             
+            updatePlayerInfoHeaders();
             fetchResults();
         }
         
@@ -560,6 +649,7 @@
             document.getElementById('resultsScreen').style.display = 'none';
             document.getElementById('finalScreen').style.display = 'block';
             
+            updatePlayerInfoHeaders();
             fetchFinalResults();
         }
         
