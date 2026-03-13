@@ -138,6 +138,7 @@ Route::prefix('quiz')->name('quiz.')->group(function () {
     Route::get('/teacher/{roomCode}', [QuizGameController::class, 'teacherView'])->name('teacher');
     Route::get('/player/{roomCode}', [QuizGameController::class, 'playerView'])->name('player');
     Route::get('/animals/{roomCode}', [QuizGameController::class, 'getAvailableAnimals'])->name('animals');
+    Route::get('/animals-svgs', [QuizGameController::class, 'getAllAnimalSvgs'])->name('animals-svgs');
     Route::post('/join/{roomCode}', [QuizGameController::class, 'joinGame'])->name('join');
     Route::post('/start/{roomCode}', [QuizGameController::class, 'startGame'])->name('start');
     Route::post('/answer/{roomCode}', [QuizGameController::class, 'submitAnswer'])->name('answer');

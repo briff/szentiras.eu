@@ -95,4 +95,31 @@ class QuizGameAnimals
         
         return null;
     }
+    
+    /**
+     * Get all animal SVG contents in one response
+     * This optimizes loading by avoiding multiple HTTP requests
+     * 
+     * @return array Array with animal IDs as keys and SVG contents as values
+     */
+    public static function getAllAnimalSvgs(): array
+    {
+        $svgs = [];
+        $animalsPath = public_path('animals');
+        
+        $allAnimals = self::getAvailableAnimals();
+        
+        foreach ($allAnimals as $animal) {
+            $svgPath = $animalsPath . '/' . $animal['id'] . '.svg';
+            
+            if (file_exists($svgPath)) {
+                $svgContent = file_get_contents($svgPath);
+                if ($svgContent !== false) {
+                    $svgs[$animal['id']] = $svgContent;
+                }
+            }
+        }
+        
+        return $svgs;
+    }
 }

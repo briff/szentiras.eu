@@ -135,6 +135,19 @@ class QuizGameController extends Controller
     }
     
     /**
+     * Get all animal SVGs in bulk for performance optimization
+     */
+    public function getAllAnimalSvgs()
+    {
+        $svgs = QuizGameAnimals::getAllAnimalSvgs();
+        
+        return response()->json([
+            'success' => true,
+            'svgs' => $svgs,
+        ])->header('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    }
+    
+    /**
      * Join game (Player)
      */
     public function joinGame(Request $request, string $roomCode)
