@@ -192,7 +192,6 @@ services:
     networks:
       - internal
     command: php artisan horizon
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
       start_period: 30s

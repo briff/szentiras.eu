@@ -3,6 +3,8 @@
 namespace SzentirasHu\Test\Editor;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use SzentirasHu\Models\Commentary;
 use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Service\Editor\EditorService;
@@ -235,5 +237,30 @@ class CommentaryEditorControllerTest extends TestCase
 
         // Verify all references were cleared
         $this->assertCount(0, $updatedData['references']);
+    }
+
+    /**
+     * Test that commentary generation always uses the default translation,
+     * ignoring the currently viewed translation passed from the UI.
+     */
+    public function testGenerateUsesDefaultTranslationRegardlessOfCurrentTranslation(): void
+    {
+        Config::set('settings.defaultTranslationAbbrev', 'SZIT');
+        Translation::factory()->create(['abbrev' => 'SZIT']);
+        Translation::factory()->create(['abbrev' => 'KNB']);
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->withArgs(function (string $command, array $params): bool {
+                return $command === 'szentiras:generate-commentary'
+                    && $params['translation'] === 'SZIT';
+            });
+
+        $response = $this->post(route('editor.commentaries.generate'), [
+            'reference' => 'MAT 1:1',
+            'translation' => 'KNB',
+        ]);
+
+        $response->assertRedirect();
     }
 }

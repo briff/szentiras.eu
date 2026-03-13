@@ -87,20 +87,22 @@ class CommentaryEditorController extends Controller
 
     /**
      * Generate AI commentary for a reference.
+     * Always uses the default translation regardless of the currently viewed translation.
      */
     public function generate(Request $request)
     {
         $request->validate([
             'reference' => 'required|string',
-            'translation' => 'required|string',
         ]);
+
+        $defaultTranslation = $this->translationService->getDefaultTranslation();
 
         // Check if this is a JSON request
         if ($request->expectsJson()) {
             // Call the Artisan command asynchronously
             Artisan::call('szentiras:generate-commentary', [
                 'reference' => $request->input('reference'),
-                'translation' => $request->input('translation'),
+                'translation' => $defaultTranslation->abbrev,
             ]);
 
             return response()->json([
@@ -112,7 +114,7 @@ class CommentaryEditorController extends Controller
         // Call the Artisan command
         Artisan::call('szentiras:generate-commentary', [
             'reference' => $request->input('reference'),
-            'translation' => $request->input('translation'),
+            'translation' => $defaultTranslation->abbrev,
         ]);
 
         return redirect()->back()->with('success', 'Kommentár generálva.');

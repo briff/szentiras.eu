@@ -35,7 +35,11 @@ RUN chown -R laravel:laravel .
 USER laravel
 
 ENV NVM_DIR /home/laravel/.nvm
+ENV PATH "/home/laravel/.local/bin:${PATH}"
+
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
     && . $NVM_DIR/nvm.sh \
     && nvm install 22 \
     && nvm use 22
+    && curl -fsSL https://claude.ai/install.sh | bash
+
