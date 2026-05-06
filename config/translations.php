@@ -130,7 +130,7 @@ return [
             'textSource' => env('TEXT_SOURCE_RUF', 's3'),
             'id' => 6,
             'order' => 9,
-            'copyright' => 'A 2014-es revidált Bibliát a Magyar Bibliatársulat ideiglenes engedélyével publikáljuk. A hivatalos változat http://abibliamindenkie.hu/ oldalon  látható</a>.',
+            'copyright' => 'A 2014-es revidált Bibliát a Magyar Bibliatársulat ideiglenes engedélyével publikáljuk. A hivatalos változat http://abibliamindenkie.hu/ oldalon látható.',
             'publisher' => [ 'name' => 'Magyar Bibliatársulat', 'url' => 'https://bibliatarsulat.hu'],
             'toc_heading_levels' => '5-9'
 
@@ -160,6 +160,19 @@ return [
             'copyright' => 'Open Greek New Testament (OGNT) project, CC BY-SA 4.0.',
             'publisher' => [ 'name' => 'OpenGNT Project', 'url' => 'https://github.com/eliranwong/OpenGNT'],
             'toc_heading_levels' => '5-9'
+        ],
+        'KAL' => [
+            'verseTypes' => [
+                'text' => [901],
+                'heading' => [701 => 3],
+                'footnote' => [2001]
+            ],
+            'textSource' => env('TEXT_SOURCE_KAL', 'local'),
+            'id' => 9,
+            'order' => 12,
+            'copyright' => 'Káldi György SJ 1626-os fordításának Tárkányi Béla által elvégzett revíziója, 1865 (nem jogvédett)',
+            'publisher' => [ 'name' => 'Káldi Biblia Gitlab Projekt', 'url' => 'https://kaldibiblia.gitlab.io/'],
+            'toc_heading_levels' => '5-9'
         ]
     ],
     'ids' => [
@@ -170,6 +183,7 @@ return [
         5 => 'BD',
         6 => 'RUF',
         7 => 'STL',
-        8 => 'GNT'
+        8 => 'GNT',
+        9 => 'KAL'
     ]
 ];

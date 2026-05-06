@@ -2,8 +2,8 @@
 
 return [
     'defaultTranslationAbbrev' => env("DEFAULT_TRANSLATION_ABBREV", "SZIT"),
-    'translationAbbrevRegex' => env("TRANSLATION_ABBREV_REGEX", "KNB|SZIT|UF|KG|BD|RUF|STL|knb|szit|uf|kg|bd|ruf|stl"),
-    'enabledTranslations' => preg_split("/, ?/", env("ENABLED_TRANSLATIONS", "1,3,4,5,6,7")),
+    'translationAbbrevRegex' => env("TRANSLATION_ABBREV_REGEX", "KNB|SZIT|UF|KG|BD|RUF|STL|KAL|knb|szit|uf|kg|bd|ruf|stl|kal"),
+    'enabledTranslations' => preg_split("/, ?/", env("ENABLED_TRANSLATIONS", "1,3,4,5,6,7,9")),
     'audioDirectory' => env("AUDIO_DIRECTORY", 'hang'),
     'sourceDirectory' => '/tmp',
     'facebookAppId' => '679257202109581',
