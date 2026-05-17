@@ -43,22 +43,18 @@
                             </summary>
 
                             {% if exactCommentaries is not empty %}
-                                <div class="px-4">
+                                <div class="px-4 space-y-4">
                                     {% for commentaryData in exactCommentaries %}
-                                        <p class="font-semibold text-gray-800 mb-2">Kommentár a pontos szentírási helyhez:</p>
-                                        
-                                        <div class="space-y-4" id="exact-commentaries-{{ loop.index0 }}">
-                                            {# Edit button for editors #}
-                                            {% if isEditor and commentaryData.commentary_id is defined %}
-                                            <div class="mb-2 flex items-center justify-end">
+                                        <div class="rounded-lg border border-blue-200 overflow-hidden" id="exact-commentaries-{{ loop.index0 }}">
+                                            <div class="flex items-center justify-between px-4 py-2 bg-blue-50">
+                                                <h6 class="font-semibold text-blue-900 m-0">{{ commentaryData.commentary_reference ?? containerReference }}</h6>
+                                                {% if isEditor and commentaryData.commentary_id is defined %}
                                                 <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
                                                     <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
                                                 </a>
+                                                {% endif %}
                                             </div>
-                                            {% endif %}
-                                            
-                                            <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
-                                                {# Verification state display #}
+                                            <div class="commentary p-4">
                                                 {% if commentaryData.verification_level is defined %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
                                                     <div class="mb-2 flex items-center">
@@ -68,7 +64,6 @@
                                                         </span>
                                                     </div>
                                                 {% endif %}
-                                                
                                                 <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}
@@ -111,21 +106,19 @@
                             {% endif %}
 
                             {% if relatedCommentaries is not empty %}
-                                <div class="p-2 border-t border-gray-200 mt-4">
-                                    <p class="font-semibold text-gray-800 mb-2">Kapcsolódó kommentár:</p>
+                                <div class="px-4 mt-4 space-y-4">
+                                    <p class="font-semibold text-gray-600 text-sm">Kapcsolódó kommentár:</p>
                                     {% for commentaryData in relatedCommentaries %}
-                                        <div class="space-y-4">
-                                            {# Edit button for editors #}
-                                            {% if isEditor and commentaryData.commentary_id is defined %}
-                                            <div class="mb-2 flex items-center justify-end">
+                                        <div class="rounded-lg border border-gray-200 overflow-hidden">
+                                            <div class="flex items-center justify-between px-4 py-2 bg-gray-50">
+                                                <h6 class="font-semibold text-gray-800 m-0">{{ commentaryData.commentary_reference ?? '' }}</h6>
+                                                {% if isEditor and commentaryData.commentary_id is defined %}
                                                 <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
                                                     <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
                                                 </a>
+                                                {% endif %}
                                             </div>
-                                            {% endif %}
-                                            
-                                            <div class="commentary p-3 border-l-4 rounded-r shadow-sm">
-                                                {# Verification state display #}
+                                            <div class="commentary p-4">
                                                 {% if commentaryData.verification_level is defined %}
                                                     {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
                                                     <div class="mb-2 flex items-center">
@@ -135,7 +128,6 @@
                                                         </span>
                                                     </div>
                                                 {% endif %}
-                                                
                                                 <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
                                                 </div>
                                                 {% if commentaryData.references is defined and commentaryData.references is not empty %}

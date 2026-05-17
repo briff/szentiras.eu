@@ -337,6 +337,7 @@ class TextDisplayController extends Controller
                     $commentaryData['status'] = $commentary->status;
                     $commentaryData['verification_level'] = $commentary->verification_level;
                     $commentaryData['commentary_id'] = $commentary->id;
+                    $commentaryData['commentary_reference'] = $commentary->metadata['reference'] ?? null;
                     $parsed[] = $commentaryData;
                 }
                 $parsedCommentaries[] = $parsed;
