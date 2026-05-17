@@ -4,10 +4,23 @@
     'theology': {icon: 'bi-check-circle', color: 'text-white bg-success', label: 'MI-kommentár, teológiai ellenőrzésen átesett, nagy valószínűséggel pontos'}
 } %}
 
+<script>
+    function toggleCommentaryPanel(containerIndex, panelId) {
+        const container = document.getElementById('commentary-panels-' + containerIndex);
+        if (!container) { return; }
+        const panels = container.querySelectorAll('.commentary-panel');
+        const target = document.getElementById(panelId);
+        const isActive = target && !target.classList.contains('hidden');
+        panels.forEach(function(p) { p.classList.add('hidden'); });
+        if (!isActive && target) { target.classList.remove('hidden'); }
+    }
+</script>
+
 {% for verseContainer in verseContainers %}
+    {% set containerIndex = loop.index0 %}
     <div>
         {% include 'textDisplay.breadcrumb' with {'book': verseContainer.book, 'bookRef': verseContainer.bookRef } %}
-        {% set containerPlaces = parsedPlaces[loop.index0] ?? [] %}
+        {% set containerPlaces = parsedPlaces[containerIndex] ?? [] %}
         {% if containerPlaces is not empty %}
             <div class="mt-3 mb-3">
                 <button class="btn btn-sm btn-outline-success ai-tool-element"
@@ -24,164 +37,161 @@
         <div class="mb-2">
          {{ include('textDisplay.parsedVerseContainer', { 'verseContainer' : verseContainer, 'translation' : translation, 'verseToPlaces': verseToPlaces}) }}
             {# Commentary section #}
-            {% set containerCommentaries = parsedCommentaries[loop.index0] ?? [] %}
+            {% set containerCommentaries = parsedCommentaries[containerIndex] ?? [] %}
             {% set containerReference = verseContainer.bookRef.toString() %}
 
-            {# Separate exact and non-exact commentaries, and pending/processing ones #}
             {% set exactCommentaries = containerCommentaries|filter(c => c.exact and c.status == 'completed') %}
             {% set relatedCommentaries = containerCommentaries|filter(c => not c.exact and c.status == 'completed') %}
             {% set pendingCommentaries = containerCommentaries|filter(c => c.status == 'pending' or c.status == 'processing') %}
 
-            <div class="commentary-container" data-reference="{{ containerReference }}" data-translation="{{ translation.abbrev }}" data-container-index="{{ loop.index0 }}">
-                {# Commentary section - no longer in tabs #}
-                {% if containerCommentaries is not empty %}
-                    <div class="commentaries mt-2 mb-2 parsedVerses">
-                        <details class="overflow-hidden">
-                            <summary class="h6 cursor-pointer flex items-center bg-blue-100 hover:bg-blue-200 transition-colors">
-                                <i class="bi-robot"></i>
-                                Kommentár
-                            </summary>
+            <div class="commentary-container" data-reference="{{ containerReference }}" data-translation="{{ translation.abbrev }}" data-container-index="{{ containerIndex }}">
 
-                            {% if exactCommentaries is not empty %}
-                                <div class="px-4 space-y-4">
-                                    {% for commentaryData in exactCommentaries %}
-                                        <div class="rounded-lg border border-blue-200 overflow-hidden" id="exact-commentaries-{{ loop.index0 }}">
-                                            <div class="flex items-center justify-between px-4 py-2 bg-blue-50">
-                                                <h6 class="font-semibold text-blue-900 m-0">{{ commentaryData.commentary_reference ?? containerReference }}</h6>
-                                                {% if isEditor and commentaryData.commentary_id is defined %}
-                                                <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
-                                                    <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
-                                                </a>
-                                                {% endif %}
-                                            </div>
-                                            <div class="commentary p-4">
-                                                {% if commentaryData.verification_level is defined %}
-                                                    {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
-                                                    <div class="mb-2 flex items-center">
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
-                                                            <i class="bi {{ config.icon }} mr-1"></i>
-                                                            <span class="text-xs">{{ config.label }}</span>
-                                                        </span>
-                                                    </div>
-                                                {% endif %}
-                                                <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
-                                                </div>
-                                                {% if commentaryData.references is defined and commentaryData.references is not empty %}
-                                                    <ul>
-                                                        {% for ref in commentaryData.references %}
-                                                            <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
-                                                                    {{ ref.ref }}</a>
-                                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="p-2">
-                                    <p class="font-semibold text-gray-800 mb-2">A pontos szentírási helyhez még nincs kommentár</p>
-                                </div>
-                                {% if pendingCommentaries is empty and canGenerateCommentary %}
-                                <div class="commentary-status-container" id="status-{{ loop.index0 }}">
-                                    {# Status will be loaded via AJAX #}
-                                </div>
-                                <div class="commentary-generator border-top pt-1 mt-2">
-                                    <form method="POST" action="{{ route('editor.commentaries.generate') }}">
-                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="reference" value="{{ verseContainer.bookRef.toString() }}">
-                                    <input type="hidden" name="translation" value="{{ translation.abbrev }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="hyphens: none;">
-                                        <i class="bi-robot"></i> Kommentár készítése mesterséges intelligenciával: {{ verseContainer.bookRef.toString() }} (kb. 1 perc)
-                                    </button>
-                                    </form>
-                                </div>
-                                {% elseif pendingCommentaries is empty and commentaryGenerationPossible %}
-                                <div class="p-2 border-t border-gray-200 mt-4">
-                                    Belépett felhasználóink kérhetnek mesterséges intelligenciával előállított kommentárt ehhez a szentírási helyhez. Ez a szolgáltatás jelenleg fejlesztés alatt áll, de hamarosan elérhető lesz.
-                                </div>
-                                {% endif %}
-
-                            {% endif %}
-
-                            {% if relatedCommentaries is not empty %}
-                                <div class="px-4 mt-4 space-y-4">
-                                    <p class="font-semibold text-gray-600 text-sm">Kapcsolódó kommentár:</p>
-                                    {% for commentaryData in relatedCommentaries %}
-                                        <div class="rounded-lg border border-gray-200 overflow-hidden">
-                                            <div class="flex items-center justify-between px-4 py-2 bg-gray-50">
-                                                <h6 class="font-semibold text-gray-800 m-0">{{ commentaryData.commentary_reference ?? '' }}</h6>
-                                                {% if isEditor and commentaryData.commentary_id is defined %}
-                                                <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
-                                                    <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
-                                                </a>
-                                                {% endif %}
-                                            </div>
-                                            <div class="commentary p-4">
-                                                {% if commentaryData.verification_level is defined %}
-                                                    {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
-                                                    <div class="mb-2 flex items-center">
-                                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
-                                                            <i class="bi {{ config.icon }} mr-1"></i>
-                                                            <span class="text-xs">{{ config.label }}</span>
-                                                        </span>
-                                                    </div>
-                                                {% endif %}
-                                                <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}
-                                                </div>
-                                                {% if commentaryData.references is defined and commentaryData.references is not empty %}
-                                                    <ul>
-                                                        {% for ref in commentaryData.references %}
-                                                            <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
-                                                                    {{ ref.ref }}</a>
-                                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-
-                            {% if pendingCommentaries is not empty %}
-                                    <div class="commentary-pending-placeholder"
-                                         data-container-index="{{ loop.index0 }}"
-                                         data-reference="{{ containerReference }}"
-                                         data-translation="{{ translation.abbrev }}"
-                                         id="pending-exact-{{ loop.index0 }}">
-                                        <div class="border border-yellow-200 rounded-lg bg-yellow-50 overflow-hidden">
-                                            <div class="flex items-center px-4 py-3 bg-yellow-100">
-                                                <span class="loading mr-2">⏳</span>
-                                                <span class="text-sm text-gray-700">{{ containerReference }}: kommentár létrehozása folyamatban...</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                        </details>
-                    </div>
-                {% else %}
-                    {% if canGenerateCommentary %}
-                        <div class="commentary-status-container" id="status-{{ loop.index0 }}">
-                                {# Status will be loaded via AJAX #}
+                {# Pending commentary placeholder #}
+                {% if pendingCommentaries is not empty %}
+                    <div class="commentary-pending-placeholder"
+                         data-container-index="{{ containerIndex }}"
+                         data-reference="{{ containerReference }}"
+                         data-translation="{{ translation.abbrev }}"
+                         id="pending-exact-{{ containerIndex }}">
+                        <div class="border border-yellow-200 rounded-lg bg-yellow-50 overflow-hidden mb-2">
+                            <div class="flex items-center px-4 py-3 bg-yellow-100">
+                                <span class="loading mr-2">⏳</span>
+                                <span class="text-sm text-gray-700">{{ containerReference }}: kommentár létrehozása folyamatban...</span>
+                            </div>
                         </div>
-                        <div class="commentary-generator border-top pt-1 mt-2">
-                            <form method="POST" action="{{ route('editor.commentaries.generate') }}">
+                    </div>
+                {% endif %}
+
+                {# Commentary buttons row #}
+                <div class="flex flex-wrap gap-2 items-center mt-2">
+                    {% if exactCommentaries is not empty %}
+                        {% set firstExact = exactCommentaries|first %}
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                onclick="toggleCommentaryPanel({{ containerIndex }}, 'exact-full-{{ containerIndex }}')">
+                            <i class="bi-robot me-1"></i><strong>Kommentár: {{ firstExact.commentary_reference ?? containerReference }}</strong>
+                        </button>
+                    {% elseif pendingCommentaries is empty %}
+                        {% if canGenerateCommentary %}
+                            <div class="commentary-status-container" id="status-{{ containerIndex }}">
+                                {# Status will be loaded via AJAX #}
+                            </div>
+                            <form method="POST" action="{{ route('editor.commentaries.generate') }}" class="d-inline">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="reference" value="{{ verseContainer.bookRef.toString() }}">
                                 <input type="hidden" name="translation" value="{{ translation.abbrev }}">
                                 <button type="submit" class="btn btn-sm btn-outline-secondary" style="hyphens: none;">
-                                    <i class="bi-robot"></i> Kommentár készítése mesterséges intelligenciával (kb. 1 perc)
+                                    <i class="bi-robot me-1"></i> Kommentár készítése: {{ containerReference }}
                                 </button>
                             </form>
-                        </div>
-                    {% elseif pendingCommentaries is empty and commentaryGenerationPossible %}
-                    <div class="p-2 border-top mt-4">
-                        <i class="bi-robot"></i> Belépett felhasználóink kérhetnek mesterséges intelligenciával előállított kommentárt ehhez a szentírási helyhez.
-                    </div>
+                        {% elseif commentaryGenerationPossible %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    onclick="toggleCommentaryPanel({{ containerIndex }}, 'commentary-info-{{ containerIndex }}')">
+                                <i class="bi-robot me-1"></i> Kommentár: {{ containerReference }}
+                            </button>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
+
+                    {# Related commentary buttons #}
+                    {% if relatedCommentaries is not empty %}
+                        <span class="text-muted small">Kapcsolódó kommentárok:</span>
+                        {% for commentaryData in relatedCommentaries %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    onclick="toggleCommentaryPanel({{ containerIndex }}, 'related-{{ containerIndex }}-{{ loop.index0 }}')">
+                                {{ commentaryData.commentary_reference ?? containerReference }}
+                            </button>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                {# Commentary panels — one shown at a time #}
+                <div id="commentary-panels-{{ containerIndex }}" class="mt-2">
+
+                    {# Commentary generation info panel #}
+                    {% if exactCommentaries is empty and pendingCommentaries is empty and commentaryGenerationPossible %}
+                        <div id="commentary-info-{{ containerIndex }}" class="commentary-panel hidden bg-gray-50 rounded-md px-3 py-2 text-sm text-gray-700">
+                            Belépett felhasználóink kérhetnek mesterséges intelligenciával előállított kommentárt ehhez a szentírási helyhez. Ez a szolgáltatás jelenleg fejlesztés alatt áll, de hamarosan elérhető lesz.
+                        </div>
+                    {% endif %}
+
+                    {# Full exact commentary panel #}
+                    {% if exactCommentaries is not empty %}
+                        <div id="exact-full-{{ containerIndex }}" class="commentary-panel hidden commentaries parsedVerses">
+                            {% for commentaryData in exactCommentaries %}
+                                <div class="rounded-lg border border-blue-200 overflow-hidden mb-2">
+                                    <div class="flex items-center justify-between px-4 py-2 bg-blue-100">
+                                        <h6 class="font-semibold text-blue-900 m-0">{{ commentaryData.commentary_reference ?? containerReference }}</h6>
+                                        {% if isEditor and commentaryData.commentary_id is defined %}
+                                            <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
+                                                <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    <div class="commentary p-4 bg-blue-50">
+                                        {% if commentaryData.verification_level is defined %}
+                                            {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
+                                            <div class="mb-2 flex items-center">
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
+                                                    <i class="bi {{ config.icon }} mr-1"></i>
+                                                    <span class="text-xs">{{ config.label }}</span>
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}</div>
+                                        {% if commentaryData.references is defined and commentaryData.references is not empty %}
+                                            <ul>
+                                                {% for ref in commentaryData.references %}
+                                                    <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">{{ ref.ref }}</a>
+                                                        <span class="ml-1">– {{ ref.reason }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {# Related commentary panels #}
+                    {% for commentaryData in relatedCommentaries %}
+                        <div id="related-{{ containerIndex }}-{{ loop.index0 }}" class="commentary-panel hidden parsedVerses">
+                            <div class="rounded-lg border border-gray-200 overflow-hidden">
+                                <div class="flex items-center justify-between px-4 py-2 bg-gray-100">
+                                    <h6 class="font-semibold text-gray-800 m-0">{{ commentaryData.commentary_reference ?? '' }}</h6>
+                                    {% if isEditor and commentaryData.commentary_id is defined %}
+                                        <a href="{{ route('editor.commentaries.show', commentaryData.commentary_id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors" title="Kommentár szerkesztése">
+                                            <i class="bi bi-pencil-square mr-1"></i> Szerkesztés
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                <div class="commentary p-4 bg-gray-50">
+                                    {% if commentaryData.verification_level is defined %}
+                                        {% set config = verification_config[commentaryData.verification_level] ?? verification_config.none %}
+                                        <div class="mb-2 flex items-center">
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded {{ config.color }}">
+                                                <i class="bi {{ config.icon }} mr-1"></i>
+                                                <span class="text-xs">{{ config.label }}</span>
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                    <div data-content-origin="ai-assisted" class="commentary-text text-sm leading-relaxed text-gray-700">{{ commentaryData.commentary_text ? commentaryData.commentary_text|markdown_to_html|raw : '' }}</div>
+                                    {% if commentaryData.references is defined and commentaryData.references is not empty %}
+                                        <ul>
+                                            {% for ref in commentaryData.references %}
+                                                <li><a href="{{ ref.ref }}" target="_blank" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">{{ ref.ref }}</a>
+                                                    <span class="ml-1">– {{ ref.reason }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                </div>
+
             </div>
             {% set hasFootnote = false %}
             {% for verse in verseContainer.parsedVerses %}
@@ -209,7 +219,7 @@
             {% endif %}
             </div>
             {%  if chapterLinks %}
-                <ul class="pagination" id="pagination-{{ loop.index0 }}">
+                <ul class="pagination" id="pagination-{{ containerIndex }}">
                     {% if chapterLinks.prevLink %}
                         <li class="page-item">
                             <a href="/{{ chapterLinks.prevLink }}{{ mediaEnabled ? '?media' : '' }}" class="page-link"><i class="bi-chevron-left"></i> Előző {{ verseContainer.book.usx_code != "PSA" ? "fejezet" : "zsoltár"}}</a>
@@ -221,9 +231,9 @@
                         </li>
                         {% endif %}
                   </ul>
-                
+
                 {# Floating navigation control that appears when pagination is out of view #}
-                <div class="floating-pagination-{{ loop.index0 }}" style="position: fixed; bottom: 20px; right: 20px; display: none; z-index: 1050; gap: 4px;">
+                <div class="floating-pagination-{{ containerIndex }}" style="position: fixed; bottom: 20px; right: 20px; display: none; z-index: 1050; gap: 4px;">
                     {% if chapterLinks.prevLink %}
                         <a href="/{{ chapterLinks.prevLink }}{{ mediaEnabled ? '?media' : '' }}" style="width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.7); color: white; border-radius: 4px; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(0, 0, 0, 0.9)'; this.style.transform='scale(1.1)';" onmouseout="this.style.backgroundColor='rgba(0, 0, 0, 0.7)'; this.style.transform='scale(1)';" title="Előző {{ verseContainer.book.usx_code != "PSA" ? "fejezet" : "zsoltár"}}">
                             <i class="bi-chevron-left"></i>
@@ -235,14 +245,14 @@
                         </a>
                     {% endif %}
                 </div>
-                
+
                 <script>
                     (function() {
-                        const paginationId = 'pagination-{{ loop.index0 }}';
-                        const floatingClass = 'floating-pagination-{{ loop.index0 }}';
+                        const paginationId = 'pagination-{{ containerIndex }}';
+                        const floatingClass = 'floating-pagination-{{ containerIndex }}';
                         const pagination = document.getElementById(paginationId);
                         const floatingNav = document.querySelector('.' + floatingClass);
-                        
+
                         if (pagination && floatingNav) {
                             const observer = new IntersectionObserver((entries) => {
                                 entries.forEach(entry => {
@@ -255,7 +265,7 @@
                             }, {
                                 threshold: 0.1
                             });
-                            
+
                             observer.observe(pagination);
                         }
                     })();
