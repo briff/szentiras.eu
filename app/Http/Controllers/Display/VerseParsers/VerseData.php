@@ -90,7 +90,7 @@ class VerseData
                         return "\n{$hashes} {$versePart->content}\n";
                     } else {
                         // plain or any other value
-                        return $versePart->content;
+                        return $versePart->content . ' ';
                     }
                 } else {
                     return $versePart->content;

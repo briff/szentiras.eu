@@ -4,6 +4,9 @@ namespace SzentirasHu\Test;
 
 use SzentirasHu\Service\Text\VerseParsers\KGVerseParser;
 use SzentirasHu\Service\Text\VerseParsers\KNBVerseParser;
+use SzentirasHu\Http\Controllers\Display\VerseParsers\VerseData;
+use SzentirasHu\Http\Controllers\Display\VerseParsers\VersePart;
+use SzentirasHu\Http\Controllers\Display\VerseParsers\VersePartType;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\Verse;
 use SzentirasHu\Test\Common\TestCase;
@@ -98,4 +101,32 @@ class VerseParserTest extends TestCase
 
     }
 
-} 
+    public function testGetTextSeparatesHeadingsFromText()
+    {
+        $verseData = new VerseData(1, 2);
+        $verseData->verseParts = [
+            new VersePart($verseData, "I. A SÁSKAJÁRÁS CSAPÁSA", VersePartType::HEADING, 0, 2),
+            new VersePart($verseData, "Siralom és könyörgés", VersePartType::HEADING, 1, 3),
+            new VersePart($verseData, "A) Siralom az ország pusztulása felett", VersePartType::HEADING, 2, 4),
+            new VersePart($verseData, "Halljátok ezt, vének, figyeljetek mindnyájan!", VersePartType::SIMPLE_TEXT, 3),
+        ];
+
+        $this->assertEquals(
+            "I. A SÁSKAJÁRÁS CSAPÁSA Siralom és könyörgés A) Siralom az ország pusztulása felett Halljátok ezt, vének, figyeljetek mindnyájan!",
+            $verseData->getText()
+        );
+        $this->assertStringNotContainsString("CSAPÁSASiralom", $verseData->getText());
+    }
+
+    public function testGetTextOmitsHeadingsWhenRequested()
+    {
+        $verseData = new VerseData(1, 2);
+        $verseData->verseParts = [
+            new VersePart($verseData, "I. A SÁSKAJÁRÁS CSAPÁSA", VersePartType::HEADING, 0, 2),
+            new VersePart($verseData, "Halljátok ezt, vének!", VersePartType::SIMPLE_TEXT, 1),
+        ];
+
+        $this->assertEquals("Halljátok ezt, vének!", $verseData->getText('none'));
+    }
+
+}
