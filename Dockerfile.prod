@@ -40,7 +40,7 @@ RUN chown -R www-data:www-data storage
 RUN printf 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0 * * * * www-data cd /var/www/html && php artisan schedule:run >> /var/www/html/storage/logs/laravel-scheduler.log 2>&1\n' > /etc/cron.d/laravel-scheduler \
     && chmod 0644 /etc/cron.d/laravel-scheduler
 
-RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
-&& sed -i 's/memory_limit = .*/memory_limit = 256M/' /usr/local/etc/php/php.ini
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && sed -i 's/memory_limit = .*/memory_limit = 256M/' /usr/local/etc/php/php.ini
 RUN a2enmod rewrite headers
 RUN a2enconf mpm-prefork-tuning
