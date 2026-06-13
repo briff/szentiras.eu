@@ -36,6 +36,13 @@ use SzentirasHu\Models\Media;
 |
 */
 
+// Subdomain redirect: ujszov.szentiras.eu → szentiras.eu/GNT (temporary, easy to swap later)
+Route::domain('ujszov.szentiras.eu')->group(function () {
+    Route::get('{path?}', function () {
+        return redirect('https://szentiras.eu/GNT', 302);
+    })->where('path', '.*');
+});
+
 Route::get('/', [ HomeController::class, 'index' ]);
 
 Route::get("/kereses", '\SzentirasHu\Http\Controllers\Search\SearchController@getIndex');
