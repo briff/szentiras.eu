@@ -2,16 +2,14 @@
 
 namespace SzentirasHu\Console\Commands;
 
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use SzentirasHu\Models\DictionaryEntry;
 use SzentirasHu\Models\DictionaryMeaning;
-use SzentirasHu\Models\Etymology;
 use SzentirasHu\Models\StrongWord;
-use Throwable;
+use SzentirasHu\Service\Ai\AiPromptService;
 
 class GenerateStrongWordTranslations extends Command
 {
@@ -23,9 +21,11 @@ class GenerateStrongWordTranslations extends Command
     protected $signature = 'szentiras:generate-strong-word-translations
         {--source= : s3 or filesystem. If given, it will not try to generate the words, but instead loads to DB }
         {--word= : an optional array of Strong word ids. If given, generate for these words only. }
-        {--batch : if set, send the required words in a batch request }
-        {--batch-result= : Set the parameter to get the batch results }
-        {--model=claude-3-5-haiku-20241022 : The model to use}
+        {--provider=openai : The AI provider to generate with: openai or anthropic }
+        {--limit= : Generate at most this many new words in this run, then stop. Lets you stay within a daily token budget across manual runs. }
+        {--batch : if set, send the required words in a batch request (anthropic only) }
+        {--batch-result= : Set the parameter to get the batch results (anthropic only) }
+        {--model= : The model to use. Defaults to the provider default (OpenAI: from config/ai.php, Anthropic: claude-3-5-haiku-20241022). }
     ';
 
     /**
@@ -42,15 +42,34 @@ class GenerateStrongWordTranslations extends Command
     private $folder;
     private $apiKey;
     private $model;
+    private $provider;
+
+    public function __construct(
+        private readonly AiPromptService $aiPromptService,
+    ) {
+        parent::__construct();
+    }
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->model = $this->option("model");
+        $this->provider = $this->option("provider");
+        $this->model = $this->resolveModel();
         $this->folder = 'translation';
         $this->apiKey = Config::get('services.anthropic.api_key');
+
+        if (!in_array($this->provider, ['openai', 'anthropic'], true)) {
+            $this->error("Unknown provider '{$this->provider}'. Use 'openai' or 'anthropic'.");
+            return self::FAILURE;
+        }
+
+        if ($this->provider === 'openai' && ($this->option('batch') || $this->option('batch-result'))) {
+            $this->error("Batch mode is only supported with --provider=anthropic.");
+            return self::FAILURE;
+        }
+
         if ($this->option('batch-result')) {
             $batchId = $this->option('batch-result');
             $apiUrl = "https://api.anthropic.com/v1/messages/batches/{$batchId}";
@@ -102,6 +121,10 @@ class GenerateStrongWordTranslations extends Command
             $sourceStorage = Storage::disk('s3');
         }
 
+        $limit = $this->option('limit') !== null ? (int) $this->option('limit') : null;
+        $generatedCount = 0;
+        $totalTokens = 0;
+
         foreach ($wordNumbers as $wordNumber) {
             $progressBar->advance();
             $path = "{$this->folder}/{$wordNumber}_{$this->model}.json";
@@ -139,13 +162,23 @@ class GenerateStrongWordTranslations extends Command
                     $dictionaryMeaning->save();
                 }
             } else {
-                // we are generating now, not loading                
+                // we are generating now, not loading
                 if (Storage::exists($path)) {
                     $this->info("{$wordNumber}: translation already exists. Skipping.");
                     continue;
                 }
-                if (!$this->option("batch")) {
+                if ($limit !== null && $generatedCount >= $limit) {
+                    $progressBar->clear();
+                    $this->info("Limit of {$limit} reached. Stopping. Re-run to generate the next batch.");
+                    $progressBar->display();
+                    break;
+                }
+                if ($this->provider === 'openai') {
+                    $totalTokens += $this->sendOpenAiRequest($wordNumber, $path);
+                    $generatedCount++;
+                } else if (!$this->option("batch")) {
                     $this->sendDirectRequest($wordNumber, $path);
+                    $generatedCount++;
                 } else {
                     $batchRequests[] = [
                         "custom_id" => "$wordNumber",
@@ -164,6 +197,7 @@ class GenerateStrongWordTranslations extends Command
                             ]
                         ]
                     ];
+                    $generatedCount++;
                 }
             }
         }
@@ -172,6 +206,64 @@ class GenerateStrongWordTranslations extends Command
         }
         $progressBar->finish();
         $this->output->newline();
+
+        if ($generatedCount > 0) {
+            $this->info("Generated {$generatedCount} new word(s) with {$this->provider} ({$this->model}).");
+            if ($this->provider === 'openai') {
+                $this->info("Total tokens used in this run: {$totalTokens}.");
+            }
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Resolve the model name based on the selected provider and the --model option.
+     */
+    private function resolveModel(): string
+    {
+        if ($model = $this->option('model')) {
+            return $model;
+        }
+
+        return $this->provider === 'openai'
+            ? Config::get('ai.configurations.strong_word_translation.model', 'gpt-4.1')
+            : 'claude-3-5-haiku-20241022';
+    }
+
+    /**
+     * Generate a translation for a single word using OpenAI and save it to storage.
+     *
+     * @return int Token usage reported by the API for this request.
+     */
+    private function sendOpenAiRequest(string $wordNumber, string $path): int
+    {
+        $strongWord = StrongWord::where('number', $wordNumber)->first();
+        if (!$strongWord) {
+            $this->error("{$wordNumber}: Strong word not found.");
+            return 0;
+        }
+
+        $this->info("{$wordNumber}: Generate translation with OpenAI ({$this->model}).");
+
+        $response = $this->aiPromptService->generate(
+            'strong_word_translation',
+            false,
+            ['greek_word' => $strongWord->lemma],
+            null,
+            ['model' => $this->model]
+        );
+
+        [$responseString, $tokenUsage] = $this->aiPromptService->extractTextAndTokens($response);
+
+        if (empty($responseString)) {
+            $this->error("{$wordNumber}: empty response from OpenAI.");
+            return $tokenUsage;
+        }
+
+        $this->decodeAndSaveResponseString($wordNumber, $responseString, $path);
+
+        return $tokenUsage;
     }
 
     private function sendDirectRequest($wordNumber, $path)
