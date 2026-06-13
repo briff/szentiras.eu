@@ -277,4 +277,52 @@ class AiPromptServiceTest extends TestCase
 
         $this->assertSame($responseFormat, $result['response_format']);
     }
+
+    #[Test]
+    public function it_extracts_text_and_tokens_from_response_object(): void
+    {
+        $response = (object) [
+            'output' => [
+                (object) [
+                    'content' => [
+                        (object) ['text' => 'Generated text'],
+                    ],
+                ],
+            ],
+            'usage' => (object) ['totalTokens' => 123],
+        ];
+
+        [$text, $tokens] = $this->service->extractTextAndTokens($response);
+
+        $this->assertSame('Generated text', $text);
+        $this->assertSame(123, $tokens);
+    }
+
+    #[Test]
+    public function it_extracts_text_and_zero_tokens_when_usage_missing(): void
+    {
+        $response = (object) [
+            'output' => [
+                (object) [
+                    'content' => [
+                        (object) ['text' => 'Only text'],
+                    ],
+                ],
+            ],
+        ];
+
+        [$text, $tokens] = $this->service->extractTextAndTokens($response);
+
+        $this->assertSame('Only text', $text);
+        $this->assertSame(0, $tokens);
+    }
+
+    #[Test]
+    public function it_casts_non_object_response_to_string(): void
+    {
+        [$text, $tokens] = $this->service->extractTextAndTokens('plain string');
+
+        $this->assertSame('plain string', $text);
+        $this->assertSame(0, $tokens);
+    }
 }
