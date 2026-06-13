@@ -202,11 +202,12 @@ class AiPromptService
      * @param array<string, string|int> $placeholders
      * @param bool $isBatch Whether to submit as a batch job
      * @param int|null $sourceId Optional source ID (e.g., commentary ID) to associate with batch item
+     * @param array<string, mixed> $configOverrides Optional overrides applied on top of the resolved configuration (e.g., 'model')
      * @return mixed Raw API response, or null if batch job was submitted
      */
-    public function generate(string $configurationName, bool $isBatch = false, array $placeholders = [], ?int $sourceId = null): mixed
+    public function generate(string $configurationName, bool $isBatch = false, array $placeholders = [], ?int $sourceId = null, array $configOverrides = []): mixed
     {
-        $config = $this->resolveConfiguration($configurationName);
+        $config = array_merge($this->resolveConfiguration($configurationName), $configOverrides);
 
         // Prepare system and user prompts
         $prompts = $this->preparePrompts($config, $placeholders);
@@ -317,5 +318,26 @@ class AiPromptService
                 'content' => $userPrompt,
             ],
         ];
+    }
+
+    /**
+     * Extract the generated text and token usage from an OpenAI Responses API result.
+     *
+     * @param mixed $response Raw response returned by {@see generate()}
+     * @return array{0: string, 1: int} Tuple of [text, totalTokens]
+     */
+    public function extractTextAndTokens(mixed $response): array
+    {
+        if (is_object($response) && property_exists($response, 'output')) {
+            $text = $response->output[0]->content[0]->text ?? '';
+            $tokenUsage = 0;
+            if (property_exists($response, 'usage') && is_object($response->usage) && property_exists($response->usage, 'totalTokens')) {
+                $tokenUsage = (int) $response->usage->totalTokens;
+            }
+
+            return [$text, $tokenUsage];
+        }
+
+        return [(string) $response, 0];
     }
 }
