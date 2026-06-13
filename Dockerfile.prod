@@ -41,5 +41,6 @@ RUN printf 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n0
     && chmod 0644 /etc/cron.d/laravel-scheduler
 
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+&& sed -i 's/memory_limit = .*/memory_limit = 256M/' /usr/local/etc/php/php.ini
 RUN a2enmod rewrite headers
 RUN a2enconf mpm-prefork-tuning
