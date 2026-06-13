@@ -1,0 +1,10 @@
+{#
+  Renders Greek verse words as clickable spans that open the Greek word panel.
+  Expects: words = array produced by GreekVerse::annotatedWords()
+  Optional: marked = array of word indexes to highlight (e.g. occurrences of a searched Strong word)
+#}
+{%- set marked = marked|default([]) -%}
+{%- for word in words -%}
+    <span class="greekWord clickable-greek{% if word.i in marked %} matched{% endif %}" data-usx="{{ word.usx_code }}" data-chapter="{{ word.chapter }}" data-verse="{{ word.verse }}" data-i="{{ word.i }}" tabindex="0" role="button"{% if word.strong %} title="{{ word.strong }}{% if word.translit %} ({{ word.translit }}){% endif %}"{% endif %}>{{ word.printed }}</span>
+    {%- if word.hasBreak %}<br>{% else %}{{ ' ' }}{% endif -%}
+{%- endfor -%}

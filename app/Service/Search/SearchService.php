@@ -199,6 +199,7 @@ class SearchService
                         $verseData['text'] = preg_replace('/<[^>]*>/', ' ', $verse->verse);
                         $verseData['greekText'] = $sphinxResults->verses[$verse->id]['greekText'] ?? null;
                         $verseData['greekTransliteration'] = $sphinxResults->verses[$verse->id]['greekTransliteration'] ?? null;
+                        $verseData['greekWords'] = $sphinxResults->verses[$verse->id]['greekWords'] ?? null;
 
                         if ($verse->chapter > $currentChapter) {
                             $verseData['chapterStart'] = true;
@@ -246,6 +247,7 @@ class SearchService
                 $verseData['numv'] = $verse->numv;
                 $verseData['text'] = '';
                 $verseData['greekText'] =  $sphinxResults->verses[$gepiToId[$verse->gepi]]['greekText'] ?? null;
+                $verseData['greekWords'] = $sphinxResults->verses[$gepiToId[$verse->gepi]]['greekWords'] ?? null;
                 if ($verse->getText()) {
                     $verseData['text'] .= preg_replace('/<[^>]*>/', ' ', $verse->getText());
                 }

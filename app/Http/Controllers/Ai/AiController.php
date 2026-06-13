@@ -19,7 +19,6 @@ use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TextService;
 use SzentirasHu\Service\Text\TranslationService;
 use Illuminate\Support\Collection;
-use Log;
 
 class AiController extends Controller
 {
@@ -41,22 +40,7 @@ class AiController extends Controller
         $greekVerse = GreekVerse::where('gepi', $gepi)->first();
         $greekVector = null;
         if ($greekVerse) {
-            $annotatedGreekText = [];
-            $greekText = str_replace('¶', '', $greekVerse->text);
-            $explodedText = explode(' ', $greekText);
-            $explodedStrongs = explode(' ', $greekVerse->strongs);
-            $explodedTranslits = explode(' ', $greekVerse->strong_transliterations);
-            foreach ($explodedText as $i => $word) {
-                $annotatedGreekText[] = [
-                    'printed' => $word,
-                    'strong' => $explodedStrongs[$i] ?? null,
-                    'translit' => $explodedTranslits[$i] ?? null,
-                    'usx_code' => $greekVerse->usx_code,
-                    'chapter' => $greekVerse->chapter,
-                    'verse' => $greekVerse->verse,
-                    'i' => $i
-                ];
-            }
+            $annotatedGreekText = $greekVerse->annotatedWords();
             $greekVector = $this->semanticSearchService->retrieveGreekVector($greekVerse->gepi, $greekVerse->source);
         } else {
             $annotatedGreekText = null;
@@ -220,27 +204,17 @@ class AiController extends Controller
         $instances = [];
         if (!$otherGreekVerses->isEmpty()) {
             foreach ($otherGreekVerses as $greekVerse) {
-                $greekText = str_replace('¶', '', $greekVerse->text);
                 $explodedStrongs = explode(' ', $greekVerse->strongs);
-                $strongIndexes = [];
+                $markedIndexes = [];
                 foreach ($explodedStrongs as $index => $explodedStrong) {
                     if ($explodedStrong == $strongWord->lemma) {
-                        $strongIndexes[] = $index;
+                        $markedIndexes[] = $index;
                     }
                 }
-                $explodedGreekText = explode(' ', $greekText);
-                foreach ($strongIndexes as $index) {
-                    if (array_key_exists($index, $explodedGreekText)) {
-                        $explodedGreekText[$index] = "<mark>{$explodedGreekText[$index]}</mark>";
-                    } else {
-                        Log::debug('Wrong strong index in verse');
-                    }
-                }
-                $greekText = implode(' ', $explodedGreekText);
                 $book = $this->bookService->getBookByUsxCodeTranslation($greekVerse->usx_code, $translation->abbrev);
                 $ref = CanonicalReference::fromString("{$book->abbrev} {$greekVerse->chapter},{$greekVerse->verse}", $translation->id);
                 $pureText = $this->textService->getPureText($ref, $translation, 'none');
-                $instances[] = ["book" => $book, "greekVerse" => $greekVerse, "greekText" => $greekText, "pureText" => $pureText, "ref" => $ref];
+                $instances[] = ["book" => $book, "greekVerse" => $greekVerse, "annotatedWords" => $greekVerse->annotatedWords(), "markedIndexes" => $markedIndexes, "pureText" => $pureText, "ref" => $ref];
             }
         }
 

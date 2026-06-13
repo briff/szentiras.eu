@@ -1,4 +1,7 @@
 import { itemRender } from '../quickSearch.js';
+import { initGreekWordPanel } from '../greekWordPanel.js';
+
+initGreekWordPanel();
 
 $('#textSearchForm').on('submit', function (event) {
     event.preventDefault();

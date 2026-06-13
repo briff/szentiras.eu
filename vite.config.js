@@ -26,6 +26,7 @@ export default defineConfig({
                 'resources/assets/js/pages/verses.js',
                 'resources/assets/js/pages/print.js',
                 'resources/assets/js/pages/search.js',
+                'resources/assets/js/pages/greekWord.js',
             ],
             refresh: true,
         }),

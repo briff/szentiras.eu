@@ -225,9 +225,9 @@ class SearchController extends Controller
                     $query->orWhere('strong_normalizations', '~*', "\\y{$word}\\y");
                 }
             }
-            $greekVerses = $query->get()->toArray();
-            $gepis = array_map(fn($greekVerse) => "{$greekVerse['usx_code']}_{$greekVerse['chapter']}_{$greekVerse['verse']}", $greekVerses);
-            $greekVersesPerGepi = array_combine($gepis, $greekVerses);
+            $greekVerses = $query->get();
+            $greekVersesPerGepi = $greekVerses->keyBy('gepi');
+            $gepis = $greekVersesPerGepi->keys()->all();
         } else if ($form->mode == 'verse') {
             // use SphinxSearch to find the greek verses
             $sphinxClient = new SphinxSearch(implode(' ', explode(' ', $form->greekText)));
@@ -250,7 +250,7 @@ class SearchController extends Controller
                 }
                 $greekVerses = GreekVerse::whereIn('id', $fullTextSearchResult->verseIds)->get();
                 $gepis = $greekVerses->pluck('gepi')->toArray();
-                $greekVersesPerGepi = array_combine($gepis, $greekVerses->toArray());
+                $greekVersesPerGepi = $greekVerses->keyBy('gepi');
             }
         }
 
@@ -278,8 +278,10 @@ class SearchController extends Controller
                 $results->verses[$verse->id]['gepi'] = $verse->gepi;
                 $results->verses[$verse->id]['tip'] = $verse->tip;
                 $results->verses[$verse->id]['weight()'] = 1;
-                $results->verses[$verse->id]['greekText'] = str_replace('¶', '', $greekVersesPerGepi[$verse->gepi]['text']);
-                $results->verses[$verse->id]['greekTransliteration'] = $greekVersesPerGepi[$verse->gepi]['transliteration'];
+                $greekVerse = $greekVersesPerGepi[$verse->gepi];
+                $results->verses[$verse->id]['greekText'] = str_replace('¶', '', $greekVerse->text);
+                $results->verses[$verse->id]['greekTransliteration'] = $greekVerse->transliteration;
+                $results->verses[$verse->id]['greekWords'] = $greekVerse->annotatedWords();
             }
             if (!$verses->isEmpty()) {
                 $results->hitCount = count($verses);

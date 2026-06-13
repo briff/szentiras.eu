@@ -1,0 +1,13 @@
+{#
+  Slide-in panel (drawer) showing the meaning/explanation of a clicked Greek word.
+  Reused on the Greek reading pages and the Greek search results.
+#}
+<div class="offcanvas offcanvas-end greek-word-offcanvas" tabindex="-1" id="greekWordOffcanvas" aria-labelledby="greekWordOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="greekWordOffcanvasLabel"><i class="bi bi-journal-text"></i> Görög szó</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Bezárás"></button>
+    </div>
+    <div class="offcanvas-body greek greekSection" lang="grc">
+        <div class="greek-word-content"></div>
+    </div>
+</div>

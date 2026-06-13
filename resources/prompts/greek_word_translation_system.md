@@ -18,4 +18,4 @@ A JSON szerkezete:
   "notes": "Magyar nyelvű, katolikus tanításnak megfelelő megjegyzések, ha vannak fontos és jól megalapozott tudnivalók a szó újszövetségi használatáról."
 }
 
-A „meaning” mezőben mindig egyetlen szó szerepeljen.
+A „meaning” mezőben mindig egyetlen jelentés szerepeljen.

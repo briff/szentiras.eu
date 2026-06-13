@@ -69,11 +69,15 @@
     </div>
     {{ _self.pagination(hitCount, offset, limit, strongWord) }}
     {% for instance in instances %}
-        <blockquote class="mb-2">            
+        <blockquote class="mb-2">
             <div class="pureText"><a href="/{{ instance.book.translation.abbrev }}/{{ instance.ref.toString() }}"><span class="label">{{ instance.ref.toString() }}</span></a> {{ instance.pureText }}</div>
-            <div class="greek">{{ instance.greekText|raw }}</div>
+            <div class="greek">{% include 'greekText.clickableGreekText' with {'words': instance.annotatedWords, 'marked': instance.markedIndexes} %}</div>
         </blockquote>
     {% endfor %}
     {{ _self.pagination(hitCount, offset, limit, strongWord) }}
 
+    {% include 'greekText.greekWordOffcanvas' %}
+
 {% endblock %}
+
+{% set js=['pages/greekWord'] %}

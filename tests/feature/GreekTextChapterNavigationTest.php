@@ -64,8 +64,8 @@ class GreekTextChapterNavigationTest extends TestCase
         $response = $this->get('/GNT/Mt');
 
         $response->assertStatus(200);
-        $response->assertSee('GReeK chapter 1 verse 1');
-        $response->assertDontSee('GReeK chapter 2 verse 1');
+        $response->assertSeeText('GReeK chapter 1 verse 1');
+        $response->assertDontSeeText('GReeK chapter 2 verse 1');
     }
 
     public function test_chapter_reference_shows_only_that_chapter(): void
@@ -75,9 +75,9 @@ class GreekTextChapterNavigationTest extends TestCase
         $response = $this->get('/GNT/Mt2');
 
         $response->assertStatus(200);
-        $response->assertSee('GReeK chapter 2 verse 1');
-        $response->assertDontSee('GReeK chapter 1 verse 1');
-        $response->assertDontSee('GReeK chapter 3 verse 1');
+        $response->assertSeeText('GReeK chapter 2 verse 1');
+        $response->assertDontSeeText('GReeK chapter 1 verse 1');
+        $response->assertDontSeeText('GReeK chapter 3 verse 1');
     }
 
     public function test_chapter_navigation_links_are_rendered(): void

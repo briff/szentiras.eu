@@ -150,9 +150,11 @@ Görög Újszövetségi Szentírás
                     <span class="numvai">{{ greekVerse.verse }}&nbsp;</span>
                 </a>
                 {% endif %}
-                <span class="verse-text">{{ greekVerse.text|replace({'¶': '<br>'})|raw }}</span>
+                <span class="verse-text">{% include 'greekText.clickableGreekText' with {'words': greekVerse.annotatedWords} %}</span>
         {% endfor %}
     </div>
+
+    {% include 'greekText.greekWordOffcanvas' %}
 
     {% if currentChapter is not null and (previousChapter is not null or nextChapter is not null) %}
     <div class="d-flex align-items-center justify-content-between mt-3">

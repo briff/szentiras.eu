@@ -206,7 +206,7 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
                                 <a href="/{{ group.trans.abbrev }}/{{ group.book.abbrev }}{{ verse.chapter }}">{{ verse.chapter }}</a></strong> {% endif %}{% endif %}
                             {% if verse.ellipseBefore %} [...] {% endif %}{% if form.grouping == 'book' or  form.grouping == 'chapter' %}<sup>
                                 <a href="/{{ group.trans.abbrev}}/{{ group.book.abbrev }} {{ verse.chapter }},{{ verse.numv }}">{{ verse.numv }}</a></sup>{% endif %}{{ verse.text|raw }}
-                                {% if verse.greekText %}<div class="greek">{{ verse.greekText }}</div><div class="greek">{{ verse.greekTransliteration }}</div>{% endif %}
+                                {% if verse.greekWords %}<div class="greek">{% include 'greekText.clickableGreekText' with {'words': verse.greekWords} %}</div><div class="greek">{{ verse.greekTransliteration }}</div>{% elseif verse.greekText %}<div class="greek">{{ verse.greekText }}</div><div class="greek">{{ verse.greekTransliteration }}</div>{% endif %}
                         {% endfor %}
                         <div class="greek">{{ chapters.greekText }}</div>
                         </div>
@@ -233,7 +233,7 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
                             <a href="/{{ result.translation.abbrev }}/{{ result.book.abbrev }} {{ verse.chapter }},{{ verse.numv }}">
                                 {{ verse.chapter }},{{ verse.numv }}</a>
                             {{ verse.text|raw }}
-                            {% if verse.greekText %}<div class="greek">{{ verse.greekText }}</div>{% endif %}
+                            {% if verse.greekWords %}<div class="greek">{% include 'greekText.clickableGreekText' with {'words': verse.greekWords} %}</div>{% elseif verse.greekText %}<div class="greek">{{ verse.greekText }}</div>{% endif %}
                         </div>
                     {% endfor %}
                 {% else %}
@@ -242,7 +242,7 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
                             <a href="/{{ result.translation.abbrev }}/{{ result.book.abbrev }} {{ chapter }}">{{ chapter }}</a>
                             {% for verse in verses %}
                                 {% if verse.ellipseBefore %} [...] {% endif %}<sup>{{ verse.numv }}</sup>{{ verse.text|raw }}
-                                {% if verse.greekText %}<div class="greek">{{ verse.greekText }}</div>{% endif %}
+                                {% if verse.greekWords %}<div class="greek">{% include 'greekText.clickableGreekText' with {'words': verse.greekWords} %}</div>{% elseif verse.greekText %}<div class="greek">{{ verse.greekText }}</div>{% endif %}
                             {% endfor %}
                             </div>
                     {% endfor %}
@@ -257,6 +257,8 @@ Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %
     {% if form.textToSearch == '' and  form.greekTranslit == "" %}
         {% include 'search/searchInfo' %}
     {% endif %}
+
+    {% include 'greekText.greekWordOffcanvas' %}
 
 {% endblock %}
 

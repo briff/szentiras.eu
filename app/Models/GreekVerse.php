@@ -47,4 +47,48 @@ class GreekVerse extends Model
     public function strongWords() {
         return $this->belongsToMany(StrongWord::class)->withPivot('strong_word_instances');
     }
+
+    /**
+     * Annotate each Greek word of the verse with the data needed to look up its
+     * meaning through the {@see \SzentirasHu\Http\Controllers\Ai\AiController::getGreekWordPanel()} endpoint.
+     *
+     * The word index `i` matches the ordering of the verse `json` array, i.e. the
+     * tokens of the verse text with the paragraph marker removed and split on spaces.
+     *
+     * @return array<int, array{printed: string, strong: ?string, translit: ?string, usx_code: string, chapter: int, verse: int, i: int, hasBreak: bool}>
+     */
+    /**
+     * Accessor so templates can read `greekVerse.annotatedWords` without Eloquent
+     * mistaking it for a relationship.
+     *
+     * @return array<int, array{printed: string, strong: ?string, translit: ?string, usx_code: string, chapter: int, verse: int, i: int, hasBreak: bool}>
+     */
+    public function getAnnotatedWordsAttribute(): array
+    {
+        return $this->annotatedWords();
+    }
+
+    public function annotatedWords(): array
+    {
+        $cleanedTokens = explode(' ', str_replace('¶', '', $this->text));
+        $originalTokens = explode(' ', $this->text);
+        $strongs = explode(' ', (string) $this->strongs);
+        $transliterations = explode(' ', (string) $this->strong_transliterations);
+
+        $words = [];
+        foreach ($cleanedTokens as $i => $token) {
+            $words[] = [
+                'printed' => $token,
+                'strong' => $strongs[$i] ?? null,
+                'translit' => $transliterations[$i] ?? null,
+                'usx_code' => $this->usx_code,
+                'chapter' => $this->chapter,
+                'verse' => $this->verse,
+                'i' => $i,
+                'hasBreak' => isset($originalTokens[$i]) && str_contains($originalTokens[$i], '¶'),
+            ];
+        }
+
+        return $words;
+    }
 }

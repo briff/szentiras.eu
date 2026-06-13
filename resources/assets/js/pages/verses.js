@@ -1,5 +1,6 @@
 import initPdfModal from '../pdfDialog.js';
 import { VerseCardDialog } from '../verseCardDialog.js';
+import { initGreekWordPanel } from '../greekWordPanel.js';
 
 const initToggler = function () {
     var delay = 400;
@@ -454,5 +455,6 @@ function initMediaButtonStyling() {
 }
 
 initMediaButtonStyling();
+initGreekWordPanel();
 
 scrollToVerse();
