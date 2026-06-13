@@ -227,7 +227,7 @@ class GenerateStrongWordTranslations extends Command
         }
 
         return $this->provider === 'openai'
-            ? Config::get('ai.configurations.strong_word_translation.model', 'gpt-4.1')
+            ? Config::get('ai.configurations.strong_word_translation.model', 'gpt-5.5')
             : 'claude-3-5-haiku-20241022';
     }
 

@@ -64,7 +64,7 @@ class GenerateStrongWordTranslationsTest extends TestCase
         $mock = Mockery::mock(AiPromptService::class);
         $mock->shouldReceive('generate')
             ->once()
-            ->with('strong_word_translation', false, ['greek_word' => 'λόγος'], null, ['model' => 'gpt-4.1'])
+            ->with('strong_word_translation', false, ['greek_word' => 'λόγος'], null, ['model' => 'gpt-5.5'])
             ->andReturn($json);
         $mock->shouldReceive('extractTextAndTokens')
             ->once()
@@ -77,8 +77,8 @@ class GenerateStrongWordTranslationsTest extends TestCase
             '--provider' => 'openai',
         ])->assertSuccessful();
 
-        Storage::assertExists('translation/1_gpt-4.1.json');
-        $this->assertSame($json, Storage::get('translation/1_gpt-4.1.json'));
+        Storage::assertExists('translation/1_gpt-5.5.json');
+        $this->assertSame($json, Storage::get('translation/1_gpt-5.5.json'));
     }
 
     public function test_limit_caps_number_of_generated_words(): void
@@ -102,9 +102,9 @@ class GenerateStrongWordTranslationsTest extends TestCase
             '--limit' => '2',
         ])->assertSuccessful();
 
-        Storage::assertExists('translation/1_gpt-4.1.json');
-        Storage::assertExists('translation/2_gpt-4.1.json');
-        Storage::assertMissing('translation/3_gpt-4.1.json');
+        Storage::assertExists('translation/1_gpt-5.5.json');
+        Storage::assertExists('translation/2_gpt-5.5.json');
+        Storage::assertMissing('translation/3_gpt-5.5.json');
     }
 
     public function test_importing_from_source_clears_existing_translations_from_other_sources(): void
@@ -126,7 +126,7 @@ class GenerateStrongWordTranslationsTest extends TestCase
         $staleMeaning->order = 0;
         $staleMeaning->save();
 
-        Storage::disk('local')->put('translation/1_gpt-4.1.json', $this->fakeTranslationJson('λόγος'));
+        Storage::disk('local')->put('translation/1_gpt-5.5.json', $this->fakeTranslationJson('λόγος'));
 
         $this->artisan('szentiras:generate-strong-word-translations', [
             '--word' => '1',
@@ -140,7 +140,7 @@ class GenerateStrongWordTranslationsTest extends TestCase
         $this->assertSame(0, DictionaryMeaning::where('source', 'old-model')->count());
 
         $entry = DictionaryEntry::where('strong_word_number', 1)->first();
-        $this->assertSame('gpt-4.1', $entry->source);
+        $this->assertSame('gpt-5.5', $entry->source);
         $this->assertSame('eredet', $entry->etymology);
     }
 

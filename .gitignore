@@ -27,3 +27,4 @@ PROVISIONED
 generated
 .env.deploy
 .claude
+storage/framework/testing
