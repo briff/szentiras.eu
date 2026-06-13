@@ -6,6 +6,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use SzentirasHu\Http\Controllers\Controller;
 use SzentirasHu\Models\StrongWord;
 
@@ -20,6 +21,7 @@ class GreekDictionaryController extends Controller
         return view('greekText.dictionary', [
             'strongWords' => $this->paginateStrongWords($filter),
             'filter' => $filter,
+            'teaser' => 'Az Újszövetség összes görög (Strong) szava betűrendben: görög–magyar szótár, latin átírással és újszövetségi előfordulásokkal.',
         ]);
     }
 
@@ -43,9 +45,14 @@ class GreekDictionaryController extends Controller
      */
     private function paginateStrongWords(string $filter): LengthAwarePaginator
     {
-        return $this->queryStrongWords($filter)
-            ->paginate(self::PAGE_SIZE)
-            ->appends(['q' => $filter]);
+        $page = request()->integer('page', 1);
+        $cacheKey = 'greek_dict_' . $page . '_' . md5($filter);
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($filter) {
+            return $this->queryStrongWords($filter)
+                ->paginate(self::PAGE_SIZE)
+                ->appends(['q' => $filter]);
+        });
     }
 
     /**

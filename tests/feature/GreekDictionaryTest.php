@@ -3,6 +3,7 @@
 namespace SzentirasHu\Test;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use SzentirasHu\Models\DictionaryMeaning;
 use SzentirasHu\Models\StrongWord;
 use SzentirasHu\Test\Common\TestCase;
@@ -14,6 +15,7 @@ class GreekDictionaryTest extends TestCase
     protected function afterRefreshingDatabase(): void
     {
         $this->resetPostgresSequences();
+        Cache::flush();
     }
 
     private function createStrongWord(int $number, string $lemma, string $transliteration, string $normalized): StrongWord
@@ -112,6 +114,22 @@ class GreekDictionaryTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('πατήρ');
         $response->assertDontSee('λόγος');
+    }
+
+    public function test_dictionary_index_has_seo_meta_tags(): void
+    {
+        $this->createStrongWord(1, 'ἀγάπη', 'agapē', 'agape');
+        $this->addMeaning(1, 'szeretet');
+
+        $response = $this->get('/gorog-szotar');
+
+        $response->assertStatus(200);
+        $response->assertSee('name="description"', false);
+        $response->assertSee('Újszövetség', false);
+        $response->assertSee('rel="canonical"', false);
+        $response->assertSee('gorog-szotar', false);
+        $response->assertSee('og:title', false);
+        $response->assertSee('og:description', false);
     }
 
     public function test_dictionary_paginates_results(): void

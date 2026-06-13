@@ -1,8 +1,14 @@
 {% extends 'layout' %}
 
-{% set pageTitle %}
-Keresés{% if form.textToSearch is defined %}: {{ form.textToSearch }}{% endif %} | Szentírás
-{% endset %}
+{% set pageTitle = 'Keresés' ~ (form.textToSearch is defined and form.textToSearch ? ': ' ~ form.textToSearch : '') ~ ' | Szentírás' %}
+
+{% block meta %}
+    <link rel="canonical" href="{{ url('/kereses') }}" />
+    <meta property="og:url" content="{{ url('/kereses') }}">
+    <meta property="og:title" content="Keresés | Szentírás">
+    <meta property="og:description" content="{{ teaser }}">
+    <meta property="og:image" content="{{ asset('img/biblia.jpg') }}">
+{% endblock %}
 
 {% macro filterRow(form, books, translations, idPrefix = '') %}
     <div class="mb-2 row">
