@@ -324,7 +324,8 @@ class SearchController extends Controller
         return View::make("search.search", [
             'form' => $form,
             'translations' => $translations,
-            'books' => $books
+            'books' => $books,
+            'teaser' => 'Keresés a teljes Szentírásban – Biblia keresés magyarul és görögül, több fordításban egyszerre.',
         ]);
     }
 

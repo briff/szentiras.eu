@@ -102,4 +102,30 @@ class GreekTextChapterNavigationTest extends TestCase
         $response->assertSee('href="/GNT/Mt2"', false);
         $response->assertDontSee('href="/GNT/Mt0"', false);
     }
+
+    public function test_gnt_landing_has_seo_meta_tags(): void
+    {
+        $response = $this->get('/GNT');
+
+        $response->assertStatus(200);
+        $response->assertSee('Görög Újszövetségi Szentírás', false);
+        $response->assertSee('name="description"', false);
+        $response->assertSee('OpenGNT', false);
+        $response->assertSee('rel="canonical"', false);
+        $response->assertSee('og:title', false);
+        $response->assertSee('og:description', false);
+    }
+
+    public function test_gnt_chapter_page_has_specific_title_and_canonical(): void
+    {
+        $this->createGreekBook();
+
+        $response = $this->get('/GNT/Mt1');
+
+        $response->assertStatus(200);
+        $response->assertSee('Evangélium Máté szerint', false);
+        $response->assertSee('1. fejezet', false);
+        $response->assertSee('canonical', false);
+        $response->assertSee('/GNT/Mt1', false);
+    }
 }

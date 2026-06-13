@@ -133,6 +133,14 @@ class GreekTextController extends Controller
             return $translationLink['abbrev'] === 'GNT' ? 1 : 0;
         })->values();
     
+        if ($book && $currentChapter !== null) {
+            $teaser = "{$book->name} {$currentChapter}. fejezet görög szövege – Görög Újszövetségi Szentírás az OpenGNT alapján.";
+        } elseif ($book) {
+            $teaser = "{$book->name} görög szövege az Újszövetségből – Görög Újszövetségi Szentírás az OpenGNT alapján.";
+        } else {
+            $teaser = 'Teljes görög újszövetségi Szentírás és görög–magyar szószedet az OpenGNT alapján, mesterséges intelligencia eszközök segítségével.';
+        }
+
         return view('greekText.gnt', [
             'translation' => $translation,
             'books' => $books,
@@ -143,7 +151,8 @@ class GreekTextController extends Controller
             'previousChapter' => $previousChapter,
             'nextChapter' => $nextChapter,
             'translationLinks' => $translationLinks,
-            'showLanding' => $book === null
+            'showLanding' => $book === null,
+            'teaser' => $teaser,
         ]);
     }
 }
