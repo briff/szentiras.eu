@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use SzentirasHu\Http\Controllers\Ai\AiController;
 use SzentirasHu\Http\Controllers\Auth\AnonymousIdController;
+use SzentirasHu\Http\Controllers\Display\GreekDictionaryController;
 use SzentirasHu\Http\Controllers\Display\GreekTextController;
 use SzentirasHu\Http\Controllers\Display\TextDisplayController;
 use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
@@ -234,6 +235,9 @@ Route::prefix('api/media')->middleware('editor')->group(function () {
     Route::get('/{usxCode}/{chapter}/{verse}/next', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getNextVerse']);
     Route::get('/{usxCode}/{chapter}/{verse}/previous', [\SzentirasHu\Http\Controllers\Api\MediaApiController::class, 'getPreviousVerse']);
 });
+
+Route::get('/gorog-szotar', [GreekDictionaryController::class, 'index'])->name('greekDictionary.index');
+Route::get('/gorog-szotar/filter', [GreekDictionaryController::class, 'filter'])->name('greekDictionary.filter');
 
 Route::get('/GNT/{reference?}', [GreekTextController::class, 'show'])->where('reference', '[^/]+');
 

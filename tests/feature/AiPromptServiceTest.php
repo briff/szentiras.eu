@@ -284,6 +284,7 @@ class AiPromptServiceTest extends TestCase
         $response = (object) [
             'output' => [
                 (object) [
+                    'type' => 'message',
                     'content' => [
                         (object) ['text' => 'Generated text'],
                     ],
@@ -304,6 +305,7 @@ class AiPromptServiceTest extends TestCase
         $response = (object) [
             'output' => [
                 (object) [
+                    'type' => 'message',
                     'content' => [
                         (object) ['text' => 'Only text'],
                     ],
@@ -314,6 +316,27 @@ class AiPromptServiceTest extends TestCase
         [$text, $tokens] = $this->service->extractTextAndTokens($response);
 
         $this->assertSame('Only text', $text);
+        $this->assertSame(0, $tokens);
+    }
+
+    #[Test]
+    public function it_extracts_text_when_reasoning_block_precedes_message(): void
+    {
+        $response = (object) [
+            'output' => [
+                (object) ['type' => 'reasoning'],
+                (object) [
+                    'type' => 'message',
+                    'content' => [
+                        (object) ['text' => 'Message after reasoning'],
+                    ],
+                ],
+            ],
+        ];
+
+        [$text, $tokens] = $this->service->extractTextAndTokens($response);
+
+        $this->assertSame('Message after reasoning', $text);
         $this->assertSame(0, $tokens);
     }
 

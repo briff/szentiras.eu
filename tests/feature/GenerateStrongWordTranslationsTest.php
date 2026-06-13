@@ -5,6 +5,8 @@ namespace SzentirasHu\Test;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
+use SzentirasHu\Models\DictionaryEntry;
+use SzentirasHu\Models\DictionaryMeaning;
 use SzentirasHu\Models\StrongWord;
 use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Test\Common\TestCase;
@@ -103,6 +105,43 @@ class GenerateStrongWordTranslationsTest extends TestCase
         Storage::assertExists('translation/1_gpt-4.1.json');
         Storage::assertExists('translation/2_gpt-4.1.json');
         Storage::assertMissing('translation/3_gpt-4.1.json');
+    }
+
+    public function test_importing_from_source_clears_existing_translations_from_other_sources(): void
+    {
+        $this->createStrongWord(1, 'λόγος');
+
+        $staleEntry = new DictionaryEntry();
+        $staleEntry->strong_word_number = 1;
+        $staleEntry->source = 'old-model';
+        $staleEntry->paradigm = 'régi';
+        $staleEntry->etymology = 'régi eredet';
+        $staleEntry->save();
+
+        $staleMeaning = new DictionaryMeaning();
+        $staleMeaning->strong_word_number = 1;
+        $staleMeaning->source = 'old-model';
+        $staleMeaning->meaning = 'régi';
+        $staleMeaning->explanation = 'régi magyarázat';
+        $staleMeaning->order = 0;
+        $staleMeaning->save();
+
+        Storage::disk('local')->put('translation/1_gpt-4.1.json', $this->fakeTranslationJson('λόγος'));
+
+        $this->artisan('szentiras:generate-strong-word-translations', [
+            '--word' => '1',
+            '--provider' => 'openai',
+            '--source' => 'filesystem',
+        ])->assertSuccessful();
+
+        $this->assertSame(1, DictionaryEntry::where('strong_word_number', 1)->count());
+        $this->assertSame(1, DictionaryMeaning::where('strong_word_number', 1)->count());
+        $this->assertSame(0, DictionaryEntry::where('source', 'old-model')->count());
+        $this->assertSame(0, DictionaryMeaning::where('source', 'old-model')->count());
+
+        $entry = DictionaryEntry::where('strong_word_number', 1)->first();
+        $this->assertSame('gpt-4.1', $entry->source);
+        $this->assertSame('eredet', $entry->etymology);
     }
 
     public function test_openai_provider_rejects_batch_mode(): void

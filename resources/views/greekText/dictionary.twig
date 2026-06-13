@@ -1,0 +1,75 @@
+{% extends "layout" %}
+
+{% set pageTitle %}
+Görög szótár | Szentírás
+{% endset %}
+
+{% block content %}
+
+    <h2>Görög szótár</h2>
+
+    <p class="text-body-secondary">
+        Az Újszövetség valamennyi görög (Strong) szava betűrendben. Gépelve azonnal szűrhetsz a listában:
+        kereshetsz latin átírásra (pl. <em>logos</em>) vagy magyar jelentésre is (pl. <em>atya</em>).
+        Egy szóra kattintva megjelenik a jelentése, magyarázata és újszövetségi előfordulásainak felsorolása.
+        <span class="text-muted">A szótárat folyamatosan bővítjük.</span>
+    </p>
+
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" id="dictionaryFilter" class="form-control" autocomplete="off"
+               value="{{ filter }}"
+               placeholder="Latin átírás vagy magyar jelentés (pl. logos, agape, atya)…"
+               aria-label="Szűrés latin átírás vagy jelentés szerint">
+    </div>
+
+    <div id="dictionaryResults">
+        {% include 'greekText.dictionaryRows' %}
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    (function () {
+        const input = document.getElementById('dictionaryFilter');
+        const results = document.getElementById('dictionaryResults');
+        let timer = null;
+        let controller = null;
+
+        function load(page) {
+            if (controller) {
+                controller.abort();
+            }
+            controller = new AbortController();
+            const query = input.value.trim();
+            let url = '/gorog-szotar/filter?q=' + encodeURIComponent(query);
+            if (page && page > 1) {
+                url += '&page=' + page;
+            }
+            fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                signal: controller.signal
+            })
+                .then(response => response.text())
+                .then(html => { results.innerHTML = html; })
+                .catch(error => { if (error.name !== 'AbortError') { console.error(error); } });
+        }
+
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(() => load(1), 150);
+        });
+
+        results.addEventListener('click', function (event) {
+            const link = event.target.closest('a[data-page]');
+            if (!link) {
+                return;
+            }
+            event.preventDefault();
+            load(parseInt(link.getAttribute('data-page'), 10));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    })();
+</script>
+{% endblock %}

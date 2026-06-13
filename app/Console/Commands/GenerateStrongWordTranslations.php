@@ -142,9 +142,9 @@ class GenerateStrongWordTranslations extends Command
                     $progressBar->display();
                     continue;
                 }
-                // delete all meanings and etimology for the given word and model
-                DictionaryEntry::where('strong_word_number', $wordNumber)->where('source', $this->model)->delete();
-                DictionaryMeaning::where('strong_word_number', $wordNumber)->where('source', $this->model)->delete();
+                // delete all existing meanings and etymology for the given word, regardless of source
+                DictionaryEntry::where('strong_word_number', $wordNumber)->delete();
+                DictionaryMeaning::where('strong_word_number', $wordNumber)->delete();
                 $dictionaryEntry = new DictionaryEntry();
                 $dictionaryEntry->strong_word_number = $wordNumber;
                 $dictionaryEntry->source = $this->model;

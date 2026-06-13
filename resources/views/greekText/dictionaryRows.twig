@@ -1,0 +1,54 @@
+{% set listUrl = route('greekDictionary.index') ~ '?q=' ~ filter|url_encode %}
+
+<div class="list-group">
+    {% if strongWords is empty %}
+        <div class="list-group-item text-muted">Nincs a szűrésnek megfelelő szó.</div>
+    {% else %}
+        {% for strongWord in strongWords %}
+            <a href="/ai-greek/find-all/{{ strongWord.number }}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <span>
+                        <span class="greek fw-bold">{{ strongWord.lemma }}</span>
+                        <span class="text-muted ms-1">({{ strongWord.transliteration }})</span>
+                    </span>
+                    {% if strongWord.greek_verses_count > 0 %}
+                        <span class="badge text-bg-light" title="Előfordulások száma az Újszövetségben">{{ strongWord.greek_verses_count }}×</span>
+                    {% endif %}
+                </div>
+                {% if strongWord.dictionaryMeanings is not empty %}
+                    <div class="small text-body-secondary">
+                        {{ strongWord.dictionaryMeanings|map(m => m.meaning)|join(', ') }}
+                    </div>
+                {% endif %}
+            </a>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% if strongWords.hasPages() %}
+    <nav aria-label="Lapozás" class="mt-3">
+        <ul class="pagination justify-content-center mb-0">
+            {% if strongWords.onFirstPage() %}
+                <li class="page-item disabled"><span class="page-link">Előző</span></li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ listUrl ~ '&page=' ~ (strongWords.currentPage() - 1) }}"
+                       data-page="{{ strongWords.currentPage() - 1 }}">Előző</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">{{ strongWords.currentPage() }} / {{ strongWords.lastPage() }}</span>
+            </li>
+
+            {% if strongWords.hasMorePages() %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ listUrl ~ '&page=' ~ (strongWords.currentPage() + 1) }}"
+                       data-page="{{ strongWords.currentPage() + 1 }}">Következő</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Következő</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}

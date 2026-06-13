@@ -63,7 +63,7 @@ class SearchController extends Controller
 
     public function getIndex()
     {
-        return $this->getView($this->prepareForm());
+        return $this->getView($this->prepareForm())->with('greekSearch', Request::boolean('greek'));
     }
 
     public function anySuggest()

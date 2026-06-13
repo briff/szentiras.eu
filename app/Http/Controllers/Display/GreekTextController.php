@@ -37,63 +37,52 @@ class GreekTextController extends Controller
         $book = null;
         $greekVerses = collect();
         $canonicalRef = null;
-        
+        $chapters = collect();
+        $currentChapter = null;
+        $previousChapter = null;
+        $nextChapter = null;
+
         if ($reference) {
+            $requestedChapter = null;
             try {
                 $canonicalRef = CanonicalReference::fromString($reference, $templateTranslation);
                 $scheme = request()->query('scheme', 'default');
                 if ($scheme === 'vulgata') {
                     $canonicalRef = $this->numberingSchemeService->convertReference($canonicalRef, 'vulgata', 'default');
                 }
-                
+
                 // Get the first book reference (GNT references should only have one book)
                 if (count($canonicalRef->bookRefs) > 0) {
                     $bookRef = $canonicalRef->bookRefs[0];
-                    $bookAbbrev = $bookRef->bookId;
-                    
-                    $book = collect($books)->firstWhere('abbrev', $bookAbbrev);
-                    
-                    if ($book) {
-                        $query = GreekVerse::where('usx_code', $book->usx_code);
-                        
-                        // If there are chapter ranges, apply filters
-                        if (count($bookRef->chapterRanges) > 0) {
-                            $query->where(function ($q) use ($bookRef) {
-                                foreach ($bookRef->chapterRanges as $chapterRange) {
-                                    $chapterId = $chapterRange->chapterRef->chapterId;
-                                    $untilChapterId = $chapterRange->untilChapterRef ? $chapterRange->untilChapterRef->chapterId : null;
-                                    
-                                    if ($untilChapterId) {
-                                        // Chapter range
-                                        $q->orWhereBetween('chapter', [$chapterId, $untilChapterId]);
-                                    } else {
-                                        // Single chapter
-                                        $q->orWhere('chapter', $chapterId);
-                                    }
-                                    
-                                    // If there are verse ranges within the chapter, we need to filter verses too
-                                    // This is more complex and would require subqueries
-                                    // For now, we'll get all verses in the chapter and filter in PHP
-                                }
-                            });
-                        }
-                        
-                        $greekVerses = $query->orderBy('chapter')->orderBy('verse')->get();
-                        
-                        // If there are verse ranges, filter the collection
-                        if (count($bookRef->chapterRanges) > 0) {
-                            $greekVerses = $this->filterVersesByReference($greekVerses, $bookRef);
-                        }
+                    $book = collect($books)->firstWhere('abbrev', $bookRef->bookId);
+
+                    if ($book && count($bookRef->chapterRanges) > 0) {
+                        $requestedChapter = $bookRef->chapterRanges[0]->chapterRef->chapterId;
                     }
                 }
             } catch (ParsingException $e) {
                 // If parsing fails, fall back to treating it as a book abbreviation
                 $book = collect($books)->firstWhere('abbrev', $reference);
-                if ($book) {
+            }
+
+            if ($book) {
+                $chapters = GreekVerse::where('usx_code', $book->usx_code)
+                    ->distinct()
+                    ->orderBy('chapter')
+                    ->pluck('chapter');
+
+                // Reading pages always show a single chapter; default to the first one.
+                $currentChapter = $chapters->contains($requestedChapter) ? $requestedChapter : $chapters->first();
+
+                if ($currentChapter !== null) {
                     $greekVerses = GreekVerse::where('usx_code', $book->usx_code)
-                        ->orderBy('chapter')
+                        ->where('chapter', $currentChapter)
                         ->orderBy('verse')
                         ->get();
+
+                    $position = $chapters->search($currentChapter);
+                    $previousChapter = $position > 0 ? $chapters[$position - 1] : null;
+                    $nextChapter = $position < $chapters->count() - 1 ? $chapters[$position + 1] : null;
                 }
             }
         }
@@ -149,54 +138,12 @@ class GreekTextController extends Controller
             'books' => $books,
             'greekVerses' => $greekVerses,
             'book' => $book,
-            'translationLinks' => $translationLinks
+            'chapters' => $chapters,
+            'currentChapter' => $currentChapter,
+            'previousChapter' => $previousChapter,
+            'nextChapter' => $nextChapter,
+            'translationLinks' => $translationLinks,
+            'showLanding' => $book === null
         ]);
-    }
-    
-    /**
-     * Filter Greek verses based on chapter/verse ranges from a BookRef
-     */
-    private function filterVersesByReference($verses, $bookRef)
-    {
-        return $verses->filter(function ($verse) use ($bookRef) {
-            foreach ($bookRef->chapterRanges as $chapterRange) {
-                $chapterId = $chapterRange->chapterRef->chapterId;
-                $untilChapterId = $chapterRange->untilChapterRef ? $chapterRange->untilChapterRef->chapterId : null;
-                
-                // Check if verse is in chapter range
-                if ($untilChapterId) {
-                    if ($verse->chapter < $chapterId || $verse->chapter > $untilChapterId) {
-                        continue;
-                    }
-                } else {
-                    if ($verse->chapter != $chapterId) {
-                        continue;
-                    }
-                }
-                
-                // If no verse ranges specified, include all verses in the chapter
-                if (empty($chapterRange->chapterRef->verseRanges)) {
-                    return true;
-                }
-                
-                // Check verse ranges
-                foreach ($chapterRange->chapterRef->verseRanges as $verseRange) {
-                    $verseId = $verseRange->verseRef->verseId;
-                    $untilVerseId = $verseRange->untilVerseRef ? $verseRange->untilVerseRef->verseId : null;
-                    
-                    if ($untilVerseId) {
-                        if ($verse->verse >= $verseId && $verse->verse <= $untilVerseId) {
-                            return true;
-                        }
-                    } else {
-                        if ($verse->verse == $verseId) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            
-            return false;
-        });
     }
 }

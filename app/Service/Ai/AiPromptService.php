@@ -329,7 +329,8 @@ class AiPromptService
     public function extractTextAndTokens(mixed $response): array
     {
         if (is_object($response) && property_exists($response, 'output')) {
-            $text = $response->output[0]->content[0]->text ?? '';
+            $messageOutput = collect($response->output)->first(fn($o) => $o->type === 'message');
+            $text = $messageOutput?->content[0]->text ?? '';
             $tokenUsage = 0;
             if (property_exists($response, 'usage') && is_object($response->usage) && property_exists($response->usage, 'totalTokens')) {
                 $tokenUsage = (int) $response->usage->totalTokens;
