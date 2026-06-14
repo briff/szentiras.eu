@@ -134,11 +134,11 @@ class GreekTextController extends Controller
         })->values();
     
         if ($book && $currentChapter !== null) {
-            $teaser = "{$book->name} {$currentChapter}. fejezet görög szövege – Görög Újszövetségi Szentírás az OpenGNT alapján.";
+            $teaser = "{$book->name}, {$currentChapter}. fejezet görög szövege – Görög Újszövetségi Szentírás";
         } elseif ($book) {
-            $teaser = "{$book->name} görög szövege az Újszövetségből – Görög Újszövetségi Szentírás az OpenGNT alapján.";
+            $teaser = "{$book->name} görög szövege az Újszövetségből – Görög Újszövetségi Szentírás";
         } else {
-            $teaser = 'Teljes görög újszövetségi Szentírás és görög–magyar szószedet az OpenGNT alapján, mesterséges intelligencia eszközök segítségével.';
+            $teaser = 'Teljes görög újszövetségi Szentírás és görög–magyar szószedet';
         }
 
         return view('greekText.gnt', [
