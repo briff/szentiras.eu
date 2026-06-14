@@ -150,7 +150,6 @@ class ImportGreek extends Command
             $this->downloadFiles();
         }
         if (!$this->option('skip-words')) {
-            StrongWord::truncate();
             $this->fillStrongWordsTable();
         }
         foreach (StrongWord::all() as $strongWord) {
@@ -316,30 +315,91 @@ class ImportGreek extends Command
             $parts = explode("\t", $line);
             $strongNumber = (int)str_replace("G", "", $parts[0]);
             $lemma = $parts[3];
-            $transliteration = $this->transliterate($lemma);
-            $normalizedText = $this->normalize($transliteration);
-            $cleanText = preg_replace('/\p{Mn}/u', '', $normalizedText);
-            $normalized = strtolower($cleanText);
-            $strongWords[$strongNumber] = [
-                'number' => $strongNumber,
-                'lemma' => $lemma,
-                'transliteration' => $transliteration,
-                'normalized' => $normalized
-            ];
+            $strongWords[$strongNumber] = $this->buildStrongWordData($strongNumber, $lemma);
         }
+
+        $strongWords = $this->applyXmlLemmas($strongWords);
+
+        $now = now();
         $progressBar = $this->output->createProgressBar(count($strongWords));
-        foreach ($strongWords as $strongWordData) {
-            $progressBar->advance();
-            $strongWord = new StrongWord();
-            $strongWord->number = $strongWordData['number'];
-            $strongWord->lemma = $strongWordData['lemma'];
-            $strongWord->transliteration = $strongWordData['transliteration'];
-            $strongWord->normalized = $strongWordData['normalized'];
-            $strongWord->save();
+        foreach (array_chunk($strongWords, 500) as $chunk) {
+            $rows = array_map(
+                static fn (array $data): array => $data + ['created_at' => $now, 'updated_at' => $now],
+                $chunk
+            );
+            StrongWord::upsert($rows, ['number'], ['lemma', 'transliteration', 'normalized', 'updated_at']);
+            $progressBar->advance(count($chunk));
         }
 
         $progressBar->finish();
         $this->output->newline();
+    }
+
+    /**
+     * Build a Strong word row from a number and a Greek lemma, deriving the
+     * transliteration and normalized form.
+     *
+     * @return array{number: int, lemma: string, transliteration: string, normalized: string}
+     */
+    private function buildStrongWordData(int $strongNumber, string $lemma): array
+    {
+        $transliteration = $this->transliterate($lemma);
+        $normalizedText = $this->normalize($transliteration);
+        $cleanText = preg_replace('/\p{Mn}/u', '', $normalizedText);
+        $normalized = strtolower($cleanText);
+
+        return [
+            'number' => $strongNumber,
+            'lemma' => $lemma,
+            'transliteration' => $transliteration,
+            'normalized' => $normalized,
+        ];
+    }
+
+    /**
+     * Override the lemma of every Strong word that has a canonical entry in
+     * dictionary.xml with the authoritative `unicode` field. The TXT lexicon
+     * contains duplicate extended-Strong rows for some numbers (e.g. G0001G
+     * "Alpha" and G0001H "ἆ"), where the last row would otherwise win.
+     *
+     * @param  array<int, array{number: int, lemma: string, transliteration: string, normalized: string}>  $strongWords
+     * @return array<int, array{number: int, lemma: string, transliteration: string, normalized: string}>
+     */
+    private function applyXmlLemmas(array $strongWords): array
+    {
+        foreach ($this->loadXmlLemmas() as $strongNumber => $lemma) {
+            if (array_key_exists($strongNumber, $strongWords)) {
+                $strongWords[$strongNumber] = $this->buildStrongWordData($strongNumber, $lemma);
+            }
+        }
+
+        return $strongWords;
+    }
+
+    /**
+     * Read the canonical lemmas from dictionary.xml, keyed by Strong number.
+     *
+     * @return array<int, string>
+     */
+    private function loadXmlLemmas(): array
+    {
+        $xmlFile = Storage::get("greek/dictionary.xml");
+        if (!$xmlFile) {
+            $this->warn("dictionary.xml not found; keeping lemmas from dictionary.txt.");
+            return [];
+        }
+
+        $xml = simplexml_load_string($xmlFile);
+        $lemmas = [];
+        foreach ($xml->xpath('//entry[@strongs]') as $entry) {
+            $strongNumber = (int) $entry['strongs'];
+            $lemma = (string) $entry->greek['unicode'];
+            if ($strongNumber && $lemma !== '') {
+                $lemmas[$strongNumber] = $lemma;
+            }
+        }
+
+        return $lemmas;
     }
 
     private function normalize($text)
