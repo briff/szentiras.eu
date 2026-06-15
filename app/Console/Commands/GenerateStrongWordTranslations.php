@@ -322,6 +322,7 @@ class GenerateStrongWordTranslations extends Command
         $translation  = json_decode($responseString, true);
         if ($translation == NULL) {
             $this->error("Bad response from AI: " . $responseString);
+            return;
         }
         Storage::put("{$path}", $responseString);
         $this->info("{$wordNumber}: translation saved.");

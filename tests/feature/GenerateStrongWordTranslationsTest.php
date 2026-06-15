@@ -81,6 +81,31 @@ class GenerateStrongWordTranslationsTest extends TestCase
         $this->assertSame($json, Storage::get('translation/1_gpt-5.5.json'));
     }
 
+    public function test_bad_openai_response_does_not_save_file(): void
+    {
+        $this->createStrongWord(1, 'λόγος');
+        $badResponse = 'this is not json';
+
+        $mock = Mockery::mock(AiPromptService::class);
+        $mock->shouldReceive('generate')
+            ->once()
+            ->andReturn($badResponse);
+        $mock->shouldReceive('extractTextAndTokens')
+            ->once()
+            ->with($badResponse)
+            ->andReturn([$badResponse, 7]);
+        $this->app->instance(AiPromptService::class, $mock);
+
+        $this->artisan('szentiras:generate-strong-word-translations', [
+            '--word' => '1',
+            '--provider' => 'openai',
+        ])
+            ->expectsOutputToContain('Bad response from AI: ' . $badResponse)
+            ->assertSuccessful();
+
+        Storage::assertMissing('translation/1_gpt-5.5.json');
+    }
+
     public function test_limit_caps_number_of_generated_words(): void
     {
         $this->createStrongWord(1, 'λόγος');
