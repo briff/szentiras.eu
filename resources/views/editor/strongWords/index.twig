@@ -1,0 +1,94 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <h1>Görög szótár szerkesztése</h1>
+    <p class="text-muted">Strong-szavak szótári szócikkeinek szerkesztése és AI-generálása</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="strong-words-editor">
+    <form method="GET" action="{{ route('editor.strongWords.index') }}" class="mb-4">
+        <div class="input-group">
+            <input type="text" class="form-control" name="q" value="{{ filter }}"
+                   placeholder="Keresés görög szó, átírás, jelentés vagy Strong-szám szerint…">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-search"></i> Keresés
+            </button>
+            {% if filter %}
+                <a href="{{ route('editor.strongWords.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Szűrő törlése
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if strongWords.count() > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Strong</th>
+                        <th>Görög szó</th>
+                        <th>Átírás</th>
+                        <th>Jelentések</th>
+                        <th>Szócikk</th>
+                        <th>Előfordulás</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for strongWord in strongWords %}
+                    <tr>
+                        <td><code>{{ strongWord.number }}</code></td>
+                        <td><strong>{{ strongWord.lemma }}</strong></td>
+                        <td><small class="text-muted">{{ strongWord.transliteration }}</small></td>
+                        <td>
+                            <small>{{ strongWord.dictionaryMeanings|map(m => m.meaning)|join(', ') }}</small>
+                        </td>
+                        <td>
+                            {% if strongWord.dictionaryEntry %}
+                                <span class="badge bg-success">van</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">nincs</span>
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ strongWord.greek_verses_count }}</small></td>
+                        <td>
+                            <a href="{{ route('editor.strongWords.show', strongWord.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i> Szerkesztés
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if strongWords.hasPages() %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if strongWords.onFirstPage() %}
+                    <li class="page-item disabled"><span class="page-link">Előző</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ strongWords.previousPageUrl() }}">Előző</a></li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">{{ strongWords.currentPage() }} / {{ strongWords.lastPage() }}</span>
+                </li>
+                {% if strongWords.hasMorePages() %}
+                    <li class="page-item"><a class="page-link" href="{{ strongWords.nextPageUrl() }}">Következő</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Következő</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Nincs találat.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

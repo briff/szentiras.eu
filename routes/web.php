@@ -10,6 +10,7 @@ use SzentirasHu\Http\Controllers\Editor\AnonymousIdEditorController;
 use SzentirasHu\Http\Controllers\Editor\ApiKeyController;
 use SzentirasHu\Http\Controllers\Editor\ThemeController;
 use SzentirasHu\Http\Controllers\Editor\CommentaryEditorController;
+use SzentirasHu\Http\Controllers\Editor\StrongWordEditorController;
 use SzentirasHu\Http\Controllers\Editor\ContactMessageEditorController;
 use SzentirasHu\Http\Controllers\Contact\ContactController;
 use SzentirasHu\Http\Controllers\Contact\InboxController;
@@ -201,6 +202,14 @@ Route::middleware('editor')->group(function () {
         Route::get('/{apiKey}/edit', [ApiKeyController::class, 'edit'])->name('edit');
         Route::put('/{apiKey}', [ApiKeyController::class, 'update'])->name('update');
         Route::delete('/{apiKey}', [ApiKeyController::class, 'destroy'])->name('destroy');
+    });
+
+    // Strong word dictionary editor
+    Route::prefix('editor/strong-words')->name('editor.strongWords.')->group(function () {
+        Route::get('/', [StrongWordEditorController::class, 'index'])->name('index');
+        Route::get('/{strongWord}', [StrongWordEditorController::class, 'show'])->name('show');
+        Route::put('/{strongWord}', [StrongWordEditorController::class, 'update'])->name('update');
+        Route::post('/{strongWord}/generate', [StrongWordEditorController::class, 'generate'])->name('generate');
     });
 
     // Themes editor

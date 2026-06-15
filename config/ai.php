@@ -74,7 +74,7 @@ return [
             'model'             => env('AI_STRONG_WORD_MODEL', 'gpt-5.5'),
             'temperature'       => env('AI_STRONG_WORD_TEMPERATURE', 0.7),
             'max_output_tokens' => env('AI_STRONG_WORD_MAX_OUTPUT_TOKENS', 2048),
-            'timeout'           => env('AI_STRONG_WORD_TIMEOUT', 240),
+            'timeout'           => env('AI_STRONG_WORD_TIMEOUT', 480),
             'verbosity'         => env('AI_STRONG_WORD_VERBOSITY', 'high'),
             'reasoning_effort'  => env('AI_STRONG_WORD_REASONING_EFFORT', 'none'),
             'store'             => env('AI_STRONG_WORD_STORE', false),

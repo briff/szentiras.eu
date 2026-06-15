@@ -1,0 +1,206 @@
+{% extends 'layout.twig' %}
+
+{% block pageHeader %}
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>{{ strongWord.lemma }} <small class="text-muted">({{ strongWord.transliteration }})</small></h1>
+            <p class="text-muted">
+                <span class="badge bg-secondary">Strong {{ strongWord.number }}</span>
+                {% if strongWord.dictionaryEntry %}
+                    <span class="badge bg-info">forrás: {{ strongWord.dictionaryEntry.source }}</span>
+                {% endif %}
+            </p>
+        </div>
+        <a href="{{ route('editor.strongWords.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Vissza a listához
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if session('success') %}
+    <div class="alert alert-success"><i class="bi bi-check-circle"></i> {{ session('success') }}</div>
+{% endif %}
+{% if session('error') %}
+    <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ session('error') }}</div>
+{% endif %}
+
+<div class="strong-word-editor">
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Szótári szócikk</h5>
+            <button type="button" class="btn btn-sm btn-outline-success" id="generate-btn"
+                    data-generate-url="{{ route('editor.strongWords.generate', strongWord.id) }}">
+                <i class="bi bi-stars"></i> Generálás AI-val
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="generate-error" class="alert alert-danger d-none"></div>
+            <div id="preview-banner" class="alert alert-warning d-none">
+                <i class="bi bi-eye"></i> AI-előnézet betöltve (<span id="preview-tokens">0</span> token).
+                A mező-tartalmak nincsenek mentve, amíg rá nem kattint a <strong>Mentés</strong> gombra.
+            </div>
+            <form method="POST" action="{{ route('editor.strongWords.update', strongWord.id) }}" id="strong-word-form">
+                {{ csrf_field() }}
+                <input type="hidden" name="_method" value="PUT">
+
+                <div class="mb-3">
+                    <label for="paradigm" class="form-label">Szótári alak (paradigma)</label>
+                    <input type="text" class="form-control" id="paradigm" name="paradigm"
+                           value="{{ strongWord.dictionaryEntry.paradigm }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jelentések</label>
+                    <div id="meanings-container">
+                        {% for meaning in strongWord.dictionaryMeanings %}
+                            <div class="meaning-item mb-2 p-3 border rounded">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label small">Jelentés</label>
+                                        <input type="text" class="form-control" name="meanings[{{ loop.index0 }}][meaning]"
+                                               value="{{ meaning.meaning }}" required>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small">Magyarázat</label>
+                                        <input type="text" class="form-control" name="meanings[{{ loop.index0 }}][explanation]"
+                                               value="{{ meaning.explanation }}">
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-meaning">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-meaning">
+                        <i class="bi bi-plus-circle"></i> Új jelentés
+                    </button>
+                </div>
+
+                <div class="mb-3">
+                    <label for="etymology" class="form-label">Etimológia</label>
+                    <textarea class="form-control" id="etymology" name="etymology" rows="2">{{ strongWord.dictionaryEntry.etymology }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Megjegyzések</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="4">{{ strongWord.dictionaryEntry.notes }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<template id="meaning-template">
+    <div class="meaning-item mb-2 p-3 border rounded">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small">Jelentés</label>
+                <input type="text" class="form-control" name="meanings[__INDEX__][meaning]" value="" required>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label small">Magyarázat</label>
+                <input type="text" class="form-control" name="meanings[__INDEX__][explanation]" value="">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-meaning">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('meanings-container');
+    const template = document.getElementById('meaning-template');
+
+    function reindex() {
+        container.querySelectorAll('.meaning-item').forEach((item, index) => {
+            item.querySelector('input[name*="[meaning]"]').name = `meanings[${index}][meaning]`;
+            item.querySelector('input[name*="[explanation]"]').name = `meanings[${index}][explanation]`;
+        });
+    }
+
+    container.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-meaning')) {
+            e.target.closest('.meaning-item').remove();
+            reindex();
+        }
+    });
+
+    function addMeaning(meaning = '', explanation = '') {
+        const index = container.querySelectorAll('.meaning-item').length;
+        const html = template.innerHTML.replace(/__INDEX__/g, index);
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const item = temp.firstElementChild;
+        item.querySelector('input[name*="[meaning]"]').value = meaning;
+        item.querySelector('input[name*="[explanation]"]').value = explanation;
+        container.appendChild(item);
+    }
+
+    document.getElementById('add-meaning').addEventListener('click', function () {
+        addMeaning();
+    });
+
+    // AI generate -> editable preview (not persisted until the form is saved)
+    const generateBtn = document.getElementById('generate-btn');
+    const errorBox = document.getElementById('generate-error');
+    const previewBanner = document.getElementById('preview-banner');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    generateBtn.addEventListener('click', async function () {
+        errorBox.classList.add('d-none');
+        const originalHtml = generateBtn.innerHTML;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generálás…';
+
+        try {
+            const response = await fetch(generateBtn.dataset.generateUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Ismeretlen hiba.');
+            }
+
+            const t = data.translation;
+            document.getElementById('paradigm').value = t.word || '';
+            document.getElementById('etymology').value = t.etymology || '';
+            document.getElementById('notes').value = t.notes || '';
+
+            container.innerHTML = '';
+            (t.meanings || []).forEach(m => addMeaning(m.meaning || '', m.explanation || ''));
+
+            document.getElementById('preview-tokens').textContent = data.tokenUsage ?? 0;
+            previewBanner.classList.remove('d-none');
+            previewBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) {
+            errorBox.textContent = e.message;
+            errorBox.classList.remove('d-none');
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = originalHtml;
+        }
+    });
+});
+</script>
+{% endblock %}
