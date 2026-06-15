@@ -149,4 +149,26 @@ class StrongWordEditorControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee('Ἰησοῦς');
     }
+
+    public function testIndexSearchByTransliterationDoesNotCastToNumber(): void
+    {
+        $strongWord = $this->createStrongWord();
+        $this->createMeaning($strongWord->number, 'Jézus');
+
+        $response = $this->get(route('editor.strongWords.index', ['q' => 'Iesous']));
+
+        $response->assertOk();
+        $response->assertSee('Ἰησοῦς');
+    }
+
+    public function testIndexSearchByNumberMatchesStrongWord(): void
+    {
+        $strongWord = $this->createStrongWord();
+        $this->createMeaning($strongWord->number, 'Jézus');
+
+        $response = $this->get(route('editor.strongWords.index', ['q' => (string) $strongWord->number]));
+
+        $response->assertOk();
+        $response->assertSee('Ἰησοῦς');
+    }
 }

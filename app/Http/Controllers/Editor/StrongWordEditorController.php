@@ -122,11 +122,14 @@ class StrongWordEditorController extends Controller
             $normalized = mb_strtolower($filter);
             $query->where(function (Builder $q) use ($normalized, $filter): void {
                 $q->where('normalized', 'like', "{$normalized}%")
-                    ->orWhere('transliteration', 'like', "{$normalized}%")
-                    ->orWhere('number', $filter)
+                    ->orWhere('transliteration', 'ilike', "{$filter}%")
                     ->orWhereHas('dictionaryMeanings', function (Builder $meaning) use ($filter): void {
                         $meaning->where('meaning', 'ilike', "%{$filter}%");
                     });
+
+                if (is_numeric($filter)) {
+                    $q->orWhere('number', $filter);
+                }
             });
         }
 
