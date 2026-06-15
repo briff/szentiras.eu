@@ -23,7 +23,7 @@
         {% set containerPlaces = parsedPlaces[containerIndex] ?? [] %}
         {% if containerPlaces is not empty %}
             <div class="mt-3 mb-3">
-                <button class="btn btn-sm btn-outline-success ai-tool-element"
+                <button class="btn btn-sm btn-outline-success ai-tool-element hidden"
                         data-bs-toggle="modal"
                         data-bs-target="#placeModal"
                         data-place-ids="{{ containerPlaces|map(arrow => arrow.place_id)|join(',') }}"
