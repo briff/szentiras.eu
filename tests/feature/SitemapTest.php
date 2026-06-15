@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use SzentirasHu\Data\Entity\Book;
+use SzentirasHu\Data\Entity\ReadingPlan;
 use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Test\Common\TestCase;
@@ -50,6 +51,29 @@ class SitemapTest extends TestCase
 
         // Lev/Szám have no seeded verses, so they get no chapter URLs.
         $response->assertDontSee('<loc>' . url('/TESTTRANS/Lev1') . '</loc>', false);
+    }
+
+    public function test_sitemap_includes_static_landing_pages(): void
+    {
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertSee('<loc>' . url('/info') . '</loc>', false);
+        $response->assertSee('<loc>' . url('/forditasok') . '</loc>', false);
+        $response->assertSee('<loc>' . url('/tervek') . '</loc>', false);
+        $response->assertSee('<loc>' . url('/tools') . '</loc>', false);
+        $response->assertSee('<loc>' . url('/hang') . '</loc>', false);
+    }
+
+    public function test_sitemap_includes_reading_plans_and_their_days(): void
+    {
+        // The migration seeds reading plan id 1 ("365 napos terv") with day rows.
+        $readingPlan = ReadingPlan::with('days')->findOrFail(1);
+        $firstDay = $readingPlan->days->first();
+
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertSee('<loc>' . url("/tervek/{$readingPlan->id}") . '</loc>', false);
+        $response->assertSee('<loc>' . url("/tervek/{$readingPlan->id}/{$firstDay->day_number}") . '</loc>', false);
     }
 
     public function test_sitemap_includes_gnt_chapters_from_greek_verses(): void

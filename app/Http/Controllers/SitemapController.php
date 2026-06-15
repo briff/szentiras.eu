@@ -5,6 +5,7 @@ namespace SzentirasHu\Http\Controllers;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use SzentirasHu\Data\Entity\Book;
+use SzentirasHu\Data\Repository\ReadingPlanRepository;
 use SzentirasHu\Data\Repository\TranslationRepository;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Service\Text\BookService;
@@ -17,9 +18,35 @@ class SitemapController extends Controller
      */
     private const GNT_TEMPLATE_TRANSLATION_ID = 7;
 
+    /**
+     * Static, crawlable landing pages with no model-derived parameters.
+     *
+     * @var list<string>
+     */
+    private const STATIC_PAGES = [
+        '/',
+        '/info',
+        '/impresszum',
+        '/informaciok',
+        '/kereses',
+        '/ai-search',
+        '/forditasok',
+        '/hang',
+        '/tervek',
+        '/tools',
+        '/tools/memorygame',
+        '/tools/guessbook',
+        '/tools/memory-game-play',
+        '/tools/guess-word',
+        '/tools/verse-scramble',
+        '/tools/word-from-next-verse',
+        '/contact',
+    ];
+
     public function __construct(
         protected TranslationRepository $translationRepository,
-        protected BookService $bookService
+        protected BookService $bookService,
+        protected ReadingPlanRepository $readingPlanRepository
     ) {
     }
 
@@ -34,7 +61,12 @@ class SitemapController extends Controller
 
     private function buildSitemap(): string
     {
-        $locations = ['/'];
+        $locations = self::STATIC_PAGES;
+
+        foreach ($this->readingPlanLocations() as $location) {
+            $locations[] = $location;
+        }
+
         foreach ($this->translationRepository->getAll() as $translation) {
             $locations[] = "/{$translation->abbrev}";
             foreach ($this->booksFor($translation) as $book) {
@@ -53,6 +85,25 @@ class SitemapController extends Controller
             . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n"
             . $urls
             . '</urlset>' . "\n";
+    }
+
+    /**
+     * Each reading plan's overview page plus a page per day, matching the
+     * /tervek/{id} and /tervek/{plan_id}/{day_number} routes.
+     *
+     * @return list<string>
+     */
+    private function readingPlanLocations(): array
+    {
+        $locations = [];
+        foreach ($this->readingPlanRepository->getAll() as $readingPlan) {
+            $locations[] = "/tervek/{$readingPlan->id}";
+            foreach ($readingPlan->days as $day) {
+                $locations[] = "/tervek/{$readingPlan->id}/{$day->day_number}";
+            }
+        }
+
+        return $locations;
     }
 
     /**
