@@ -61,7 +61,7 @@ class SitemapTest extends TestCase
         $response->assertSee('<loc>' . url('/forditasok') . '</loc>', false);
         $response->assertSee('<loc>' . url('/tervek') . '</loc>', false);
         $response->assertSee('<loc>' . url('/tools') . '</loc>', false);
-        $response->assertSee('<loc>' . url('/hang') . '</loc>', false);
+        $response->assertSee('<loc>' . url('/rolunk') . '</loc>', false);
     }
 
     public function test_sitemap_omits_individual_reading_plans_and_their_days(): void

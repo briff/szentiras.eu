@@ -33,5 +33,10 @@ class InfoController extends Controller
         ]);
     }
 
+    public function about()
+    {
+        return view("info.about");
+    }
+
 
 }

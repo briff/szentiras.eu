@@ -77,6 +77,7 @@ Route::get("/api", '\SzentirasHu\Http\Controllers\Api\ApiController@getIndex')
 Route::get('/info', '\SzentirasHu\Http\Controllers\Home\InfoController@getIndex');
 Route::get('/impresszum', '\SzentirasHu\Http\Controllers\Home\InfoController@mission');
 Route::get('/informaciok', '\SzentirasHu\Http\Controllers\Home\InfoController@informaciok');
+Route::get('/rolunk', '\SzentirasHu\Http\Controllers\Home\InfoController@about');
 
 Route::get('/pdf/dialog/{translationAbbrev}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getDialog');
 Route::get('/pdf/ref/{translationId}/{refString}', '\SzentirasHu\Http\Controllers\Display\PdfController@getRef');
@@ -92,12 +93,6 @@ Route::post('/verse-card/update/{sessionId}', '\SzentirasHu\Http\Controllers\Dis
 Route::post('/verse-card/end/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@endSession')->name('verse-card.end');
 Route::get('/verse-card/download/{sessionId}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@download')->name('verse-card.download');
 Route::get('/verse-card/asset/{assetId}/{type}', '\SzentirasHu\Http\Controllers\Display\VerseCardController@serveAsset')->name('verse-card.asset');
-
-/** AUDIO */
-Route::get('/hang', '\SzentirasHu\Http\Controllers\Display\AudioBookController@index');
-
-Route::get('/hang/{id}', '\SzentirasHu\Http\Controllers\Display\AudioBookController@show')
-    ->where('id', '.+');
 
 /** Places */
 Route::get('/place/{placeIds}', [TextDisplayController::class, 'showPlaceDetails'])->where('placeIds', '[0-9,]+');

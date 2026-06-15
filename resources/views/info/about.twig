@@ -1,0 +1,107 @@
+{% extends 'layout' %}
+{% set pageTitle='Az oldalról | Szentírás' %}
+
+{% block content %}
+<div class="markdown-content mx-auto my-4">
+    {% apply markdown_to_html %}
+# Az oldalról
+
+A **Szentírás.eu** egy ingyenes, magyar nyelvű bibliaolvasó és bibliatanulmányozó honlap. Célunk, hogy a Szentírás szövege bárki számára könnyen elérhető legyen, és hogy a klasszikus olvasás mellett korszerű – köztük mesterséges intelligenciára épülő – eszközökkel is segítsük az Ige megértését, elmélyült tanulmányozását és játékos megismerését.
+
+Az oldalt a [Szent József Hackathon](https://szentjozsef.jezsuita.hu/szent-jozsef-hackathon/) közössége fejleszti és üzemelteti. A háttérről, a szerzői jogokról és küldetésünkről az [Információk](/informaciok) oldalon olvashatsz.
+
+## Kinek készült?
+
+Az oldal egyaránt szól azoknak, akik
+
+* egyszerűen csak **el szeretnék olvasni** egy-egy igeszakaszt vagy könyvet,
+* **összehasonlítanák** a különböző fordításokat,
+* **elmélyülten tanulmányoznák** a szöveget az eredeti göröggel, szótárral és kommentárokkal,
+* **közösségben, játékosan** szeretnék megismerni a Bibliát (hittanórán, ifjúsági csoportban, családban),
+* idézeteket, **megosztható tartalmakat** készítenének a Szentírásból.
+
+## Bibliafordítások
+
+Több teljes és újszövetségi fordítás érhető el egymás mellett:
+
+* **Szent István Társulati Biblia (SZIT)** – teljes katolikus fordítás,
+* **Békés–Dalos Újszövetségi Szentírás (BD)**,
+* **Simon Tamás László Újszövetség-fordítása (STL)**,
+* **Károli Gáspár revideált fordítása (KG)**,
+* **Káldi 1865-ös fordítás**,
+* **Görög Újszövetség és szószedet (GNT)** az eredeti szöveg tanulmányozásához.
+
+Az egyes fordításokról, forrásaikról és a felhasználási feltételekről (licenszek) a [Fordítások ismertetése](/forditasok) oldalon tájékozódhatsz.
+
+## Olvasás és összehasonlítás
+
+A szövegmegjelenítő áttekinthetően, fejezetenként mutatja az igeszakaszokat. Egyetlen kattintással **párhuzamosan összehasonlíthatod** a különböző fordításokat, így könnyen megfigyelheted a megfogalmazásbeli eltéréseket. A versekre kattintva további lehetőségek – PDF, igés kártya, hivatkozás megosztása – nyílnak meg.
+
+## Keresés
+
+Több keresési mód közül választhatsz:
+
+* **Szöveges keresés** a [keresőben](/kereses): szavakra és kifejezésekre kereshetsz a fordításokban.
+* **Görög keresés**: az eredeti újszövetségi szöveg görög szavai és **Strong-számai** alapján.
+* **MI-alapú (szemantikus) keresés** az [MI-keresőben](/ai-search): nem a pontos szavakra, hanem a **jelentésre, tartalomra** keres, így olyan igéket is megtalál, amelyek máshogy fogalmaznak, mégis a témádról szólnak.
+
+## Eredeti görög szöveg és szótár
+
+A **görög Újszövetség** tanulmányozását külön eszközök segítik:
+
+* **kattintható görög szavak**, amelyek megnyitják az adott szó adatlapját,
+* egy-egy görög szó **összes előfordulásának** listázása,
+* **görög–magyar szótár** mesterséges intelligencia által generált, lapozható magyar jelentésekkel.
+
+## Mesterséges intelligenciát használó eszközök
+
+A megértést MI-alapú segédeszközök is támogatják: a versekhez kapcsolódó **MI-magyarázatok** és a **görög szóelemzések** néhány kattintással elérhetők, a [szemantikus keresés](/ai-search) pedig tartalom szerint találja meg a keresett igéket.
+
+## Kommentárok
+
+Az egyes szakaszokhoz **kommentárok**, magyarázatok kapcsolódhatnak, amelyek a szöveg történeti és teológiai hátterének megértését segítik.
+
+## Bibliai helyek térképe
+
+A szentírási helyszíneket **interaktív térképen** is megtekintheted, részletes adatlapokkal. Így a bibliai események földrajzi háttere is kézzelfoghatóvá válik.
+
+## Olvasási tervek
+
+A [Tervek](/tervek) menüpontban **olvasási terveket** találsz, amelyek napról napra vezetnek végig egy-egy témán vagy bibliai könyvön, segítve a rendszeres szentírásolvasást.
+
+## Igéskártya-készítő
+
+Az **igéskártya-készítővel** néhány kattintással szép, **képes igeidézeteket** hozhatsz létre, amelyeket egyszerűen megoszthatsz másokkal.
+
+## PDF és nyomtatás
+
+Bármely igeszakaszt **PDF formátumban** is elérheted, így kényelmesen kinyomtathatod vagy elmentheted.
+
+## Játékok és kvízek
+
+A Szentírás játékos megismerését több [eszköz és játék](/tools) szolgálja:
+
+* **bibliai kvíz** több játékossal, tanári és játékos nézettel,
+* **„Találd ki a könyvet"** és **„Találd ki a hiányzó szót"** játékok,
+* **verskirakó** és **memóriajáték**,
+* **„Szó a következő versből"** feladvány.
+
+Ezek hittanórán, ifjúsági közösségben vagy családban is jól használhatók.
+
+## Megjelenés és kényelmi funkciók
+
+* **Sötét és világos téma** közötti váltás a saját ízlésednek megfelelően.
+* **Reszponzív felület**, amely mobilon, tableten és asztali gépen is jól használható.
+* **Anonim azonosító / profil**: beállításaidat és a hozzád tartozó tartalmakat egy egyszerű, személyes profilon kezelheted.
+
+## Kapcsolat és fejlesztői hozzáférés
+
+* A [kapcsolatfelvételi űrlapon](/contact) üzenetet küldhetsz a szerkesztőknek; a válaszokat is nyomon követheted.
+* Fejlesztőknek **API** is rendelkezésre áll a szövegek programozott eléréséhez – részletek az [API oldalon](/api).
+
+---
+
+Köszönjük, hogy a **Szentírás.eu**-t használod! Ha javaslatod vagy észrevételed van, írj nekünk a [kapcsolati oldalon](/contact) keresztül.
+    {% endapply %}
+</div>
+{% endblock %}

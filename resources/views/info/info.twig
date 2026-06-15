@@ -2,7 +2,9 @@
 {% set pageTitle='Újdonságok | Szentírás' %}
 
 {% block content %}
-{% apply markdown_to_html %}
-{% include 'info.news' %}
-{% endapply %}
+<div class="markdown-content mx-auto my-4">
+    {% apply markdown_to_html %}
+    {% include 'info.news' %}
+    {% endapply %}
+</div>
 {% endblock %}

@@ -2,24 +2,38 @@
 {% set pageTitle='Információk | Szentírás' %}
 
 {% block content %}
-<div class="container-fluid">
-    <h1>Információk</h1>
-    
-            <div class="card mb-4">
-                <div class="card-body">
-                    {% apply markdown_to_html %}
-                    {% include 'info.mission' %}
-                    {% endapply %}
-                </div>
-            </div>
+<div class="container-fluid my-4">
+    <h1 class="mb-4">Információk</h1>
 
-            <div class="card mb-4">
-                <div class="card-body">
-                    {% apply markdown_to_html %}
-                    {% include 'info.news' %}
-                    {% endapply %}
-                </div>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+            <i class="bi bi-info-circle fs-1 text-primary"></i>
+            <div>
+                <h2 class="h5 mb-1"><a href="/rolunk" class="text-decoration-none">Az oldalról – mi ez és mire való?</a></h2>
+                <p class="mb-2 text-muted">Ismerd meg a Szentírás.eu célját és funkcióit: fordítások, keresés, görög szöveg és szótár, kommentárok, olvasási tervek, igés kártya, játékok és további eszközök.</p>
+                <a href="/rolunk" class="btn btn-sm btn-outline-primary">Tovább az ismertetőhöz</a>
             </div>
-    
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="markdown-content">
+                {% apply markdown_to_html %}
+                {% include 'info.mission' %}
+                {% endapply %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="markdown-content">
+                {% apply markdown_to_html %}
+                {% include 'info.news' %}
+                {% endapply %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
