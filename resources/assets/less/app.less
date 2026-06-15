@@ -282,6 +282,56 @@
     border-color: #444;
 }
 
+:root[data-theme="dark"] .offcanvas,
+:root[data-theme="dark"] .offcanvas-sm,
+:root[data-theme="dark"] .offcanvas-md,
+:root[data-theme="dark"] .offcanvas-lg,
+:root[data-theme="dark"] .offcanvas-xl,
+:root[data-theme="dark"] .offcanvas-xxl {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    border-color: #444;
+}
+
+:root[data-theme="dark"] .offcanvas-header,
+:root[data-theme="dark"] .offcanvas-footer {
+    border-color: #444;
+}
+
+:root[data-theme="dark"] .popover {
+    background-color: #333;
+    border-color: #555;
+}
+
+:root[data-theme="dark"] .popover-header {
+    background-color: #3a3a3a;
+    color: var(--text-color);
+    border-bottom-color: #555;
+}
+
+:root[data-theme="dark"] .popover-body {
+    color: var(--text-color);
+}
+
+:root[data-theme="dark"] .popover .popover-arrow::before {
+    border-top-color: #555;
+    border-bottom-color: #555;
+    border-left-color: #555;
+    border-right-color: #555;
+}
+
+:root[data-theme="dark"] .popover .popover-arrow::after {
+    border-top-color: #333;
+    border-bottom-color: #333;
+    border-left-color: #333;
+    border-right-color: #333;
+}
+
+:root[data-theme="dark"] .offcanvas .btn-close,
+:root[data-theme="dark"] .popover .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 :root[data-theme="dark"] .nav-tabs .nav-link.active {
     background-color: #333 !important;
     color: var(--text-color) !important;
@@ -1062,6 +1112,11 @@ div.illustration {
         box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
         border: 1px solid #ddd;
     }
+}
+
+:root[data-theme="dark"] .greekSection .meaning-panel {
+    background-color: #333;
+    border-color: #555;
 }
 
 .label {
