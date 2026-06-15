@@ -70,6 +70,9 @@
                 </p>
             </div> #}
     {% endif %}
+    {% if not readingPlanDay and metaReference %}
+        <h1 class="h4">{{ metaReference }}</h1>
+    {% endif %}
     <div class="translationButtons">
         {% include 'textDisplay.translationButtons' with { 'translations': translations, 'translation': translation, 'mediaEnabled': mediaEnabled} %}
     </div>

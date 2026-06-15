@@ -464,6 +464,7 @@ class TextDisplayController extends Controller
                 'canonicalUrl' => $this->referenceService->getCanonicalUrl($canonicalRef, $translation->id),
                 'seoUrl' => $this->referenceService->getSeoUrl($canonicalRef, $translation->id),
                 'metaTitle' => $this->getTitle($verseContainers, $translation),
+                'metaReference' => $this->getReference($verseContainers),
                 'teaser' => $this->textService->getTeaser($verseContainers),
                 'chapterLinks' => $chapterLinks,
                 'media' => $mediaVerses ?? [],
@@ -672,17 +673,27 @@ class TextDisplayController extends Controller
 
     private function getTitle($verseContainers, $translation)
     {
-        $title = "";
-        $title .= "{$translation->name}";
+        $reference = $this->getReference($verseContainers);
+
+        return $reference !== "" ? "{$reference} – {$translation->name}" : $translation->name;
+    }
+
+    /**
+     * The reference in the canonical abbreviation defined by the translation,
+     * e.g. "Mt 23,4". Multiple containers are joined with "; ".
+     *
+     * @param VerseContainer[] $verseContainers
+     */
+    private function getReference($verseContainers): string
+    {
+        $references = [];
         foreach ($verseContainers as $verseContainer) {
-            if (isset($verseContainer->book)) {
-                $title .= " - {$verseContainer->book->name}";
-            }
             if (isset($verseContainer->bookRef)) {
-                $title .= " - {$verseContainer->bookRef->toString()}";
+                $references[] = $verseContainer->bookRef->toString();
             }
         }
-        return $title;
+
+        return implode('; ', $references);
     }
 
     /** this only works for one chapter references

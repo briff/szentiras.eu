@@ -1,5 +1,6 @@
 {% macro numv(verse, mark = false) -%}
-    <a id="v_{{ verse.gepi }}"></a>
+    {%- set verseUrl = '/' ~ verse.book.translation.abbrev ~ '/' ~ verse.book.abbrev ~ verse.chapter ~ ',' ~ verse.numv -%}
+    <a id="v_{{ verse.gepi }}" class="verse-anchor" href="{{ verseUrl }}" title="{{ verse.book.abbrev }} {{ verse.chapter }},{{ verse.numv }}" aria-label="{{ verse.book.name }} {{ verse.chapter }},{{ verse.numv }}"></a>
 {% if verse.footnotes is not empty %}
     {% set currentFootnote %}
     <p class='popover-footnote'>

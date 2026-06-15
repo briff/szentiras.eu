@@ -46,6 +46,8 @@ Route::domain('ujszov.szentiras.eu')->group(function () {
 
 Route::get('/', [ HomeController::class, 'index' ]);
 
+Route::get('/sitemap.xml', [\SzentirasHu\Http\Controllers\SitemapController::class, 'index']);
+
 Route::get("/kereses", '\SzentirasHu\Http\Controllers\Search\SearchController@getIndex');
 Route::post("/kereses/search", '\SzentirasHu\Http\Controllers\Search\SearchController@anySearch');
 Route::post("/kereses/quicksearch", '\SzentirasHu\Http\Controllers\Search\SearchController@anySearch');

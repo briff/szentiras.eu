@@ -97,6 +97,22 @@ class SmokeTest extends TestCase
         $this->get('/TESTTRANS/Ter2')->assertStatus(200);
     }
 
+    public function testChapterPageHasSeoTitleAndH1() {
+        $response = $this->get('/TESTTRANS/Ter2');
+        $response->assertStatus(200);
+        // Canonical abbreviation reference leads the title and is the page <h1>.
+        $response->assertSee('<title>Ter 2 ', false);
+        $response->assertSee('<h1 class="h4">Ter 2</h1>', false);
+    }
+
+    public function testVersesHaveReferenceAnchorLinks() {
+        $response = $this->get('/TESTTRANS/Ter2');
+        $response->assertStatus(200);
+        // Each verse is a crawlable permalink carrying its full canonical reference.
+        $response->assertSee('href="/TESTTRANS/Ter2,3"', false);
+        $response->assertSee('title="Ter 2,3"', false);
+    }
+
     public function testRefWithExplicitTranslation() {
         $this->get('/TESTTRANS/Ter2,3')->assertStatus(200);
     }
