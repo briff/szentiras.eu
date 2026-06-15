@@ -432,12 +432,19 @@ class TextDisplayController extends Controller
             $compareAbbrev = request()->query('compare');
             $compareTranslation = null;
             $compareVerseContainers = null;
+            $compareGreekVerses = null;
 
             if ($compareAbbrev) {
                 $compareTranslation = $this->translationRepository->getByAbbrev($compareAbbrev);
                 if ($compareTranslation && $allTranslation->contains($compareTranslation) && $compareAbbrev !== $translationAbbrev) {
-                    $compareCanonicalRef = CanonicalReference::fromString($reference, $compareTranslation->id);
-                    $compareVerseContainers = $this->textService->getTranslatedVerses($compareCanonicalRef, $compareTranslation);
+                    if ($compareAbbrev === 'GNT') {
+                        // GNT verses are stored separately from regular translations, so we align
+                        // the Greek text to the verses being displayed in the primary translation.
+                        $compareGreekVerses = $this->getGreekVersesForContainers($displayContainers);
+                    } else {
+                        $compareCanonicalRef = CanonicalReference::fromString($reference, $compareTranslation->id);
+                        $compareVerseContainers = $this->textService->getTranslatedVerses($compareCanonicalRef, $compareTranslation);
+                    }
                 }
             }
 
@@ -502,12 +509,56 @@ class TextDisplayController extends Controller
                     return $translationLink['abbrev'] === 'GNT' ? 1 : 0;
                 })->values(),
                 'compareTranslation' => $compareTranslation,
-                'compareVerseContainers' => $compareVerseContainers
+                'compareVerseContainers' => $compareVerseContainers,
+                'compareGreekVerses' => $compareGreekVerses
             ]);
         } catch (ParsingException $e) {
             // as this doesn't look like a valid reference
             abort(404);
         }
+    }
+
+    /**
+     * Collect the Greek (GNT) verses that line up with the verses displayed in the primary
+     * translation, grouped per verse container so the comparison view can render them side by side.
+     *
+     * @param VerseContainer[] $verseContainers
+     * @return array<int, \Illuminate\Support\Collection<int, GreekVerse>>
+     */
+    private function getGreekVersesForContainers(array $verseContainers): array
+    {
+        $compareGreekVerses = [];
+        foreach ($verseContainers as $verseContainer) {
+            $triples = [];
+            foreach ($verseContainer->getParsedVerses() as $verseData) {
+                $triples[] = [
+                    'usx_code' => $verseData->book->usx_code,
+                    'chapter' => $verseData->chapter,
+                    'verse' => $verseData->numv,
+                ];
+            }
+
+            if (empty($triples)) {
+                $compareGreekVerses[] = collect();
+                continue;
+            }
+
+            $compareGreekVerses[] = GreekVerse::query()
+                ->where(function ($query) use ($triples) {
+                    foreach ($triples as $triple) {
+                        $query->orWhere(function ($subQuery) use ($triple) {
+                            $subQuery->where('usx_code', $triple['usx_code'])
+                                ->where('chapter', $triple['chapter'])
+                                ->where('verse', $triple['verse']);
+                        });
+                    }
+                })
+                ->orderBy('chapter')
+                ->orderBy('verse')
+                ->get();
+        }
+
+        return $compareGreekVerses;
     }
 
     public function showReadingPlanList()
