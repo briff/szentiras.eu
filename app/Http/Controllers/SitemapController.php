@@ -4,12 +4,19 @@ namespace SzentirasHu\Http\Controllers;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Repository\TranslationRepository;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Service\Text\BookService;
 
 class SitemapController extends Controller
 {
+    /**
+     * The GNT (Greek) translation has no books of its own; it reuses the book
+     * list of this template translation, matching GreekTextController.
+     */
+    private const GNT_TEMPLATE_TRANSLATION_ID = 7;
+
     public function __construct(
         protected TranslationRepository $translationRepository,
         protected BookService $bookService
@@ -30,7 +37,7 @@ class SitemapController extends Controller
         $locations = ['/'];
         foreach ($this->translationRepository->getAll() as $translation) {
             $locations[] = "/{$translation->abbrev}";
-            foreach ($this->translationRepository->getBooks($translation) as $book) {
+            foreach ($this->booksFor($translation) as $book) {
                 foreach ($this->chaptersFor($translation, $book) as $chapter) {
                     $locations[] = "/{$translation->abbrev}/{$book->abbrev}{$chapter}";
                 }
@@ -46,6 +53,23 @@ class SitemapController extends Controller
             . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n"
             . $urls
             . '</urlset>' . "\n";
+    }
+
+    /**
+     * The books to list for a translation. GNT stores no books of its own, so
+     * it borrows the template translation's books (same as GreekTextController).
+     *
+     * @return iterable<Book>
+     */
+    private function booksFor($translation): iterable
+    {
+        if ($translation->abbrev === 'GNT') {
+            $template = $this->translationRepository->getById(self::GNT_TEMPLATE_TRANSLATION_ID);
+
+            return $this->bookService->getBooksForTranslation($template);
+        }
+
+        return $this->translationRepository->getBooks($translation);
     }
 
     /**

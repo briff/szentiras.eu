@@ -54,9 +54,10 @@ class SitemapTest extends TestCase
 
     public function test_sitemap_includes_gnt_chapters_from_greek_verses(): void
     {
-        // GNT (inserted by migration) stores its chapters in greek_verses.
+        // GNT (inserted by migration) has no books of its own: it reuses the
+        // template translation's book list and pulls chapters from greek_verses.
         $gnt = Translation::where('abbrev', 'GNT')->firstOrFail();
-        $this->createGreekBook($gnt->id);
+        $this->createGreekBook();
         Config::set('settings.enabledTranslations', array_merge(
             Config::get('settings.enabledTranslations'),
             [$gnt->id]
@@ -70,10 +71,21 @@ class SitemapTest extends TestCase
         $response->assertSee('<loc>' . url('/GNT/Mt3') . '</loc>', false);
     }
 
-    private function createGreekBook(int $translationId): void
+    private function createGreekBook(): void
     {
+        $templateTranslationId = 7;
+        if (Translation::find($templateTranslationId) === null) {
+            $template = new Translation();
+            $template->id = $templateTranslationId;
+            $template->name = 'GNT template translation';
+            $template->abbrev = 'GNTTPL';
+            $template->denom = 'denom';
+            $template->lang = 'hu';
+            $template->save();
+        }
+
         $book = new Book();
-        $book->translation_id = $translationId;
+        $book->translation_id = $templateTranslationId;
         $book->name = 'Evangélium Máté szerint';
         $book->abbrev = 'Mt';
         $book->link = 'Mt';
