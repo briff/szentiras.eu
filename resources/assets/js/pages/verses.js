@@ -169,6 +169,11 @@ const initToggler = function () {
         }
 
         if (turnOn) {
+            $('.parsedVerses span.numvai').each(function () {
+                if (this.textContent.length === 0) {
+                    this.textContent = this.dataset.numv + ' ';
+                }
+            });
             $('.parsedVerses span.numv').addClass('hidden');
             $('.parsedVerses span.numvai').removeClass('hidden');
             $('button.ai-tool-element').removeClass('hidden');
