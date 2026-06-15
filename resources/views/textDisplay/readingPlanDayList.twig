@@ -1,5 +1,9 @@
 {% extends 'layout' %}
 
+{% block meta %}
+    <meta name="robots" content="noindex,follow">
+{% endblock %}
+
 {% block content %}
     <h1>{{ readingPlan.name }}</h1>
 

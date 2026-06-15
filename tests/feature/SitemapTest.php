@@ -64,16 +64,17 @@ class SitemapTest extends TestCase
         $response->assertSee('<loc>' . url('/hang') . '</loc>', false);
     }
 
-    public function test_sitemap_includes_reading_plans_and_their_days(): void
+    public function test_sitemap_omits_individual_reading_plans_and_their_days(): void
     {
         // The migration seeds reading plan id 1 ("365 napos terv") with day rows.
+        // These pages only link to other pages, so they are excluded from the sitemap.
         $readingPlan = ReadingPlan::with('days')->findOrFail(1);
         $firstDay = $readingPlan->days->first();
 
         $response = $this->get('/sitemap.xml');
 
-        $response->assertSee('<loc>' . url("/tervek/{$readingPlan->id}") . '</loc>', false);
-        $response->assertSee('<loc>' . url("/tervek/{$readingPlan->id}/{$firstDay->day_number}") . '</loc>', false);
+        $response->assertDontSee('<loc>' . url("/tervek/{$readingPlan->id}") . '</loc>', false);
+        $response->assertDontSee('<loc>' . url("/tervek/{$readingPlan->id}/{$firstDay->day_number}") . '</loc>', false);
     }
 
     public function test_sitemap_includes_gnt_chapters_from_greek_verses(): void
