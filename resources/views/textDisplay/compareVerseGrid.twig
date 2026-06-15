@@ -1,0 +1,74 @@
+{#
+  Verse-by-verse aligned comparison grid.
+
+  The left column drives the rows; each left verse is matched to a right-column verse by
+  "chapter:verse" so verse N lines up exactly with verse N. Headings (only present on parsed
+  verses) span the full width above their verse.
+
+  Inputs:
+    leftList       ordered list of verses (parsed verses or GreekVerse models)
+    leftType       'verse' | 'greek'
+    rightMap       map "chapter:verse" => verse (parsed verse or GreekVerse model)
+    rightType      'verse' | 'greek'
+    leftLabel      column header for the left side
+    rightLabel     column header for the right side
+    translation        primary Translation (for verseCell xrefs links on the left)
+    compareTranslation comparison Translation (for verseCell xrefs links on the right)
+    verseToPlaces, highlightedGepis  optional rendering context for the primary side
+#}
+{% import 'textDisplay.compareCells' as cells %}
+{% set verseToPlaces = verseToPlaces|default({}) %}
+{% set highlightedGepis = highlightedGepis|default([]) %}
+
+<div class="compareGridHeader">
+    <div class="compareGridHeaderCell">{{ leftLabel }}</div>
+    <div class="compareGridHeaderCell">{{ rightLabel }}</div>
+</div>
+<div class="compareGrid parsedVerses">
+    {% for leftVerse in leftList %}
+        {% if leftType == 'greek' %}
+            {% set chapter = leftVerse.chapter %}
+            {% set verseNumber = leftVerse.verse %}
+        {% else %}
+            {% set chapter = leftVerse.chapter %}
+            {% set verseNumber = leftVerse.numv %}
+        {% endif %}
+        {% set key = chapter ~ ':' ~ verseNumber %}
+
+        {% if leftType == 'verse' %}
+            {%- for headingLevel in 0..4 -%}
+                {%- if leftVerse.headings[headingLevel] is defined -%}
+                    {% set tag = 'h' ~ (headingLevel+1) %}
+                    <div class="compareHeading">
+                        <{{ tag }} id="heading_{{ leftVerse.gepi }}_{{ headingLevel }}">
+                            {{ leftVerse.headings[headingLevel]|raw }}
+                            <br>
+                            <small>{{ leftVerse.headings[headingLevel]|striptags('<br><a>')|raw }}</small>
+                        </{{ tag }}>
+                    </div>
+                {%- endif -%}
+            {%- endfor -%}
+        {% endif %}
+
+        <div class="compareCell compareCol-primary">
+            {% if leftType == 'greek' %}
+                {{ cells.greekCell(leftVerse) }}
+            {% else %}
+                {{ cells.verseCell(leftVerse, translation, verseToPlaces, highlightedGepis) }}
+            {% endif %}
+        </div>
+        <div class="compareCell compareCol-secondary">
+            {% set rightVerse = rightMap[key] is defined ? rightMap[key] : null %}
+            {% if rightVerse %}
+                {% if rightType == 'greek' %}
+                    {{ cells.greekCell(rightVerse) }}
+                {% else %}
+                    {{ cells.verseCell(rightVerse, compareTranslation, {}, []) }}
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% if rightType == 'greek' %}
+    {% include 'greekText.greekWordOffcanvas' %}
+{% endif %}

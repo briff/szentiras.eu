@@ -17,6 +17,8 @@
 
 {% block content %}
 
+    {% set compareQuery = (compareTranslation is defined and compareTranslation) ? '?compare=' ~ compareTranslation.abbrev : '' %}
+
     <h2>Görög Újszövetségi Szentírás</h2>
 
     {% if showLanding %}
@@ -119,7 +121,7 @@
         <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 {% if previousChapter is not null %}
-                    <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ previousChapter }}">
+                    <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ previousChapter }}{{ compareQuery }}">
                         <i class="bi bi-chevron-left"></i> Előző
                     </a>
                 {% else %}
@@ -127,7 +129,7 @@
                 {% endif %}
                 <span class="fw-bold">{{ book.abbrev }} {{ currentChapter }}</span>
                 {% if nextChapter is not null %}
-                    <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ nextChapter }}">
+                    <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ nextChapter }}{{ compareQuery }}">
                         Következő <i class="bi bi-chevron-right"></i>
                     </a>
                 {% else %}
@@ -139,7 +141,7 @@
                     {% if ch == currentChapter %}
                         <span class="btn btn-sm btn-primary disabled">{{ ch }}</span>
                     {% else %}
-                        <a class="btn btn-sm btn-outline-secondary" role="button" href="/GNT/{{ book.abbrev }}{{ ch }}">{{ ch }}</a>
+                        <a class="btn btn-sm btn-outline-secondary" role="button" href="/GNT/{{ book.abbrev }}{{ ch }}{{ compareQuery }}">{{ ch }}</a>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -148,6 +150,23 @@
     {% endif %}
     {% endif %}
 
+    {% if compareTranslation is defined and compareTranslation and compareVerseContainers %}
+        {% set rightMap = {} %}
+        {% for container in compareVerseContainers %}
+            {% for cv in container.parsedVerses %}
+                {% set rightMap = rightMap|merge({ (cv.chapter ~ ':' ~ cv.numv): cv }) %}
+            {% endfor %}
+        {% endfor %}
+        {{ include('textDisplay.compareVerseGrid', {
+            'leftList': greekVerses,
+            'leftType': 'greek',
+            'rightMap': rightMap,
+            'rightType': 'verse',
+            'leftLabel': 'GNT',
+            'rightLabel': compareTranslation.name,
+            'compareTranslation': compareTranslation
+        }) }}
+    {% else %}
     {% set displayedChapter = null %}
     <div class="parsedVerses greek">
         {% for greekVerse in greekVerses %}
@@ -164,20 +183,21 @@
                 <span class="verse-text">{% include 'greekText.clickableGreekText' with {'words': greekVerse.annotatedWords} %}</span>
         {% endfor %}
     </div>
+    {% endif %}
 
     {% include 'greekText.greekWordOffcanvas' %}
 
     {% if currentChapter is not null and (previousChapter is not null or nextChapter is not null) %}
     <div class="d-flex align-items-center justify-content-between mt-3">
         {% if previousChapter is not null %}
-            <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ previousChapter }}">
+            <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ previousChapter }}{{ compareQuery }}">
                 <i class="bi bi-chevron-left"></i> {{ book.abbrev }} {{ previousChapter }}
             </a>
         {% else %}
             <span></span>
         {% endif %}
         {% if nextChapter is not null %}
-            <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ nextChapter }}">
+            <a class="btn btn-sm btn-outline-primary" role="button" href="/GNT/{{ book.abbrev }}{{ nextChapter }}{{ compareQuery }}">
                 {{ book.abbrev }} {{ nextChapter }} <i class="bi bi-chevron-right"></i>
             </a>
         {% else %}
@@ -204,6 +224,31 @@
                 <button type="button" class="btn btn-sm inactive" id="toggleAiTools" title="Segédeszközök" style="background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;">
                     <i class="bi-tools"></i>
                 </button>
+                {% if book and currentChapter is not null %}
+                    {% set gntChapterPath = '/GNT/' ~ book.abbrev ~ currentChapter %}
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm {% if compareTranslation %}active{% else %}inactive{% endif %}" data-bs-toggle="dropdown" title="Fordítás párhuzamos olvasása" style="{% if compareTranslation %}background-color: #0d6efd; color: white;{% else %}background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;{% endif %}">
+                            <i class="bi-columns-gap"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if compareTranslation %}
+                                <li><span class="dropdown-item-text"><strong>{{ compareTranslation.name }}</strong></span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ gntChapterPath }}">
+                                    <i class="bi-x"></i> Összehasonlítás bezárása
+                                </a></li>
+                            {% else %}
+                                {% for otherTranslation in translationLinks %}
+                                    {% if otherTranslation.abbrev != 'GNT' and otherTranslation.enabled %}
+                                        <li><a class="dropdown-item" href="{{ gntChapterPath }}?compare={{ otherTranslation.abbrev }}">
+                                            {{ otherTranslation.abbrev }}
+                                        </a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                {% endif %}
                 {% if not mediaEnabled %}
                     <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
                         <i class="bi-images"></i>

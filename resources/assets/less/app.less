@@ -993,6 +993,55 @@ div.illustration {
     }
 }
 
+.compareGridHeader {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--bs-body-bg);
+
+    .compareGridHeaderCell {
+        font-weight: 600;
+        padding: .25rem 0;
+        border-bottom: 2px solid var(--bs-border-color);
+    }
+
+    .compareGridHeaderCell + .compareGridHeaderCell {
+        padding-left: 1rem;
+    }
+}
+
+.compareGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1rem;
+
+    .compareHeading {
+        grid-column: 1 / -1;
+    }
+
+    .compareCell {
+        padding: .35rem 0;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    .compareCol-secondary {
+        padding-left: 1rem;
+        border-left: 1px solid var(--bs-border-color);
+    }
+
+    @media (max-width: 575.98px) {
+        column-gap: .5rem;
+        font-size: calc(var(--book-font-size) * 0.85);
+
+        .compareCol-secondary {
+            padding-left: .5rem;
+        }
+    }
+}
+
 .greekSection {
     .greekWord {
         cursor: pointer;

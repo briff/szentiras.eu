@@ -87,20 +87,7 @@
     {% endif %}
     <span id="data" {% if scrollTo %} data-scroll-to="{{ scrollTo }}" {% endif %}></span>
     {% if compareTranslation and (compareVerseContainers or compareGreekVerses) %}
-        <div class="row">
-            <div class="col-lg-6">
-                <h5>{{ translation.name }}</h5>
-                {{ include('textDisplay.verseContainers') }}
-            </div>
-            <div class="col-lg-6">
-                <h5>{{ compareTranslation.name }}</h5>
-                {% if compareGreekVerses %}
-                    {{ include('textDisplay.compareGreekVerses') }}
-                {% else %}
-                    {{ include('textDisplay.compareVerseContainers') }}
-                {% endif %}
-            </div>
-        </div>
+        {{ include('textDisplay.verseContainers', { 'compareMode': true }) }}
     {% else %}
         {{ include('textDisplay.verseContainers') }}
     {% endif %}

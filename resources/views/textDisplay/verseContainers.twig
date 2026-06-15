@@ -35,7 +35,34 @@
         {% endif %}
     </div>
         <div class="mb-2">
-         {{ include('textDisplay.parsedVerseContainer', { 'verseContainer' : verseContainer, 'translation' : translation, 'verseToPlaces': verseToPlaces}) }}
+         {% if compareMode|default(false) %}
+            {% set rightMap = {} %}
+            {% if compareGreekVerses is defined and compareGreekVerses %}
+                {% set rightType = 'greek' %}
+                {% for gv in compareGreekVerses[containerIndex]|default([]) %}
+                    {% set rightMap = rightMap|merge({ (gv.chapter ~ ':' ~ gv.verse): gv }) %}
+                {% endfor %}
+            {% else %}
+                {% set rightType = 'verse' %}
+                {% for cv in (compareVerseContainers[containerIndex].parsedVerses)|default([]) %}
+                    {% set rightMap = rightMap|merge({ (cv.chapter ~ ':' ~ cv.numv): cv }) %}
+                {% endfor %}
+            {% endif %}
+            {{ include('textDisplay.compareVerseGrid', {
+                'leftList': verseContainer.parsedVerses,
+                'leftType': 'verse',
+                'rightMap': rightMap,
+                'rightType': rightType,
+                'leftLabel': translation.name,
+                'rightLabel': compareTranslation.name,
+                'translation': translation,
+                'compareTranslation': compareTranslation,
+                'verseToPlaces': verseToPlaces,
+                'highlightedGepis': highlightedGepis|default([])
+            }) }}
+         {% else %}
+            {{ include('textDisplay.parsedVerseContainer', { 'verseContainer' : verseContainer, 'translation' : translation, 'verseToPlaces': verseToPlaces}) }}
+         {% endif %}
             {# Commentary section #}
             {% set containerCommentaries = parsedCommentaries[containerIndex] ?? [] %}
             {% set containerReference = verseContainer.bookRef.toString() %}

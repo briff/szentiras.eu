@@ -37,12 +37,12 @@ class TextDisplayComparisonTest extends TestCase
     }
 
     /**
-     * Test that the view templates are properly structured
+     * Test that the aligned comparison view templates are present
      */
     public function test_comparison_view_templates_exist(): void
     {
-        // Verify compareVerseContainers.twig template exists and is syntactically correct
-        $this->assertFileExists(resource_path('views/textDisplay/compareVerseContainers.twig'));
+        $this->assertFileExists(resource_path('views/textDisplay/compareCells.twig'));
+        $this->assertFileExists(resource_path('views/textDisplay/compareVerseGrid.twig'));
     }
 
     /**

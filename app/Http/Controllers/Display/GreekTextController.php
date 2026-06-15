@@ -8,6 +8,7 @@ use SzentirasHu\Data\Entity\Translation;
 use SzentirasHu\Data\Repository\TranslationRepository;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Service\Text\BookService;
+use SzentirasHu\Service\Text\TextService;
 use SzentirasHu\Service\Text\TranslationService;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Service\Reference\ParsingException;
@@ -21,7 +22,8 @@ class GreekTextController extends Controller
         protected TranslationService $translationService,
         protected TranslationRepository $translationRepository,
         protected ReferenceService $referenceService,
-        protected NumberingSchemeService $numberingSchemeService
+        protected NumberingSchemeService $numberingSchemeService,
+        protected TextService $textService
     )
     {
     }
@@ -87,6 +89,27 @@ class GreekTextController extends Controller
             }
         }
         
+        // Handle parallel comparison translation (read a translation next to the Greek text)
+        $compareTranslation = null;
+        $compareVerseContainers = null;
+        $compareAbbrev = request()->query('compare');
+        if ($compareAbbrev && $compareAbbrev !== 'GNT' && $book && $currentChapter !== null) {
+            $candidate = $this->translationRepository->getByAbbrev($compareAbbrev);
+            if ($candidate && $this->translationRepository->getAll()->contains($candidate)) {
+                try {
+                    $chapterRef = CanonicalReference::fromString("{$book->abbrev}{$currentChapter}", $templateTranslation);
+                    $compareRef = $this->referenceService->translateReference($chapterRef, $candidate->id);
+                    $containers = $this->textService->getTranslatedVerses($compareRef, $candidate);
+                    if (!empty($containers)) {
+                        $compareTranslation = $candidate;
+                        $compareVerseContainers = $containers;
+                    }
+                } catch (ParsingException $e) {
+                    // Reference not available in the comparison translation; skip comparison silently.
+                }
+            }
+        }
+
         // Get all translations for the translation switcher
         $allTranslations = $this->translationRepository->getAll();
         
@@ -153,6 +176,8 @@ class GreekTextController extends Controller
             'translationLinks' => $translationLinks,
             'showLanding' => $book === null,
             'teaser' => $teaser,
+            'compareTranslation' => $compareTranslation,
+            'compareVerseContainers' => $compareVerseContainers,
         ]);
     }
 }
