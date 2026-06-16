@@ -23,6 +23,15 @@ class SitemapTest extends TestCase
         Artisan::call('cache:clear');
         $this->seed(\Database\Seeders\DatabaseSeeder::class);
         Cache::flush();
+
+        @unlink(public_path('sitemap.xml'));
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink(public_path('sitemap.xml'));
+
+        parent::tearDown();
     }
 
     public function test_sitemap_is_served_as_xml(): void
@@ -94,6 +103,31 @@ class SitemapTest extends TestCase
         $response->assertSee('<loc>' . url('/GNT') . '</loc>', false);
         $response->assertSee('<loc>' . url('/GNT/Mt1') . '</loc>', false);
         $response->assertSee('<loc>' . url('/GNT/Mt3') . '</loc>', false);
+    }
+
+    public function test_generate_command_writes_static_sitemap_file(): void
+    {
+        $path = public_path('sitemap.xml');
+
+        $exitCode = Artisan::call('szentiras:generate-sitemap');
+
+        $this->assertSame(0, $exitCode);
+        $this->assertFileExists($path);
+
+        $contents = (string) file_get_contents($path);
+        $this->assertStringContainsString('<urlset', $contents);
+        $this->assertStringContainsString('<loc>' . url('/TESTTRANS/Ter50') . '</loc>', $contents);
+    }
+
+    public function test_sitemap_route_serves_pregenerated_static_file_when_present(): void
+    {
+        file_put_contents(public_path('sitemap.xml'), '<?xml version="1.0"?><urlset>pregenerated</urlset>');
+
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
+        $response->assertSee('pregenerated', false);
     }
 
     private function createGreekBook(): void

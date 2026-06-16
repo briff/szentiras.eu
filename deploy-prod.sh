@@ -218,6 +218,12 @@ for i in {1..10}; do
     fi
 done
 
+# 7. Generate the static sitemap so Apache can serve public/sitemap.xml directly (no PHP/DB per request)
+echo "7. Generating sitemap..."
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml exec -T app php artisan szentiras:generate-sitemap" \
+    && echo "   ✅ Sitemap generated" \
+    || echo "   ⚠️  Sitemap generation failed — the app will fall back to building it on demand"
+
 # 8. Verify services are running
 echo "8. Verifying services..."
 sleep 5
