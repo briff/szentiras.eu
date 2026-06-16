@@ -316,6 +316,14 @@ class ImportKaldiScripture extends Command
             throw new RuntimeException("Could not read book file: {$bookPath}");
         }
 
+        return $this->parseVersesFromHtml($html, $slug);
+    }
+
+    /**
+     * @return array<int, array{chapter:int,numv:int,tip:int,verse:string}>
+     */
+    private function parseVersesFromHtml(string $html, string $slug): array
+    {
         $previousLibxmlUseInternalErrors = libxml_use_internal_errors(true);
         libxml_clear_errors();
 
@@ -328,7 +336,7 @@ class ImportKaldiScripture extends Command
         $currentVerse = null;
         $hasVerseInCurrentChapter = false;
 
-        $collectDiagnostics = $this->output->isVerbose();
+        $collectDiagnostics = $this->output?->isVerbose() ?? false;
 
         $stats = [
             'paragraphs_total' => 0,
@@ -341,7 +349,7 @@ class ImportKaldiScripture extends Command
             'msonormal_empty_text' => 0,
             'msonormal_without_active_marker' => 0,
             'rows_verse' => 0,
-            'rows_chapter_title' => 0,
+            'chapter_arguments_dropped' => 0,
             'rows_appended_to_previous' => 0,
         ];
 
@@ -442,14 +450,11 @@ class ImportKaldiScripture extends Command
             }
 
             if ($currentChapter !== null && $hasVerseInCurrentChapter === false) {
-                $rows[] = [
-                    'chapter' => $currentChapter,
-                    'numv' => 0,
-                    'tip' => 701,
-                    'verse' => $text,
-                ];
+                // Káldi prints a summary paragraph ("argumentum") before verse 1 of each
+                // chapter. It has no verse number, so we skip it entirely rather than store
+                // it as a phantom verse 0, which produced bogus references like "1Jan 2,0".
                 if ($collectDiagnostics) {
-                    $stats['rows_chapter_title']++;
+                    $stats['chapter_arguments_dropped']++;
                 }
                 continue;
             }
@@ -490,7 +495,7 @@ class ImportKaldiScripture extends Command
                 count($rows)
             ));
 
-            if (($this->output->isVeryVerbose() && $collectDiagnostics) || count($rows) === 0) {
+            if ((($this->output?->isVeryVerbose() ?? false) && $collectDiagnostics) || count($rows) === 0) {
                 $this->line('Kaldi DOM anomalies [' . $slug . ']: ' . json_encode($samples, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             }
         }
