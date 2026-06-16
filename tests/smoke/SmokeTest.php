@@ -154,14 +154,15 @@ class SmokeTest extends TestCase
         $response->assertDontSee('id="commentary-panels-', false);
     }
 
-    public function testCommentaryContentEndpointRendersUncachedFragment() {
+    public function testCommentaryContentEndpointIsShortCacheableForAnonymous() {
         $response = $this->get('/api/commentaries/content?reference=Ter2&translation=TESTTRANS&containerIndex=0');
         $response->assertStatus(200);
         $response->assertSee('commentary-panels-0', false);
-        // The fragment carries live, per-user state and must never be shared-cached.
+        // Anonymous visitors get a short shared cache so bot floods collapse to few origin hits.
         $cacheControl = (string) $response->headers->get('Cache-Control');
-        $this->assertStringContainsString('no-store', $cacheControl);
-        $this->assertStringNotContainsString('public', $cacheControl);
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('s-maxage=300', $cacheControl);
+        $response->assertHeaderMissing('Set-Cookie');
     }
 
     public function testCommentaryContentEndpointUnknownTranslationIs404() {

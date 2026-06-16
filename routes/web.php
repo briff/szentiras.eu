@@ -227,8 +227,11 @@ Route::middleware('commentaryGeneration')->group(function () {
 // Public API for commentary status
 Route::get('/api/commentaries/status', [CommentaryEditorController::class, 'statusByReference']);
 
-// Commentary HTML fragment, loaded client-side so verse pages stay CDN-cacheable
-Route::get('/api/commentaries/content', [CommentaryEditorController::class, 'contentByReference']);
+// Commentary HTML fragment, loaded client-side so verse pages stay CDN-cacheable.
+// Short shared TTL so bot floods (headless browsers run the JS) collapse to a few
+// origin hits; logged-in users carry the anonymous_token cookie and bypass the cache.
+Route::get('/api/commentaries/content', [CommentaryEditorController::class, 'contentByReference'])
+    ->middleware('cacheable:300');
 
 // Internal API for books (used by frontend components)
 Route::get('/internal-api/books/{translationAbbrev?}', [\SzentirasHu\Http\Controllers\Api\ApiController::class, 'getBooks'])

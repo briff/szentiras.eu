@@ -40,9 +40,12 @@ class CacheAnonymousResponse
                 $response->headers->removeCookie($cookie->getName(), $cookie->getPath(), $cookie->getDomain());
             }
 
+            $browserMaxAge = (int) $request->attributes->get('cache_max_age', config('page_cache.browser_max_age'));
+            $cdnMaxAge = (int) $request->attributes->get('cache_cdn_max_age', config('page_cache.cdn_max_age'));
+
             $response->setPublic();
-            $response->setMaxAge((int) config('page_cache.browser_max_age'));
-            $response->setSharedMaxAge((int) config('page_cache.cdn_max_age'));
+            $response->setMaxAge($browserMaxAge);
+            $response->setSharedMaxAge($cdnMaxAge);
         } else {
             $response->setPrivate();
             $response->headers->addCacheControlDirective('no-store');

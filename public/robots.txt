@@ -15,6 +15,7 @@ Disallow: /login
 Disallow: /login/
 Disallow: /logout
 Disallow: /logout/
+Disallow: /api/
 Disallow: /*?compare=
 Disallow: /*&compare=
 Disallow: /*?fullContext

@@ -50,17 +50,18 @@ class CommentaryEditorController extends Controller
         $commentaries = $this->commentaryService->findForReference($reference, $translation);
         $isEditor = $this->editorService->currentIsEditor();
 
-        return response()
-            ->view('textDisplay.commentarySection', [
-                'containerCommentaries' => $this->commentaryService->parseCommentaryCollection($commentaries),
-                'containerReference' => $referenceString,
-                'containerIndex' => (int) $request->input('containerIndex', 0),
-                'translation' => $translation,
-                'canGenerateCommentary' => $this->commentaryService->canGenerateCommentary($isEditor),
-                'commentaryGenerationPossible' => $this->commentaryService->commentaryGenerationPossible(),
-                'isEditor' => $isEditor,
-            ])
-            ->header('Cache-Control', 'private, no-store');
+        // Caching is governed by the cacheable/CacheAnonymousResponse middleware:
+        // anonymous visitors get a short shared cache, logged-in users (anonymous_token
+        // cookie) get a private, no-store response so they see their commentaries live.
+        return response()->view('textDisplay.commentarySection', [
+            'containerCommentaries' => $this->commentaryService->parseCommentaryCollection($commentaries),
+            'containerReference' => $referenceString,
+            'containerIndex' => (int) $request->input('containerIndex', 0),
+            'translation' => $translation,
+            'canGenerateCommentary' => $this->commentaryService->canGenerateCommentary($isEditor),
+            'commentaryGenerationPossible' => $this->commentaryService->commentaryGenerationPossible(),
+            'isEditor' => $isEditor,
+        ]);
     }
 
     /**

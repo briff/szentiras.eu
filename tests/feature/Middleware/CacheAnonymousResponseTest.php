@@ -51,8 +51,23 @@ class CacheAnonymousResponseTest extends TestCase
         $result = $this->handle($request, new Response('ok', 200));
 
         $cacheControl = $result->headers->get('Cache-Control');
+        // Logged-in users (anonymous_token) must never be served a shared-cached copy,
+        // so they see their own commentaries the moment they generate them.
         $this->assertStringContainsString('private', $cacheControl);
         $this->assertStringContainsString('no-store', $cacheControl);
+    }
+
+    public function test_short_ttl_override_is_respected(): void
+    {
+        $request = $this->cacheableGet();
+        $request->attributes->set('cache_max_age', 300);
+        $request->attributes->set('cache_cdn_max_age', 300);
+
+        $result = $this->handle($request, new Response('ok', 200));
+
+        $cacheControl = $result->headers->get('Cache-Control');
+        $this->assertStringContainsString('s-maxage=300', $cacheControl);
+        $this->assertStringContainsString('max-age=300', $cacheControl);
     }
 
     public function test_non_cacheable_route_is_untouched(): void
