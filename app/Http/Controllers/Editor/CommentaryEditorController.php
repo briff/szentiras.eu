@@ -10,6 +10,7 @@ use SzentirasHu\Models\Commentary;
 use SzentirasHu\Service\Text\BookService;
 use SzentirasHu\Service\Text\TranslationService;
 use SzentirasHu\Service\Ai\CommentaryService;
+use SzentirasHu\Service\Editor\EditorService;
 use SzentirasHu\Service\Reference\CanonicalReference;
 use SzentirasHu\Data\Entity\Translation;
 
@@ -19,7 +20,48 @@ class CommentaryEditorController extends Controller
         protected TranslationService $translationService,
         protected BookService $bookService,
         protected CommentaryService $commentaryService,
+        protected EditorService $editorService,
     ) {}
+
+    /**
+     * Render the commentary section for one verse container as an HTML fragment.
+     * Loaded client-side so the verse pages themselves stay CDN-cacheable while
+     * commentaries (which change frequently) are always served live.
+     */
+    public function contentByReference(Request $request)
+    {
+        $request->validate([
+            'reference' => 'required|string',
+            'translation' => 'required|string',
+        ]);
+
+        $referenceString = $request->input('reference');
+        $translation = Translation::where('abbrev', $request->input('translation'))->first();
+        if (!$translation) {
+            return response('', 404);
+        }
+
+        try {
+            $reference = CanonicalReference::fromString($referenceString, $translation->id);
+        } catch (\Exception $e) {
+            return response('', 400);
+        }
+
+        $commentaries = $this->commentaryService->findForReference($reference, $translation);
+        $isEditor = $this->editorService->currentIsEditor();
+
+        return response()
+            ->view('textDisplay.commentarySection', [
+                'containerCommentaries' => $this->commentaryService->parseCommentaryCollection($commentaries),
+                'containerReference' => $referenceString,
+                'containerIndex' => (int) $request->input('containerIndex', 0),
+                'translation' => $translation,
+                'canGenerateCommentary' => $this->commentaryService->canGenerateCommentary($isEditor),
+                'commentaryGenerationPossible' => $this->commentaryService->commentaryGenerationPossible(),
+                'isEditor' => $isEditor,
+            ])
+            ->header('Cache-Control', 'private, no-store');
+    }
 
     /**
      * Display a listing of commentaries.

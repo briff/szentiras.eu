@@ -14,37 +14,70 @@ class CommentaryStatusPoller {
         this.pollInterval = 5000; // 5 seconds
         this.generatingContainers = new Set(); // tracks containers where generation was triggered
         this.init();
-        this.setupGenerationButtons();
     }
 
     init() {
-        // Case 1: containers with no commentaries at all (status-{index} div present)
+        // Commentary markup is no longer rendered into the (CDN-cached) page. Load
+        // each container's fragment from the uncached endpoint, then wire it up.
         const containers = document.querySelectorAll('.commentary-container');
-        containers.forEach((container) => {
-            const reference = container.dataset.reference;
-            const translation = container.dataset.translation;
-            const containerIndex = container.dataset.containerIndex;
+        containers.forEach((container) => this.loadCommentaryContainer(container));
+    }
 
-            const statusContainer = document.getElementById(`status-${containerIndex}`);
-            if (statusContainer) {
-                // Do an initial status check; only start continuous polling if
-                // there is already a pending/processing commentary in the database.
-                this.checkAndStartPollingIfActive(reference, translation, containerIndex);
-            }
-        });
+    /**
+     * Fetch and inject the commentary fragment for one container, then run the
+     * status/polling logic against the freshly injected markup.
+     */
+    loadCommentaryContainer(container) {
+        const reference = container.dataset.reference;
+        const translation = container.dataset.translation;
+        const containerIndex = container.dataset.containerIndex;
 
-        // Case 3: placeholders for pending commentaries
-        const pendingPlaceholders = document.querySelectorAll('.commentary-pending-placeholder');
-        pendingPlaceholders.forEach((placeholder) => {
-            const reference = placeholder.dataset.reference;
-            const translation = placeholder.dataset.translation;
-            const containerIndex = placeholder.dataset.containerIndex;
+        return fetch(`/api/commentaries/content?reference=${encodeURIComponent(reference)}&translation=${encodeURIComponent(translation)}&containerIndex=${encodeURIComponent(containerIndex)}`)
+            .then((response) => (response.ok ? response.text() : ''))
+            .then((html) => {
+                container.innerHTML = html;
+                this.initContainer(container);
+            })
+            .catch((error) => {
+                console.error('Error loading commentary content:', error);
+            });
+    }
 
-            if (!this.pollingIntervals.has(containerIndex)) {
-                this.generatingContainers.add(containerIndex);
-                this.startPollingForPendingPlaceholder(reference, translation, containerIndex);
-            }
-        });
+    /**
+     * Re-fetch a container's fragment (used instead of a full page reload, which
+     * would just return the cached page) after generation completes.
+     */
+    reloadCommentaryContainer(containerIndex) {
+        this.stopPolling(containerIndex);
+        this.generatingContainers.delete(containerIndex);
+        const container = document.querySelector(`.commentary-container[data-container-index="${containerIndex}"]`);
+        if (container) {
+            this.loadCommentaryContainer(container);
+        }
+    }
+
+    initContainer(container) {
+        const reference = container.dataset.reference;
+        const translation = container.dataset.translation;
+        const containerIndex = container.dataset.containerIndex;
+
+        // Wire up any generation form inside this container
+        this.setupGenerationButtons(container);
+
+        // Case 1: container with no commentaries yet (status-{index} div present)
+        const statusContainer = document.getElementById(`status-${containerIndex}`);
+        if (statusContainer) {
+            // Do an initial status check; only start continuous polling if
+            // there is already a pending/processing commentary in the database.
+            this.checkAndStartPollingIfActive(reference, translation, containerIndex);
+        }
+
+        // Case 2: placeholder for a pending commentary
+        const pendingPlaceholder = container.querySelector('.commentary-pending-placeholder');
+        if (pendingPlaceholder && !this.pollingIntervals.has(containerIndex)) {
+            this.generatingContainers.add(containerIndex);
+            this.startPollingForPendingPlaceholder(reference, translation, containerIndex);
+        }
     }
 
     checkAndStartPollingIfActive(reference, translation, containerIndex) {
@@ -74,9 +107,9 @@ class CommentaryStatusPoller {
             });
     }
 
-    setupGenerationButtons() {
+    setupGenerationButtons(root = document) {
         // Find all commentary generator forms
-        const forms = document.querySelectorAll('.commentary-generator form');
+        const forms = root.querySelectorAll('.commentary-generator form');
         forms.forEach((form) => {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -224,9 +257,9 @@ class CommentaryStatusPoller {
             })
             .then((data) => {
                 if (data.status === 'completed') {
-                    // Reload to show the newly completed commentary in the proper section
-                    this.stopPolling(containerIndex);
-                    location.reload();
+                    // Re-load the fragment to show the completed commentary (a full
+                    // page reload would just return the cached page).
+                    this.reloadCommentaryContainer(containerIndex);
                 } else if (data.status === 'failed' || data.status === 'not_found') {
                     // Remove the pending element and stop polling
                     this.stopPolling(containerIndex);
@@ -269,8 +302,8 @@ class CommentaryStatusPoller {
         }
 
         if (data.status === 'completed') {
-            // Commentary is complete - reload the page to show the completed commentary
-            location.reload();
+            // Commentary is complete — re-load the fragment (not the cached page).
+            this.reloadCommentaryContainer(containerIndex);
             return;
         }
 

@@ -20,6 +20,66 @@ class CommentaryService
     ) {}
 
     /**
+     * Parse a commentary collection into the view-ready array shape consumed by
+     * the commentary section template.
+     *
+     * @param  Collection<int, Commentary>  $commentaries
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseCommentaryCollection(Collection $commentaries): array
+    {
+        $parsed = [];
+        foreach ($commentaries as $commentary) {
+            $commentaryData = json_decode($commentary->commentary_text, true);
+            if (!is_array($commentaryData)) {
+                $commentaryData = [
+                    'commentary_text' => $commentary->commentary_text,
+                    'references' => [],
+                ];
+            }
+            $commentaryData['exact'] = $commentary->is_exact ?? false;
+            $commentaryData['status'] = $commentary->status;
+            $commentaryData['verification_level'] = $commentary->verification_level;
+            $commentaryData['commentary_id'] = $commentary->id;
+            $commentaryData['commentary_reference'] = $commentary->metadata['reference'] ?? null;
+            $parsed[] = $commentaryData;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Whether commentary generation is offered to logged-in users at all.
+     */
+    public function commentaryGenerationPossible(): bool
+    {
+        if (!config('ai.configurations.commentary.all_users_allowed', false)) {
+            return false;
+        }
+
+        return $this->sumTokenUsageForDay() < config('ai.configurations.commentary.max_token_per_day', 0);
+    }
+
+    /**
+     * Whether the current request may generate a commentary. Mirrors the logic
+     * in the CheckCommentaryGeneration middleware.
+     */
+    public function canGenerateCommentary(bool $isEditor): bool
+    {
+        if ($isEditor) {
+            return true;
+        }
+        if (!config('ai.configurations.commentary.all_users_allowed', false)) {
+            return false;
+        }
+        if (!session('anonymous_token')) {
+            return false;
+        }
+
+        return $this->sumTokenUsageForDay() < config('ai.configurations.commentary.max_token_per_day', 0);
+    }
+
+    /**
      * Find commentaries that cover a specific verse.
      * Uses the same range-matching algorithm as CommentaryRange creation.
      *

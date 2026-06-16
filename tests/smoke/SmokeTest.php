@@ -145,4 +145,27 @@ class SmokeTest extends TestCase
         $response->assertHeaderMissing('Set-Cookie');
     }
 
+    public function testVersePageDefersCommentariesToAjax() {
+        $response = $this->get('/TESTTRANS/Ter2,3');
+        $response->assertStatus(200);
+        // The container placeholder is present so JS can load commentaries...
+        $response->assertSee('class="commentary-container"', false);
+        // ...but the commentary markup itself must not be baked into the cached page.
+        $response->assertDontSee('id="commentary-panels-', false);
+    }
+
+    public function testCommentaryContentEndpointRendersUncachedFragment() {
+        $response = $this->get('/api/commentaries/content?reference=Ter2&translation=TESTTRANS&containerIndex=0');
+        $response->assertStatus(200);
+        $response->assertSee('commentary-panels-0', false);
+        // The fragment carries live, per-user state and must never be shared-cached.
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringNotContainsString('public', $cacheControl);
+    }
+
+    public function testCommentaryContentEndpointUnknownTranslationIs404() {
+        $this->get('/api/commentaries/content?reference=Ter2&translation=NOPE')->assertStatus(404);
+    }
+
 }

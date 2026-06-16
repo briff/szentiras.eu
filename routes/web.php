@@ -227,6 +227,9 @@ Route::middleware('commentaryGeneration')->group(function () {
 // Public API for commentary status
 Route::get('/api/commentaries/status', [CommentaryEditorController::class, 'statusByReference']);
 
+// Commentary HTML fragment, loaded client-side so verse pages stay CDN-cacheable
+Route::get('/api/commentaries/content', [CommentaryEditorController::class, 'contentByReference']);
+
 // Internal API for books (used by frontend components)
 Route::get('/internal-api/books/{translationAbbrev?}', [\SzentirasHu\Http\Controllers\Api\ApiController::class, 'getBooks'])
     ->middleware('same-origin');

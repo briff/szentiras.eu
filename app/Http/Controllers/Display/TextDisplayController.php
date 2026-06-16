@@ -85,44 +85,12 @@ class TextDisplayController extends Controller
 
     private function commentaryGenerationPossible(): bool
     {
-        $allUsersAllowed = config('ai.configurations.commentary.all_users_allowed', false);
-        if (!$allUsersAllowed) {
-            return false;
-        }
-        $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
-        $usedTokens = $this->commentaryService->sumTokenUsageForDay();
-        
-        return $usedTokens < $maxTokenPerDay;
+        return $this->commentaryService->commentaryGenerationPossible();
     }
 
-    /**
-     * Check if commentary generation is allowed for the current user.
-     * Replicates the logic from CheckCommentaryGeneration middleware.
-     */
     private function canGenerateCommentary(): bool
     {
-        // Allow editors unconditionally
-        if ($this->editorService->currentIsEditor()) {
-            return true;
-        }
-
-        // Check if commentary generation is allowed for all logged-in users
-        $allUsersAllowed = config('ai.configurations.commentary.all_users_allowed', false);
-        if (!$allUsersAllowed) {
-            return false;
-        }
-
-        // Check if user is logged in (has anonymous token)
-        $token = Session::get('anonymous_token');
-        if (!$token) {
-            return false;
-        }
-
-        // Check daily token usage limit
-        $maxTokenPerDay = config('ai.configurations.commentary.max_token_per_day', 0);
-        $usedTokens = $this->commentaryService->sumTokenUsageForDay();
-        
-        return $usedTokens < $maxTokenPerDay;
+        return $this->commentaryService->canGenerateCommentary($this->editorService->currentIsEditor());
     }
 
     public function showTranslationList()
@@ -313,35 +281,9 @@ class TextDisplayController extends Controller
                 }
             }
 
-            // Fetch commentaries for each verse container
+            // Commentaries are loaded client-side from /api/commentaries/content so
+            // these pages stay safe for the CDN to cache (see CommentaryEditorController).
             $displayContainers = $fullContextVerseContainers ?? $verseContainers;
-            $commentaries = [];
-            $parsedCommentaries = [];
-            foreach ($displayContainers as $verseContainer) {
-                $commentaryCollection = $this->commentaryService->findForReference(
-                    CanonicalReference::fromString($verseContainer->bookRef->toString(), $translation->id),
-                    $translation
-                );
-                $commentaries[] = $commentaryCollection;
-                $parsed = [];
-                foreach ($commentaryCollection as $commentary) {
-                    $commentaryData = json_decode($commentary->commentary_text, true);
-                    if (!is_array($commentaryData)) {
-                        $commentaryData = [
-                            'commentary_text' => $commentary->commentary_text,
-                            'references' => [],
-                        ];
-                    }
-                    // Add exact match flag, status, verification level and id for polling
-                    $commentaryData['exact'] = $commentary->is_exact ?? false;
-                    $commentaryData['status'] = $commentary->status;
-                    $commentaryData['verification_level'] = $commentary->verification_level;
-                    $commentaryData['commentary_id'] = $commentary->id;
-                    $commentaryData['commentary_reference'] = $commentary->metadata['reference'] ?? null;
-                    $parsed[] = $commentaryData;
-                }
-                $parsedCommentaries[] = $parsed;
-            }
 
             // Fetch places for each verse container
             $parsedPlaces = [];
@@ -462,8 +404,6 @@ class TextDisplayController extends Controller
                 'nextDay' => $nextDay,
                 'canonicalRef' => str_replace(" ", "%20", $canonicalRef->toString()),
                 'verseContainers' => $fullContextVerseContainers ?? $verseContainers,
-                'commentaries' => $commentaries,
-                'parsedCommentaries' => $parsedCommentaries,
                 'parsedPlaces' => $parsedPlaces,
                 'verseToPlaces' => $verseToPlaces,
                 'translation' => $translation,
