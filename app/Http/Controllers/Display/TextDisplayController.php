@@ -112,7 +112,7 @@ class TextDisplayController extends Controller
         $bookHeaders = [];
         $toc = request()->has("toc");
         if ($toc) {
-            $bookHeaders = Cache::remember("bookHeaders_{$translationAbbrev}", 60 * 24, function () use ($books, $translation) {
+            $bookHeaders = Cache::rememberForever("bookHeaders_{$translationAbbrev}", function () use ($books, $translation) {
                 $result = [];
                 foreach ($books as $book) {
                     $canonicalRef = CanonicalReference::fromString("{$book->abbrev}", $translation->id);

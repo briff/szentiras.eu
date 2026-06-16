@@ -32,7 +32,7 @@ class BookService {
     }
 
     public function getBookByUsxCodeTranslation(string $usxCode, string $translationAbbrev) : Book {
-        return Cache::remember("getBookByUsxCodeTranslation_{$usxCode}_{$translationAbbrev}", now()->addDays(), function() use ($usxCode, $translationAbbrev) {
+        return Cache::rememberForever("getBookByUsxCodeTranslation_{$usxCode}_{$translationAbbrev}", function() use ($usxCode, $translationAbbrev) {
         $translation = $this->translationService->getByAbbreviation($translationAbbrev);
         return $this->bookRepository->getByUsxCodeForTranslation($usxCode, $translation);
         });

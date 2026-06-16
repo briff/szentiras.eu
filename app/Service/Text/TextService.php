@@ -76,7 +76,7 @@ class TextService
             }
         }
         if (empty(($verseTypes))) {
-            Cache::put($cacheKey, $verseContainers, now()->addHour());
+            Cache::forever($cacheKey, $verseContainers);
         }
         return $verseContainers;
     }

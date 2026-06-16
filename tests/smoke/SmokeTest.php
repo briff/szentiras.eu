@@ -108,8 +108,9 @@ class SmokeTest extends TestCase
     public function testVersesHaveReferenceAnchorLinks() {
         $response = $this->get('/TESTTRANS/Ter2');
         $response->assertStatus(200);
-        // Each verse is a crawlable permalink carrying its full canonical reference.
-        $response->assertSee('href="/TESTTRANS/Ter2,3"', false);
+        // Verses anchor to a fragment on the chapter page rather than a separate
+        // per-verse URL, so crawlers don't flood individual verse pages.
+        $response->assertSee('href="/TESTTRANS/Ter2#v_', false);
         $response->assertSee('title="Ter 2,3"', false);
     }
 

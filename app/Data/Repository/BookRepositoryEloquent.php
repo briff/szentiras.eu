@@ -19,7 +19,7 @@ class BookRepositoryEloquent implements BookRepository
 
     public function getBooksByTranslation($translationId)
     {
-        return Cache::remember("getBooksByTranslation_{$translationId}", 120, function () use ($translationId) {
+        return Cache::rememberForever("getBooksByTranslation_{$translationId}", function () use ($translationId) {
             return Book::where('translation_id', $translationId)->orderBy('order')->get();
         });
     }

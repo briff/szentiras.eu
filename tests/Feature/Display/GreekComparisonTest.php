@@ -13,19 +13,6 @@ class GreekComparisonTest extends FastDatabaseTestCase
 {
     private const TEST_TRANSLATION_ID = 1001;
 
-    /**
-     * FastDatabaseTestCase seeds only once, inside the first test's transaction, which is then
-     * rolled back. Re-seed for any later test so each test has the TESTTRANS translation row.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        if (!Translation::find(self::TEST_TRANSLATION_ID)) {
-            $this->seed(\Database\Seeders\DatabaseSeeder::class);
-        }
-    }
-
     private function setUpNewTestamentData(): void
     {
         $book = new Book();
