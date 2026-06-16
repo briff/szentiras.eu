@@ -121,5 +121,18 @@ class SmokeTest extends TestCase
         $this->get('/TESTTRANS/Ter2,123')->assertStatus(404);
     }
 
+    public function testCanonicalVersePageMarksVariantLinksNofollow() {
+        $response = $this->get('/TESTTRANS/Ter2,3');
+        $response->assertStatus(200);
+        // Crawlers must not follow links into the combinatorial variant URL space.
+        $response->assertSee('id="fullContextButton" rel="nofollow"', false);
+    }
+
+    public function testFullContextVariantPageIsNofollow() {
+        $response = $this->get('/TESTTRANS/Ter2,3?fullContext');
+        $response->assertStatus(200);
+        $response->assertSee('content="noindex,nofollow"', false);
+        $response->assertDontSee('content="noindex,follow"', false);
+    }
 
 }

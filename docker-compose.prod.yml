@@ -3,7 +3,7 @@ name: szeu-prod
 services:
   traefik:
     image: traefik:v3.3
-    mem_limit: 192m
+    mem_limit: 256m
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -177,7 +177,7 @@ services:
     command: ["memcached", "-m", "192", "-I", "2m"]
     networks:
       - internal
-    mem_limit: 192m
+    mem_limit: 256m
     restart: unless-stopped
   maintenance:
     image: nginx:alpine

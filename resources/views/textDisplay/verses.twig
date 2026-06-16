@@ -5,7 +5,7 @@
 {% block meta %}
     <link rel="canonical" href="{{ url('/' ~ seoUrl ) }}" />
     {% if seoUrl != canonicalUrl or mediaEnabled or fullContext or compareTranslation %}
-        <meta name="robots" content="noindex,follow">
+        <meta name="robots" content="noindex,nofollow">
     {% endif %}
 
     <meta property="og:url" content="{{ url('/' ~ canonicalUrl ) }}">
@@ -78,11 +78,11 @@
     </div>
 
     {% if not fullChaptersIncluded and not fullContext %}
-    <a class="btn btn-info" id="fullContextButton" href="{{ url('/' ~ canonicalUrl ~ '?fullContext' ~ (mediaEnabled ? '&media' : '' )) }}" title="Teljes szövegkörnyezet megjelenítése">
+    <a class="btn btn-info" id="fullContextButton" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ '?fullContext' ~ (mediaEnabled ? '&media' : '' )) }}" title="Teljes szövegkörnyezet megjelenítése">
         <i class="bi-chevron-expand"></i> Teljes szövegkörnyezet megjelenítése</a>
     {% endif %}
     {% if fullContext %}
-        <a class="btn btn-info" id="fullContextButton" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}" title="Csak a hivatkozás szövegének megjelenítése">
+        <a class="btn btn-info" id="fullContextButton" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}" title="Csak a hivatkozás szövegének megjelenítése">
             <i class="bi-chevron-contract"></i> Csak a hivatkozás szövegének megjelenítése</a>
     {% endif %}
     <span id="data" {% if scrollTo %} data-scroll-to="{{ scrollTo }}" {% endif %}></span>
@@ -148,12 +148,12 @@
                     <i class="bi-tools"></i>
                 </button>
                 {% if not mediaEnabled %}
-                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
+                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
                         <i class="bi-images"></i>
                     </a>
                 {% endif %}
                 {% if mediaEnabled %}
-                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ (fullContext ? '?fullContext' : '')) }}" title="Illusztrációk elrejtése">
+                    <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ (fullContext ? '?fullContext' : '')) }}" title="Illusztrációk elrejtése">
                         <i class="bi-images"></i>
                     </a>
                 {% endif %}
@@ -165,13 +165,13 @@
                         {% if compareTranslation %}
                             <li><span class="dropdown-item-text"><strong>{{ compareTranslation.name }}</strong></span></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}">
+                            <li><a class="dropdown-item" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ (mediaEnabled ? '?media' : '')) }}">
                                 <i class="bi-x"></i> Összehasonlítás bezárása
                             </a></li>
                         {% else %}
                             {% for otherTranslation in translationLinks %}
                                 {% if otherTranslation.id != translation.id and otherTranslation.enabled %}
-                                    <li><a class="dropdown-item" href="{{ url('/' ~ canonicalUrl ~ '?compare=' ~ otherTranslation.abbrev ~ (mediaEnabled ? '&media' : '')) }}">
+                                    <li><a class="dropdown-item" rel="nofollow" href="{{ url('/' ~ canonicalUrl ~ '?compare=' ~ otherTranslation.abbrev ~ (mediaEnabled ? '&media' : '')) }}">
                                         {{ otherTranslation.abbrev }}
                                     </a></li>
                                 {% endif %}

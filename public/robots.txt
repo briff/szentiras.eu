@@ -15,5 +15,11 @@ Disallow: /login
 Disallow: /login/
 Disallow: /logout
 Disallow: /logout/
+Disallow: /*?compare=
+Disallow: /*&compare=
+Disallow: /*?fullContext
+Disallow: /*&fullContext
+Disallow: /*?media
+Disallow: /*&media
 
 Sitemap: https://szentiras.eu/sitemap.xml
