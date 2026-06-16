@@ -5,6 +5,7 @@ namespace SzentirasHu\Test;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\ReadingPlan;
@@ -117,6 +118,23 @@ class SitemapTest extends TestCase
         $contents = (string) file_get_contents($path);
         $this->assertStringContainsString('<urlset', $contents);
         $this->assertStringContainsString('<loc>' . url('/TESTTRANS/Ter50') . '</loc>', $contents);
+    }
+
+    public function test_generated_sitemap_uses_configured_app_url_not_localhost(): void
+    {
+        // Mirror how the console bootstrap (SetRequestForConsole) seeds url()'s
+        // root from config('app.url') when generating the sitemap offline.
+        Config::set('app.url', 'https://szentiras.hu');
+        $this->app->instance('request', Request::create('https://szentiras.hu', 'GET'));
+        Cache::flush();
+
+        $exitCode = Artisan::call('szentiras:generate-sitemap');
+
+        $this->assertSame(0, $exitCode);
+
+        $contents = (string) file_get_contents(public_path('sitemap.xml'));
+        $this->assertStringContainsString('<loc>https://szentiras.hu/TESTTRANS/Ter50</loc>', $contents);
+        $this->assertStringNotContainsString('localhost', $contents);
     }
 
     public function test_sitemap_route_serves_pregenerated_static_file_when_present(): void
