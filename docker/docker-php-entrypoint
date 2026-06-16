@@ -3,6 +3,7 @@ set -e
 
 php artisan optimize:clear
 php artisan migrate -n --force
+php artisan optimize
 
 service cron start
 

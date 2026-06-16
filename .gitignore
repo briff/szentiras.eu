@@ -28,3 +28,5 @@ generated
 .env.deploy
 .claude
 storage/framework/testing
+# Sitemap is generated after deployment via szentiras:generate-sitemap
+public/sitemap.xml
