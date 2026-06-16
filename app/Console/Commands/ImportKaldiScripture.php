@@ -193,6 +193,8 @@ class ImportKaldiScripture extends Command
         $this->info('Kaldi import finished successfully.');
         $this->info('Run indexer if needed: php artisan szentiras:index');
 
+        $this->call('cdn:purge');
+
         return 0;
     }
 

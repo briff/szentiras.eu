@@ -8,6 +8,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Spatie\FlareClient\Api;
 use SzentirasHu\Data\Entity\ApiKey;
 use SzentirasHu\Service\Ai\AiPromptService;
+use SzentirasHu\Service\Cdn\CloudflareCacheService;
 use SzentirasHu\Service\Editor\EditorService;
 use Twig\Environment;
 use Twig\Extra\Markdown\DefaultMarkdown;
@@ -97,6 +98,14 @@ class AppServiceProvider extends ServiceProvider
         });
         
         $this->app->alias(AiPromptService::class, 'ai-prompt');
+
+        $this->app->bind(CloudflareCacheService::class, function ($app) {
+            return new CloudflareCacheService(
+                $app['config']->get('services.cloudflare.zone_id'),
+                $app['config']->get('services.cloudflare.api_token'),
+                $app['config']->get('services.cloudflare.api_base_url'),
+            );
+        });
 
         if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);

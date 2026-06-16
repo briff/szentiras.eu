@@ -243,22 +243,23 @@ Route::prefix('api/media')->middleware('editor')->group(function () {
 Route::get('/gorog-szotar', [GreekDictionaryController::class, 'index'])->name('greekDictionary.index');
 Route::get('/gorog-szotar/filter', [GreekDictionaryController::class, 'filter'])->name('greekDictionary.filter');
 
-Route::get('/GNT/{reference?}', [GreekTextController::class, 'show'])->where('reference', '[^/]+');
+Route::get('/GNT/{reference?}', [GreekTextController::class, 'show'])->middleware('cacheable')->where('reference', '[^/]+');
 
 /** These should come at the end to not collide with other routes! */
 Route::get('/{TRANSLATION_ABBREV}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showTranslation')
-    ->middleware(RedirectLowerCaseTranslationAbbrev::class)
+    ->middleware([RedirectLowerCaseTranslationAbbrev::class, 'cacheable'])
     ->where('TRANSLATION_ABBREV', Config::get('settings.translationAbbrevRegex'));
 
 Route::get('/{TRANSLATION_ABBREV}/{REFERENCE}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showTranslatedReferenceText')
-    ->middleware(RedirectLowerCaseTranslationAbbrev::class)
+    ->middleware([RedirectLowerCaseTranslationAbbrev::class, 'cacheable'])
     ->name('textDisplay.show')
     ->where(['TRANSLATION_ABBREV' => Config::get('settings.translationAbbrevRegex'),
         'REFERENCE' => '[^/]+']);
 
 Route::get('/{REFERENCE}', '\SzentirasHu\Http\Controllers\Display\\TextDisplayController@showReferenceText')
+     ->middleware('cacheable')
      ->where('REFERENCE', '[^/]+');
 Route::get('/xref/{TRANSLATION_ABBREV}/{REFERENCE}', [TextDisplayController::class, 'showXrefText'])
-    ->middleware(RedirectLowerCaseTranslationAbbrev::class)
+    ->middleware([RedirectLowerCaseTranslationAbbrev::class, 'cacheable'])
     ->where(['TRANSLATION_ABBREV' => Config::get('settings.translationAbbrevRegex'),
         'REFERENCE' => '[^/]+']);

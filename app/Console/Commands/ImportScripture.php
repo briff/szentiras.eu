@@ -122,10 +122,12 @@ class ImportScripture extends Command
         [$bookInserts, $verseInserts] = $this->readInserts($translation, $transAbbrevToImport, $filePath);
         if (!empty($bookInserts) || !empty($verseInserts)) {
             $this->storeInDb($translation, $bookInserts, $verseInserts);
+            $this->runIndexer();
+            $this->call('cdn:purge');
         } else {
             $this->info("Nincs mit feltölteni.");
+            $this->runIndexer();
         }
-        $this->runIndexer();
         return 0;
     }
 

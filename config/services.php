@@ -39,6 +39,12 @@ return [
     'api_key' => env('ANTHROPIC_API_KEY')
 ],
 
+'cloudflare' => [
+    'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+    'api_token' => env('CLOUDFLARE_API_TOKEN'),
+    'api_base_url' => env('CLOUDFLARE_API_BASE_URL', 'https://api.cloudflare.com/client/v4'),
+],
+
 'pixabay' => [
     'key' => env('PIXABAY_API_KEY'),
     'base_url' => 'https://pixabay.com/api/'

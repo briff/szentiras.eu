@@ -135,4 +135,14 @@ class SmokeTest extends TestCase
         $response->assertDontSee('content="noindex,follow"', false);
     }
 
+    public function testAnonymousVersePageIsPubliclyCacheableAndCookieFree() {
+        $response = $this->get('/TESTTRANS/Ter2,3');
+        $response->assertStatus(200);
+        // Anonymous text pages must be safe for Cloudflare to cache: no cookies, public Cache-Control.
+        $cacheControl = $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('s-maxage=', $cacheControl);
+        $response->assertHeaderMissing('Set-Cookie');
+    }
+
 }
