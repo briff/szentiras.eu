@@ -191,7 +191,7 @@ class ImportKaldiScripture extends Command
         }
 
         $this->info('Kaldi import finished successfully.');
-        $this->info('Run indexer if needed: php artisan szentiras:index');
+        $this->info('Reindex Sphinx so search picks up the changes: touch /opt/sphinx/trigger/indexer in the sphinx container (the watcher reindexes within ~30s), or restart the sphinx container for a full rebuild.');
 
         $this->call('cdn:purge');
 
