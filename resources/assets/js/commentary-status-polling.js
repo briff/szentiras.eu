@@ -17,6 +17,14 @@ class CommentaryStatusPoller {
     }
 
     init() {
+        // Whether the current visitor is logged in (carries an anonymous_token).
+        // Anonymous page responses are shared-cached by the CDN, so logged-in
+        // users must bust that cache when loading the personalised commentary
+        // fragment — otherwise they are served the guest version (no generate
+        // button) that an earlier anonymous request stored at the edge.
+        const loggedInMeta = document.querySelector('meta[name="anonymous-logged-in"]');
+        this.isLoggedIn = loggedInMeta?.getAttribute('content') === '1';
+
         // Commentary markup is no longer rendered into the (CDN-cached) page. Load
         // each container's fragment from the uncached endpoint, then wire it up.
         const containers = document.querySelectorAll('.commentary-container');
@@ -32,7 +40,16 @@ class CommentaryStatusPoller {
         const translation = container.dataset.translation;
         const containerIndex = container.dataset.containerIndex;
 
-        return fetch(`/api/commentaries/content?reference=${encodeURIComponent(reference)}&translation=${encodeURIComponent(translation)}&containerIndex=${encodeURIComponent(containerIndex)}`)
+        let url = `/api/commentaries/content?reference=${encodeURIComponent(reference)}&translation=${encodeURIComponent(translation)}&containerIndex=${encodeURIComponent(containerIndex)}`;
+        const options = {};
+        if (this.isLoggedIn) {
+            // Distinct cache key + no-store so the CDN/browser cannot serve the
+            // shared anonymous fragment to a logged-in user.
+            url += '&loggedIn=1';
+            options.cache = 'no-store';
+        }
+
+        return fetch(url, options)
             .then((response) => (response.ok ? response.text() : ''))
             .then((html) => {
                 container.innerHTML = html;
