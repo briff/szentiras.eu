@@ -1,0 +1,7 @@
+{#
+  Exposes the visitor's logged-in state (presence of an anonymous_token) to
+  client-side scripts. Anonymous page responses are shared-cached by the CDN,
+  so logged-in users must be able to detect their state and bypass that cache
+  when loading personalised fragments (e.g. the commentary section).
+#}
+<meta name="anonymous-logged-in" content="{{ session('anonymous_token') ? '1' : '0' }}">
