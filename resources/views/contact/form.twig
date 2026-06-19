@@ -56,6 +56,16 @@
                 </div>
             </div>
 
+            {% if config_get('settings.discordInviteUrl') %}
+            <div class="mt-4 p-3 bg-light border rounded text-center">
+                <p class="mb-1"><strong>Lépj kapcsolatba a fejlesztői közösséggel!</strong></p>
+                <p class="mb-2 text-muted small">Gyere a <strong>Szent József Hackathon</strong> Discord-szerverére!</p>
+                <a href="{{ config_get('settings.discordInviteUrl') }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">
+                    Csatlakozás Discordon
+                </a>
+            </div>
+            {% endif %}
+
             {% if isLoggedIn %}
                 <div class="mt-3 text-center">
                     <a href="{{ route('contact.inbox') }}" class="btn btn-outline-primary position-relative">

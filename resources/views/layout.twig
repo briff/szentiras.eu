@@ -93,6 +93,8 @@
             <p><br>Kérdéseket, ötleteket, problémákat <a href='mailto:eleklaszlosj@gmail.com'>Elek László SJ</a> (<a
                          href="http://jezsuita.hu">JTMR</a>) email-címén,<br>a <a href="{{ route('contact.form') }}">Kapcsolatfelvétel</a> űrlapon<br>és a Szentírás.eu fejlesztőinek hivatalos
                         <a href="https://www.facebook.com/szentiras.eu">Facebook</a> oldalán fogadjuk (bejegyzésben vagy Messengeren)!<br>
+            {% if config_get('settings.discordInviteUrl') %}A fejesztőket közvetlenül elérheted a <strong>Szent József Hackathon</strong>
+            <a href="{{ config_get('settings.discordInviteUrl') }}">Discordon</a>!<br>{% endif %}
             Fejlesztés: <a href="https://github.com/szentjozsefhackathon/szentiras.eu">GitHub</a>
                 {% if config_get('version.hash') %}- <small>verzió:
                     <a href="https://github.com/szentjozsefhackathon/szentiras.eu/commit/{{ config_get('version.hash') }}">

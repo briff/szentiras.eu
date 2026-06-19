@@ -22,5 +22,6 @@ return [
     ],
     'brand' => [
         'domain' => env("APP_BRAND_DOMAIN", 'szentiras.eu')
-    ]
+    ],
+    'discordInviteUrl' => env('DISCORD_INVITE_URL', ''),
 ];
