@@ -76,7 +76,7 @@ return [
             'max_output_tokens' => env('AI_STRONG_WORD_MAX_OUTPUT_TOKENS', 2048),
             'timeout'           => env('AI_STRONG_WORD_TIMEOUT', 480),
             'verbosity'         => env('AI_STRONG_WORD_VERBOSITY', 'high'),
-            'reasoning_effort'  => env('AI_STRONG_WORD_REASONING_EFFORT', 'none'),
+            'reasoning_effort'  => env('AI_STRONG_WORD_REASONING_EFFORT', 'medium'),
             'store'             => env('AI_STRONG_WORD_STORE', false),
             'system_prompt'     => resource_path('prompts/greek_word_translation_system.md'),
             'user_prompt'       => resource_path('prompts/greek_word_translation_user.md'),

@@ -1,1 +1,1 @@
-The Greek word is: {greek_word}
+A görög szó: {greek_word}
