@@ -38,6 +38,7 @@ use Database\Factories\Data\Entity\VerseCardSessionFactory;
  * @method static \Database\Factories\Data\Entity\VerseCardSessionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardSession wherePixabayOffset($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardSession wherePixabayPage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardSession whereVerseText($value)
  * @mixin \Eloquent
  */
 class VerseCardSession extends Model

@@ -45,6 +45,10 @@ use Database\Factories\Data\Entity\VerseCardAssetFactory;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardAsset whereThumbPath($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardAsset whereUpdatedAt($value)
  * @method static \Database\Factories\Data\Entity\VerseCardAssetFactory factory($count = null, $state = [])
+ * @property string|null $web_format_url
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardAsset whereHeight($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardAsset whereWebFormatUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VerseCardAsset whereWidth($value)
  * @mixin \Eloquent
  */
 class VerseCardAsset extends Model

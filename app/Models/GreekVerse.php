@@ -40,6 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $normalization
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GreekVerse whereNormalization($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GreekVerse whereTransliteration($value)
+ * @property-read \SzentirasHu\Models\array<int, array{printed: $annotated_words
  * @mixin \Eloquent
  */
 class GreekVerse extends Model

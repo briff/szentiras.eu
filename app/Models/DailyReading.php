@@ -17,6 +17,20 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  * @property-read string $combinedRefString
+ * @property-read mixed $combined_ref_string
+ * @method static \Database\Factories\Models\DailyReadingFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereCelebrationName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereErrorMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereProcessedRefs($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereRawParts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DailyReading whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class DailyReading extends Model

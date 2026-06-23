@@ -39,6 +39,7 @@ use Pgvector\Laravel\Vector;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EmbeddedExcerpt whereTranslationAbbrev($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EmbeddedExcerpt whereUsxCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EmbeddedExcerpt whereVerse($value)
+ * @method static \Database\Factories\Data\Entity\EmbeddedExcerptFactory factory($count = null, $state = [])
  * @mixin \Eloquent
  */
 class EmbeddedExcerpt extends Model
