@@ -132,18 +132,26 @@ class TextService
     }
 
     /**
+     * Builds a plain-text teaser used as the meta/OpenGraph description.
+     *
+     * Verses are concatenated (HTML tags stripped, whitespace collapsed) until
+     * the text reaches $maxLength characters, so the description is long enough
+     * to be useful for search engines instead of a single short verse.
+     *
      * @param VerseContainer[] $verseContainers
-     * @return string
      */
-    public function getTeaser($verseContainers)
+    public function getTeaser($verseContainers, int $maxLength = 320): string
     {
         $teaser = "";
         foreach ($verseContainers as $verseContainer) {
-            $parsedVerses = $verseContainer->getParsedVerses();
-            if (sizeof($parsedVerses) > 0) {
-                $teaser .= preg_replace('/<\/?[^>]+>/', ' ', $parsedVerses[0]->getText());
-                if ($verseContainer != last($verseContainers) || count($parsedVerses) > 1) {
-                    $teaser .= ' ... ';
+            foreach ($verseContainer->getParsedVerses() as $parsedVerse) {
+                $verseText = trim(preg_replace('/\s+/', ' ', preg_replace('/<\/?[^>]+>/', ' ', $parsedVerse->getText())));
+                if ($verseText === "") {
+                    continue;
+                }
+                $teaser = $teaser === "" ? $verseText : "{$teaser} {$verseText}";
+                if (mb_strlen($teaser) >= $maxLength) {
+                    return $teaser;
                 }
             }
         }

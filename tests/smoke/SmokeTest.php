@@ -74,6 +74,22 @@ class SmokeTest extends TestCase
         $this->get('/TESTTRANS')->assertStatus(200);
     }
 
+    public function testTranslationPageHasH1()
+    {
+        $response = $this->get('/TESTTRANS');
+        $response->assertStatus(200);
+        // Every page needs an <h1> for SEO (Bing crawler reports missing headers).
+        $response->assertSee('<h1 class="h4">', false);
+    }
+
+    public function testTranslationPageHasDescriptiveMetaDescription()
+    {
+        $description = $this->metaDescription($this->get('/TESTTRANS')->getContent());
+        // Bing reports meta descriptions shorter than ~150 chars as too short.
+        $this->assertGreaterThanOrEqual(150, mb_strlen($description));
+        $this->assertStringContainsString('Translation Name 1', $description);
+    }
+
     public function testBasicApi()
     {
         $this->get('/api/idezet/Ter 2,3')->assertStatus(200);
@@ -93,6 +109,22 @@ class SmokeTest extends TestCase
         $this->get('/TESTTRANS/Ter')->assertStatus(200);
     }
 
+    public function testBookPageHasH1() {
+        $response = $this->get('/TESTTRANS/Ter');
+        $response->assertStatus(200);
+        // Every page needs an <h1> for SEO (Bing crawler reports missing headers).
+        $response->assertSee('<h1 class="h4">', false);
+    }
+
+    public function testBookPageHasDescriptiveMetaDescription() {
+        $description = $this->metaDescription($this->get('/TESTTRANS/Ter')->getContent());
+        // The book description leads with the book and translation names rather
+        // than falling back to the generic site-wide description (Bing reports
+        // those as too short / duplicate).
+        $this->assertStringContainsString('Ter.', $description);
+        $this->assertStringContainsString('Translation Name 1', $description);
+    }
+
     public function testChapterWithExplicitTranslation() {
         $this->get('/TESTTRANS/Ter2')->assertStatus(200);
     }
@@ -103,6 +135,26 @@ class SmokeTest extends TestCase
         // Canonical abbreviation reference leads the title and is the page <h1>.
         $response->assertSee('<title>Ter 2 ', false);
         $response->assertSee('<h1 class="h4">Ter 2</h1>', false);
+    }
+
+    public function testChapterPageHasDescriptiveMetaDescription() {
+        $description = $this->metaDescription($this->get('/TESTTRANS/Ter2')->getContent());
+        // The chapter description leads with the reference and translation name
+        // so it is descriptive and unique even for short chapters, instead of a
+        // single short verse (Bing reports those as too short).
+        $this->assertStringContainsString('Ter 2 – Translation Name 1.', $description);
+    }
+
+    /**
+     * Extracts the <meta name="description"> content from a rendered page.
+     */
+    private function metaDescription(string $html): string
+    {
+        if (preg_match('/<meta name="description" content="([^"]*)"/', $html, $matches)) {
+            return html_entity_decode($matches[1], ENT_QUOTES);
+        }
+
+        return "";
     }
 
     public function testVersesHaveReferenceAnchorLinks() {

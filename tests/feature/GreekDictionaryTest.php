@@ -51,7 +51,8 @@ class GreekDictionaryTest extends TestCase
         $response = $this->get('/gorog-szotar');
 
         $response->assertStatus(200);
-        $response->assertSee('Görög szótár');
+        // Every page needs an <h1> for SEO (Bing crawler reports missing headers).
+        $response->assertSee('<h1 class="h2">Görög szótár</h1>', false);
         $response->assertSee('ἀγάπη');
         $response->assertSee('λόγος');
     }

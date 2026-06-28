@@ -67,6 +67,8 @@
 {% block content %}
     {% include 'textDisplay.breadcrumb' %}
 
+    <h1 class="h4">{{ translation.name }}</h1>
+
     {% include 'bookAbbrevList' with { 'translation' : translation } %}
       
     {% include 'quickChapterSelector' %}

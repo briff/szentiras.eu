@@ -128,7 +128,8 @@ class TextDisplayController extends Controller
                 'translation' => $translation,
                 'books' => $books,
                 'bookHeaders' => $bookHeaders,
-                'toc' => $toc
+                'toc' => $toc,
+                'teaser' => "A(z) {$translation->name} ({$translation->abbrev}) bibliafordítás online olvasható a Szentíráson: az Ó- és Újszövetség könyvei fejezetenként, kereséssel és más magyar fordításokkal párhuzamosan.",
             ]
         );
     }
@@ -412,7 +413,7 @@ class TextDisplayController extends Controller
                 'seoUrl' => $this->referenceService->getSeoUrl($canonicalRef, $translation->id),
                 'metaTitle' => $this->getTitle($verseContainers, $translation),
                 'metaReference' => $this->getReference($verseContainers),
-                'teaser' => $this->textService->getTeaser($verseContainers),
+                'teaser' => $this->buildMetaDescription($verseContainers, $translation),
                 'chapterLinks' => $chapterLinks,
                 'media' => $mediaVerses ?? [],
                 'otherMedia' => $otherMedia ?? [],
@@ -609,6 +610,7 @@ class TextDisplayController extends Controller
                 $chapterHeadings[$verse->chapter] = array_merge($chapterHeadings[$verse->chapter], $headings);
             }
         }
+        $leadVerseText = "";
         if ($leadVerses) {
             $firstVerses = $this->verseRepository->getLeadVerses($book->id);
 
@@ -623,7 +625,11 @@ class TextDisplayController extends Controller
                             $oldText = $chapters[$verse['chapter']]['leadVerses'][$verse['numv']];
                         }
                     }
-                    $chapters[$verse['chapter']]['leadVerses'][$verse['numv']] = $oldText . $this->textService->getTeaser([$verseContainer]);
+                    $verseTeaser = $this->textService->getTeaser([$verseContainer]);
+                    $chapters[$verse['chapter']]['leadVerses'][$verse['numv']] = $oldText . $verseTeaser;
+                    if (mb_strlen($leadVerseText) < 280 && $verseTeaser !== "") {
+                        $leadVerseText = $leadVerseText === "" ? $verseTeaser : "{$leadVerseText} {$verseTeaser}";
+                    }
                 }
             }
         }
@@ -633,6 +639,7 @@ class TextDisplayController extends Controller
             'translation' => $translation,
             'reference' => $translatedRef,
             'book' => $book,
+            'teaser' => trim("{$book->name} – {$translation->name}. {$leadVerseText}"),
             'chapters' => $chapters,
             'headings' => $chapterHeadings,
             'translations' => $allTranslations,
@@ -685,6 +692,22 @@ class TextDisplayController extends Controller
         }
 
         return implode('; ', $references);
+    }
+
+    /**
+     * Builds the page meta description: the reference and translation name
+     * followed by the scripture text, so the description is descriptive,
+     * unique and long enough for search engines even for short chapters.
+     *
+     * @param VerseContainer[] $verseContainers
+     */
+    private function buildMetaDescription($verseContainers, Translation $translation): string
+    {
+        $reference = $this->getReference($verseContainers);
+        $scripture = $this->textService->getTeaser($verseContainers);
+        $prefix = $reference !== "" ? "{$reference} – {$translation->name}." : "{$translation->name}.";
+
+        return trim("{$prefix} {$scripture}");
     }
 
     /** this only works for one chapter references
