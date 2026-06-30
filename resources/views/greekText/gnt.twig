@@ -3,7 +3,7 @@
 {% if book %}
     {% set pageTitle = book.name ~ (currentChapter is not null ? ' ' ~ currentChapter ~ '. fejezet' : '') ~ ' – Görög Újszövetségi Szentírás' %}
 {% else %}
-    {% set pageTitle = 'Görög Újszövetségi Szentírás' %}
+    {% set pageTitle = 'Görög Újszövetség és magyar újszövetségi szószedet, magyarázatokkal' %}
 {% endif %}
 
 {% block meta %}
@@ -19,13 +19,13 @@
 
     {% set compareQuery = (compareTranslation is defined and compareTranslation) ? '?compare=' ~ compareTranslation.abbrev : '' %}
 
-    <h2>Görög Újszövetségi Szentírás</h2>
+    <h1 class="h2">Görög Újszövetség</h2>
 
     {% if showLanding %}
     <div class="card mb-2">
         <div class="card-body">
             <p class="lead">
-                Teljes újszövetségi görög Szentírás és görög–magyar újszövetségi szószedet, amelyet mesterséges intelligencia eszközök
+                Teljes újszövetségi görög Szentírás és görög–magyar újszövetségi szószedet, magyarázatokkal, amelyet mesterséges intelligencia eszközök
                 segítségével készítettünk.
             </p>
             <p>

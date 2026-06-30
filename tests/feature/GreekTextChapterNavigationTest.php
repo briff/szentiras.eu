@@ -108,7 +108,7 @@ class GreekTextChapterNavigationTest extends TestCase
         $response = $this->get('/GNT');
 
         $response->assertStatus(200);
-        $response->assertSee('Görög Újszövetségi Szentírás', false);
+        $response->assertSee('Görög Újszövetség', false);
         $response->assertSee('name="description"', false);
         $response->assertSee('OpenGNT', false);
         $response->assertSee('rel="canonical"', false);
