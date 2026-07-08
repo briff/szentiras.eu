@@ -224,8 +224,16 @@ $SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compo
     && echo "   ✅ Sitemap generated" \
     || echo "   ⚠️  Sitemap generation failed — the app will fall back to building it on demand"
 
-# 8. Verify services are running
-echo "8. Verifying services..."
+# 8. Purge the Cloudflare CDN so cached full-page HTML (menus, layout, chrome)
+# reflects the newly deployed code. Non-fatal: a stale edge cache must not abort
+# a deployment. Skipped automatically if Cloudflare is not configured.
+echo "8. Purging CDN cache..."
+$SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml exec -T app php artisan cdn:purge" \
+    && echo "   ✅ CDN cache purged" \
+    || echo "   ⚠️  CDN purge failed — pages may serve stale chrome until the cache expires or is purged manually"
+
+# 9. Verify services are running
+echo "9. Verifying services..."
 sleep 5
 SERVICES=$($SSH_CMD "$SSH_TARGET" "cd $DEPLOY_REMOTE_PATH && docker compose -f docker-compose.prod.yml ps --services")
 echo "   Running services:"
