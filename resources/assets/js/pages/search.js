@@ -3,10 +3,12 @@ import { initGreekWordPanel } from '../greekWordPanel.js';
 
 initGreekWordPanel();
 
-$('#hunTab, #grcTab').on('shown.bs.tab', function (event) {
-    const greek = event.target.id === 'grcTab';
-    $('#searchInfoHun').toggleClass('d-none', greek);
-    $('#searchInfoGrc').toggleClass('d-none', !greek);
+document.querySelectorAll('#hunTab, #grcTab').forEach((tab) => {
+    tab.addEventListener('click', (event) => {
+        const greek = event.currentTarget.id === 'grcTab';
+        document.getElementById('searchInfoHun')?.classList.toggle('d-none', greek);
+        document.getElementById('searchInfoGrc')?.classList.toggle('d-none', !greek);
+    });
 });
 
 $('#textSearchForm').on('submit', function (event) {
