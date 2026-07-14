@@ -43,8 +43,8 @@
 {% block content %}
     <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item"><a class="border-start border-top border-end nav-link disabled" aria-disabled="true"><b>Keresés</b></a></li>        
-        <li role="presentation" class="nav-item"><a role="button" class="nav-link {{ greekSearch ? '': 'active'}}" role="tab" data-bs-toggle="tab" data-bs-target="#hun">Magyar</a></li>
-        <li role="presentation" class="nav-item"><a role="button" class="nav-link {{ greekSearch ? 'active': ''}}" role="tab" data-bs-toggle="tab" data-bs-target="#grc">Görög</a></li>
+        <li role="presentation" class="nav-item"><a role="button" id="hunTab" class="nav-link {{ greekSearch ? '': 'active'}}" role="tab" data-bs-toggle="tab" data-bs-target="#hun">Magyar</a></li>
+        <li role="presentation" class="nav-item"><a role="button" id="grcTab" class="nav-link {{ greekSearch ? 'active': ''}}" role="tab" data-bs-toggle="tab" data-bs-target="#grc">Görög</a></li>
     </ul>
     <div class="tab-content border-start border-bottom border-end search-panel mb-2">
         <div role="tabpanel" class="tab-pane {{ greekSearch ? '': 'active'}}" id="hun">
@@ -261,7 +261,12 @@
     {% endif %}    
         
     {% if form.textToSearch == '' and  form.greekTranslit == "" %}
-        {% include 'search/searchInfo' %}
+        <div id="searchInfoHun" class="{{ greekSearch ? 'd-none' }}">
+            {% include 'search/searchInfo' %}
+        </div>
+        <div id="searchInfoGrc" class="{{ greekSearch ? '' : 'd-none' }}">
+            {% include 'search/greekSearchInfo' %}
+        </div>
     {% endif %}
 
     {% include 'greekText.greekWordOffcanvas' %}

@@ -172,7 +172,21 @@ class GreekComparisonTest extends FastDatabaseTestCase
         $response = $this->get('/GNT/Mt1');
 
         $response->assertStatus(200);
-        // The compare dropdown links back to the GNT chapter with the chosen translation.
+        // The prominent parallel-reading control sits above the text, labelled and
+        // linking back to the GNT chapter with the chosen translation.
+        $response->assertSeeText('Párhuzamos olvasás fordítással:');
         $response->assertSee('/GNT/Mt1?compare=TESTTRANS', false);
+    }
+
+    public function test_gnt_landing_page_promotes_grammar_analysis_and_parallel_reading(): void
+    {
+        $this->createGreekBook();
+        $this->enableGreekComparison();
+
+        $response = $this->get('/GNT');
+
+        $response->assertStatus(200);
+        $response->assertSeeText('magyar nyelvű nyelvtani elemzés');
+        $response->assertSeeText('Párhuzamos olvasás');
     }
 }

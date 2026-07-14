@@ -1,0 +1,18 @@
+<div class="card bg-light mb-2">
+    <div class="card-header collapsible" data-bs-toggle="collapse" data-bs-target="#greekCardContent">
+        <i class="bi bi-chevron-down"></i>
+        Keresési útmutató
+</div>
+<div id="greekCardContent" class="collapse show">
+    <div class="card-body">
+{% apply markdown_to_html %}
+- Kétféle görög keresés közül lehet választani, ezek közül kell először választani.
+- **Görög szó/magyar jelentés szerint**: a versek Strong-szavai (szótövei) között keresünk. A keresendő görög szótő latin átírását lehet beírni, de a magyar jelentést is lehet gépelni, ilyenkor felajánljuk hozzá a görög megfelelőt. Több szó esetén a **+** jelenti azt, hogy mindegyiknek szerepelnie kell a versben, a **|** pedig azt, hogy bármelyik elég.
+- **Görög szövegrészlet**: a versek görög szövegében keresünk részleteket. Alapértelmezés szerint minden megadott szónak szerepelnie kell az adott versben. Ha elég, ha bármelyik szerepel, használjuk a **|** jelet, szórészletre pedig a **&#42;** jellel lehet keresni, például <i>meta&#42; | &#42;christ&#42;</i>.
+- Mindkét keresést le lehet szűkíteni egy könyvre vagy a teljes Ó- ill. Újszövetségre, és be lehet állítani, hogy melyik magyar fordítás szövege jelenjen meg a görög mellett.
+- A találatok versenként, fejezetenként vagy könyvenként csoportosítva jeleníthetők meg.
+- A találatok görög szavaira kattintva megjelenik az adott szó elemzése és jelentése.
+{% endapply %}
+    </div>
+</div>
+</div>

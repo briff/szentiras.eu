@@ -25,17 +25,23 @@
     <div class="card mb-2">
         <div class="card-body">
             <p class="lead">
-                Teljes újszövetségi görög Szentírás és görög–magyar újszövetségi szószedet, magyarázatokkal, amelyet mesterséges intelligencia eszközök
+                Teljes újszövetségi görög Szentírás, melynek alapszövege az <strong>OpenGNT</strong>, a legkorszerűbb, szabadon
+                felhasználható újszövetségi szövegforrás, amely a lehető legközelebb áll a Nestle-Aland NA28/NA27 szövegforráshoz.
+            </p>
+            <p class="mb-1">
+                Elérhető itt egy görög–magyar újszövetségi szószedet, magyarázatokkal, amelyet mesterséges intelligencia eszközök
                 segítségével készítettünk.
             </p>
             <p>
-                A görög szentírás alapszövege az <strong>OpenGNT</strong>, a legkorszerűbb, szabadon
-                felhasználható újszövetségi szövegforrás.
-            </p>
             <p class="mb-1">
                 <i class="bi bi-info-circle"></i>
                 A szöveget olvasva a <strong>versszámokra kattintva</strong> megjelennek az adott vershez tartozó
                 magyar fordítások, valamint a görög szavak szómagyarázatai.
+            </p>
+            <p class="mb-0">
+                <i class="bi bi-info-circle"></i>
+                Minden görög szóhoz <strong>magyar nyelvű nyelvtani elemzés</strong> is tartozik: a szófaj, valamint
+                – az alaktól függően – az eset, a szám, a nem, az idő, a mód és az igenem is.
             </p>
         </div>
     </div>
@@ -73,6 +79,17 @@
                         Az összes Strong szó betűrendben: jelentés, magyarázat és előfordulások.
                     </p>
                     <a href="{{ route('greekDictionary.index') }}" class="btn btn-outline-primary btn-sm">Szótár megnyitása</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-columns-gap"></i> Párhuzamos olvasás</h5>
+                    <p class="card-text">
+                        A görög szöveget bármelyik magyar fordítással <strong>párhuzamosan, egymás mellett</strong>
+                        olvashatja. A fejezet fölötti választóval bármikor kiválaszthatja a fordítást.
+                    </p>
                 </div>
             </div>
         </div>
@@ -144,6 +161,29 @@
                         <a class="btn btn-sm btn-outline-secondary" role="button" href="/GNT/{{ book.abbrev }}{{ ch }}{{ compareQuery }}">{{ ch }}</a>
                     {% endif %}
                 {% endfor %}
+            </div>
+            {% set gntChapterPath = '/GNT/' ~ book.abbrev ~ currentChapter %}
+            <hr class="my-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+                <span class="text-muted small"><i class="bi bi-columns-gap"></i> Párhuzamos olvasás fordítással:</span>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-sm {% if compareTranslation %}btn-primary{% else %}btn-outline-primary{% endif %} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ compareTranslation ? compareTranslation.abbrev : 'Fordítás választása' }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for otherTranslation in translationLinks %}
+                            {% if otherTranslation.abbrev != 'GNT' and otherTranslation.enabled %}
+                                <li><a class="dropdown-item {% if compareTranslation and compareTranslation.abbrev == otherTranslation.abbrev %}active{% endif %}" href="{{ gntChapterPath }}?compare={{ otherTranslation.abbrev }}">
+                                    {{ otherTranslation.abbrev }}
+                                </a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if compareTranslation %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ gntChapterPath }}"><i class="bi bi-x"></i> Bezárás</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -224,31 +264,6 @@
                 <button type="button" class="btn btn-sm inactive" id="toggleAiTools" title="Segédeszközök" style="background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;">
                     <i class="bi-tools"></i>
                 </button>
-                {% if book and currentChapter is not null %}
-                    {% set gntChapterPath = '/GNT/' ~ book.abbrev ~ currentChapter %}
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm {% if compareTranslation %}active{% else %}inactive{% endif %}" data-bs-toggle="dropdown" title="Fordítás párhuzamos olvasása" style="{% if compareTranslation %}background-color: #0d6efd; color: white;{% else %}background-color: transparent; color: #0d6efd; border: 1px solid #0d6efd;{% endif %}">
-                            <i class="bi-columns-gap"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            {% if compareTranslation %}
-                                <li><span class="dropdown-item-text"><strong>{{ compareTranslation.name }}</strong></span></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ gntChapterPath }}">
-                                    <i class="bi-x"></i> Összehasonlítás bezárása
-                                </a></li>
-                            {% else %}
-                                {% for otherTranslation in translationLinks %}
-                                    {% if otherTranslation.abbrev != 'GNT' and otherTranslation.enabled %}
-                                        <li><a class="dropdown-item" href="{{ gntChapterPath }}?compare={{ otherTranslation.abbrev }}">
-                                            {{ otherTranslation.abbrev }}
-                                        </a></li>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                        </ul>
-                    </div>
-                {% endif %}
                 {% if not mediaEnabled %}
                     <a class="btn btn-sm {{ hasMedia ? '' : 'd-none' }}" id="mediaButton" href="{{ url('/' ~ canonicalUrl ~ '?media' ~ (fullContext ? '&fullContext' : '')) }}" title="Illusztrációk megjelenítése">
                         <i class="bi-images"></i>

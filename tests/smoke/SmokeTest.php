@@ -105,6 +105,24 @@ class SmokeTest extends TestCase
         $this->post('/kereses/search?textToSearch=Ter&book=all&translation=0&grouping=chapter')->assertStatus(200);
     }
 
+    public function testSearchPageShowsHungarianGuideByDefault()
+    {
+        $response = $this->get('/kereses');
+        $response->assertStatus(200);
+        $response->assertSee('<div id="searchInfoHun" class="">', false);
+        $response->assertSee('<div id="searchInfoGrc" class="d-none">', false);
+        $response->assertSee('Az igehelyekre a', false);
+    }
+
+    public function testSearchPageShowsGreekGuideOnGreekTab()
+    {
+        $response = $this->get('/kereses?greek=1');
+        $response->assertStatus(200);
+        $response->assertSee('<div id="searchInfoHun" class="d-none">', false);
+        $response->assertSee('<div id="searchInfoGrc" class="">', false);
+        $response->assertSee('Strong-szavai', false);
+    }
+
     public function testBookWithExplicitTranslation() {
         $this->get('/TESTTRANS/Ter')->assertStatus(200);
     }

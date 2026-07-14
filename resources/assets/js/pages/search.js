@@ -3,6 +3,12 @@ import { initGreekWordPanel } from '../greekWordPanel.js';
 
 initGreekWordPanel();
 
+$('#hunTab, #grcTab').on('shown.bs.tab', function (event) {
+    const greek = event.target.id === 'grcTab';
+    $('#searchInfoHun').toggleClass('d-none', greek);
+    $('#searchInfoGrc').toggleClass('d-none', !greek);
+});
+
 $('#textSearchForm').on('submit', function (event) {
     event.preventDefault();
     $('#interstitial').show();
