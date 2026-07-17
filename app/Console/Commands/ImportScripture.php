@@ -26,6 +26,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use SzentirasHu\Data\Entity\Book;
 use SzentirasHu\Data\Entity\Verse;
 use SzentirasHu\Data\UsxCodes;
+use SzentirasHu\Data\ProtestantBookNames;
 
 define('BOOKCODE', 'gepi');
 define('BOOKABBREV', 'rov');
@@ -504,7 +505,7 @@ class ImportScripture extends Command
             'abbrev' => $bookAbbrev,
             'usx_code' => $bookUsx,
             'translation' => $translationAbbrev,
-            'name' => $bookName,
+            'name' => ProtestantBookNames::getName($translationAbbrev, $bookUsx) ?? $bookName,
             'link' => $this->removeAccents($bookAbbrev),
             'old_testament' => $this->isOldTestament($bookUsx),
         ];

@@ -313,6 +313,9 @@ class UsxCodes
             'RUF' => [
                 'Sir',
             ],
+            'KG' => [
+                'Sir',
+            ],
         ],
         'SIR' => [
             'default' => [

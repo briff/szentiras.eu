@@ -50,6 +50,9 @@ class UsxCodesTest extends TestCase
         $this->checkReturnedkUsxCode('RUF', 'Sir', 'LAM');
         $this->checkReturnedkUsxCode('RUF', 'sir', 'LAM');
         $this->checkReturnedkUsxCode('RUF', 'Sirák', null);
+        $this->checkReturnedkUsxCode('KG', 'Sir', 'LAM');
+        $this->checkReturnedkUsxCode('KG', 'sir', 'LAM');
+        $this->checkReturnedkUsxCode('KG', 'Sirák', null);
         $this->checkReturnedkUsxCode('SZIT', 'Sir', 'SIR');
         $this->checkReturnedkUsxCode('STL', 'Sir', 'SIR');
         $this->checkReturnedkUsxCode('STL', 'sir', 'SIR');
@@ -79,10 +82,12 @@ class UsxCodesTest extends TestCase
         $this->checkReturnedAbbrev('default', 'SIR', 'Sirák');
         $this->checkReturnedAbbrev('SZIT', 'SIR', 'Sir');
         $this->checkReturnedAbbrev('RUF', 'SIR', null);
+        $this->checkReturnedAbbrev('KG', 'SIR', null);
         $this->checkReturnedAbbrev('KNB', 'SIR', 'Sirák');
 
         $this->checkReturnedAbbrev('KNB', 'LAM', 'Siralm');
         $this->checkReturnedAbbrev('RUF', 'LAM', 'Sir');
+        $this->checkReturnedAbbrev('KG', 'LAM', 'Sir');
         $this->checkReturnedAbbrev('SZIT', 'LAM', 'Siralm');
     }
 
