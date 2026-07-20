@@ -5,6 +5,7 @@ namespace SzentirasHu\Test;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use SzentirasHu\Data\Entity\Book;
+use SzentirasHu\Models\DictionaryMeaning;
 use SzentirasHu\Models\GreekVerse;
 use SzentirasHu\Test\Common\TestCase;
 
@@ -91,5 +92,57 @@ class GreekWordPanelTest extends TestCase
         $response->assertSee('data-usx="MAT"', false);
         $response->assertSee('data-i="0"', false);
         $response->assertSee('id="greekWordOffcanvas"', false);
+    }
+
+    private function createDictionaryMeaning(int $strongWordNumber, int $order, string $meaning): void
+    {
+        $dictionaryMeaning = new DictionaryMeaning();
+        $dictionaryMeaning->strong_word_number = $strongWordNumber;
+        $dictionaryMeaning->order = $order;
+        $dictionaryMeaning->meaning = $meaning;
+        $dictionaryMeaning->explanation = 'test explanation';
+        $dictionaryMeaning->source = 'test';
+        $dictionaryMeaning->save();
+    }
+
+    public function test_verse_word_translations_returns_first_meaning_per_word(): void
+    {
+        $greekVerse = new GreekVerse();
+        $greekVerse->source = 'test';
+        $greekVerse->gepi = 'MAT_1_1';
+        $greekVerse->usx_code = 'MAT';
+        $greekVerse->chapter = 1;
+        $greekVerse->verse = 1;
+        $greekVerse->text = 'Βίβλος γενέσεως Ἀβραάμ.¶';
+        $greekVerse->json = json_encode([
+            ['word' => 'Βίβλος', 'strong' => '976', 'morphology' => 'N-NSF'],
+            ['word' => 'γενέσεως', 'strong' => '1078', 'morphology' => 'N-GSF'],
+            ['word' => 'Ἀβραάμ', 'strong' => '11', 'morphology' => 'N-PRI'],
+        ]);
+        $greekVerse->strongs = 'βίβλος γένεσις Ἀβραάμ';
+        $greekVerse->strong_transliterations = 'biblos genesis Abraam';
+        $greekVerse->strong_normalizations = '';
+        $greekVerse->save();
+
+        // The endpoint must return the meaning with the lowest order for each word.
+        $this->createDictionaryMeaning(976, 2, 'irat');
+        $this->createDictionaryMeaning(976, 1, 'könyv');
+        $this->createDictionaryMeaning(1078, 1, 'származás');
+
+        $response = $this->get('/ai-greek-verse/MAT/1/1');
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            0 => 'könyv',
+            1 => 'származás',
+            2 => null,
+        ]);
+    }
+
+    public function test_verse_word_translations_returns_404_for_unknown_verse(): void
+    {
+        $response = $this->get('/ai-greek-verse/MAT/9/9');
+
+        $response->assertStatus(404);
     }
 }

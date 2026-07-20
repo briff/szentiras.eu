@@ -176,6 +176,40 @@ class AiController extends Controller
         return response()->json($view);
     }
 
+    /**
+     * Returns the first Hungarian meaning of every Greek word in a verse, keyed by
+     * the word index `i` used by {@see GreekVerse::annotatedWords()}. Powers the
+     * inline word-by-word translation toggled from the verse popover.
+     *
+     * @return \Illuminate\Http\JsonResponse JSON object mapping word index to its first meaning (or null when unknown).
+     */
+    public function getGreekVerseWordTranslations(string $usx_code, int $chapter, int $verse): \Illuminate\Http\JsonResponse
+    {
+        $greekVerse = GreekVerse::where('usx_code', $usx_code)->where('chapter', $chapter)->where('verse', $verse)->firstOrFail();
+        $words = json_decode($greekVerse->json) ?: [];
+
+        $strongNumbers = collect($words)->pluck('strong')->filter()->unique()->values()->all();
+
+        $firstMeanings = [];
+        if (!empty($strongNumbers)) {
+            $meanings = DictionaryMeaning::whereIn('strong_word_number', $strongNumbers)
+                ->orderBy('order')
+                ->get();
+            foreach ($meanings as $meaning) {
+                if (!isset($firstMeanings[$meaning->strong_word_number])) {
+                    $firstMeanings[$meaning->strong_word_number] = $meaning->meaning;
+                }
+            }
+        }
+
+        $translations = [];
+        foreach ($words as $i => $word) {
+            $translations[$i] = $firstMeanings[(int) $word->strong] ?? null;
+        }
+
+        return response()->json($translations);
+    }
+
     public function getAllInstancesOfGreekWord($strongNumber, ?int $offset = 0)
     {
         $limit = 50;
