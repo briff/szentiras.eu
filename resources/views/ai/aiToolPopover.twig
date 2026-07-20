@@ -16,6 +16,15 @@
 
 <button data-close-button-id="closePopover" type="button" class="btn-close"></button>
 
+{% if greekText %}
+  <button type="button" class="btn btn-sm btn-outline-primary toggle-word-translation mb-2"
+    data-usx="{{ greekText[0].usx_code }}"
+    data-chapter="{{ greekText[0].chapter }}"
+    data-verse="{{ greekText[0].verse }}">
+    <i class="bi bi-translate"></i> Szavankénti fordítás
+  </button>
+{% endif %}
+
 <ul class="nav nav-tabs ai-tools" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="parallel-tab" data-bs-toggle="tab" data-bs-target="#parallel{{ gepi }}" type="button" role="tab" aria-controls="home" aria-selected="true">Fordítások</button>

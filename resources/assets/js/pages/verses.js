@@ -2,6 +2,51 @@ import initPdfModal from '../pdfDialog.js';
 import { VerseCardDialog } from '../verseCardDialog.js';
 import { initGreekWordPanel } from '../greekWordPanel.js';
 
+/**
+ * Toggles the inline word-by-word Hungarian translation for a single Greek verse
+ * displayed on the reading page. When turned on, the first meaning of every Greek
+ * word is inserted right after the word in the normal text flow, in a smaller font.
+ */
+function toggleVerseWordTranslation(usx, chapter, verse) {
+    const selector = `.parsedVerses .greekWord.clickable-greek[data-usx="${usx}"][data-chapter="${chapter}"][data-verse="${verse}"]`;
+    const words = document.querySelectorAll(selector);
+    if (words.length === 0) {
+        return;
+    }
+
+    const alreadyOn = [...words].some(word => {
+        const next = word.nextElementSibling;
+        return next && next.classList.contains('word-translation');
+    });
+
+    if (alreadyOn) {
+        words.forEach(word => {
+            const next = word.nextElementSibling;
+            if (next && next.classList.contains('word-translation')) {
+                next.remove();
+            }
+        });
+        return;
+    }
+
+    fetch(`/ai-greek-verse/${usx}/${chapter}/${verse}`)
+        .then(response => response.json())
+        .then(data => {
+            words.forEach(word => {
+                const meaning = data[word.dataset.i];
+                if (meaning && !(word.nextElementSibling && word.nextElementSibling.classList.contains('word-translation'))) {
+                    const span = document.createElement('span');
+                    span.className = 'word-translation';
+                    span.textContent = meaning;
+                    word.insertAdjacentElement('afterend', span);
+                }
+            });
+        })
+        .catch(e => {
+            console.log('Error loading word translations', e);
+        });
+}
+
 const initToggler = function () {
     var delay = 400;
     var toggles = [
@@ -119,6 +164,17 @@ const initToggler = function () {
                             popover.tip.querySelector('.btn-close').addEventListener("click", () => {
                                 popover.hide();
                             });
+                            const wordTranslationButton = popover.tip.querySelector('.toggle-word-translation');
+                            if (wordTranslationButton) {
+                                wordTranslationButton.addEventListener("click", () => {
+                                    popover.hide();
+                                    toggleVerseWordTranslation(
+                                        wordTranslationButton.dataset.usx,
+                                        wordTranslationButton.dataset.chapter,
+                                        wordTranslationButton.dataset.verse
+                                    );
+                                });
+                            }
                             const filterRadios = popover.tip.querySelectorAll('.btn-check[name^="similarFilter"]');
                             filterRadios.forEach(radio => {
                                 radio.addEventListener('change', function () {

@@ -64,6 +64,7 @@ Route::post("/ai-search/search", '\SzentirasHu\Http\Controllers\Search\SemanticS
 
 Route::get("/ai-tool/{translationAbbrev}/{refString}", [AiController::class, 'getAiToolPopover']);
 Route::get("/ai-greek/find-all/{strongNumber}/{offset?}", [AiController::class, 'getAllInstancesOfGreekWord']);
+Route::get("/ai-greek-verse/{usx_code}/{chapter}/{verse}", [AiController::class, 'getGreekVerseWordTranslations']);
 Route::get("/ai-greek/{usx_code}/{chapter}/{verse}/{i}", [AiController::class, 'getGreekWordPanel']);
 
 Route::post('/searchbible.php', '\SzentirasHu\Http\Controllers\Search\SearchController@postLegacy');
