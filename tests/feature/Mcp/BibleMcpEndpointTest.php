@@ -23,7 +23,6 @@ class BibleMcpEndpointTest extends FastDatabaseTestCase
         Translation::where('id', 1002)->update(['denom' => 'protestáns']);
 
         config(['settings.enabledTranslations' => [1001, 1002]]);
-        config(['settings.mcpTranslationAbbrev' => null]);
 
         Cache::flush();
     }

@@ -47,15 +47,13 @@ class TranslationResolver
 
     /**
      * Resolve the translation to answer with, most explicit signal first:
-     * tool argument, then the URL segment, then the configured fallback, then the site default.
+     * tool argument, then the URL segment, then the site default translation.
      *
      * @throws UnknownTranslationException
      */
     public function resolve(?string $requestedAbbrev = null): Translation
     {
-        $abbrev = $requestedAbbrev
-            ?? $this->abbrevFromUrl()
-            ?? config('settings.mcpTranslationAbbrev');
+        $abbrev = $requestedAbbrev ?? $this->abbrevFromUrl();
 
         if (blank($abbrev)) {
             return $this->translationService->getDefaultTranslation();

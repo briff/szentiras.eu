@@ -29,7 +29,6 @@ class BibleMcpToolTest extends FastDatabaseTestCase
         Translation::where('id', 1002)->update(['denom' => 'protestáns']);
 
         config(['settings.enabledTranslations' => [1001, 1002]]);
-        config(['settings.mcpTranslationAbbrev' => null]);
 
         Cache::flush();
     }
@@ -42,24 +41,12 @@ class BibleMcpToolTest extends FastDatabaseTestCase
             ->assertSee('"denomination":"katolikus"');
     }
 
-    public function test_configured_preference_overrides_the_site_default(): void
+    public function test_explicit_argument_overrides_the_site_default(): void
     {
-        config(['settings.mcpTranslationAbbrev' => 'TESTTRANS2']);
-
-        BibleServer::tool(GetVersesTool::class, ['reference' => 'Ter 2,3'])
+        BibleServer::tool(GetVersesTool::class, ['reference' => 'Ter 2,3', 'translation' => 'TESTTRANS2'])
             ->assertOk()
             ->assertSee('"abbrev":"TESTTRANS2"')
             ->assertSee('"denomination":"protestáns"');
-    }
-
-    public function test_explicit_argument_overrides_the_configured_preference(): void
-    {
-        config(['settings.mcpTranslationAbbrev' => 'TESTTRANS2']);
-
-        BibleServer::tool(GetVersesTool::class, ['reference' => 'Ter 2,3', 'translation' => 'TESTTRANS'])
-            ->assertOk()
-            ->assertSee('"abbrev":"TESTTRANS"')
-            ->assertSee('"denomination":"katolikus"');
     }
 
     public function test_translation_abbreviation_is_case_insensitive(): void
@@ -118,7 +105,7 @@ class BibleMcpToolTest extends FastDatabaseTestCase
 
     public function test_list_translations_marks_only_the_active_translation_as_default(): void
     {
-        config(['settings.mcpTranslationAbbrev' => 'TESTTRANS2']);
+        config(['settings.defaultTranslationAbbrev' => 'TESTTRANS2']);
 
         BibleServer::tool(ListTranslationsTool::class)
             ->assertOk()
