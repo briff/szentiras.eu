@@ -30,7 +30,10 @@ class VerifyApiKey
             return $next($request);
         }
 
-        $apiKey = $request->header('X-API-Key');
+        // MCP clients generally allow configuring only a URL, so the key may also arrive
+        // as a query parameter. Note that Request::path() excludes the query string, which
+        // keeps the key out of the log calls below - do not log fullUrl() here.
+        $apiKey = $request->header('X-API-Key') ?: $request->query('api_key');
 
         // If no key provided
         if (!$apiKey) {

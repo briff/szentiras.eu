@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Spatie\FlareClient\Api;
-use SzentirasHu\Data\Entity\ApiKey;
 use SzentirasHu\Service\Ai\AiPromptService;
 use SzentirasHu\Service\Cdn\CloudflareCacheService;
 use SzentirasHu\Service\Editor\EditorService;
@@ -60,11 +59,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Define rate limiter for API keys
         RateLimiter::for('api_key', function ($request) {
-            $apiKeyHeader = $request->header('X-API-Key');
-            $prefix = substr($apiKeyHeader, 0, 8);
-            $apiKey = ApiKey::where('key_prefix', $prefix)
-            ->where('enabled', true)
-            ->first();            
+            // Use the key already resolved by VerifyApiKey, so that keys passed as a
+            // ?api_key= query parameter are throttled too. Re-reading the X-API-Key header
+            // here would find nothing for those requests and grant them unlimited access.
+            $apiKey = $request->attributes->get('apiKey');
             if (!$apiKey || $apiKey->isInternal()) {
                 // No limit for internal keys or missing key (should not happen)
                 return \Illuminate\Cache\RateLimiting\Limit::none();
