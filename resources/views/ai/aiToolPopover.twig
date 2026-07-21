@@ -16,7 +16,7 @@
 
 <button data-close-button-id="closePopover" type="button" class="btn-close"></button>
 
-{% if greekText %}
+{% if greekText and pureTexts[0].translationAbbrev == 'GNT' %}
   <button type="button" class="btn btn-sm btn-outline-primary toggle-word-translation mb-2"
     data-usx="{{ greekText[0].usx_code }}"
     data-chapter="{{ greekText[0].chapter }}"
