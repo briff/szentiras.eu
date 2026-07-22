@@ -19,7 +19,7 @@
             esetleges API fejlesztésekről!</strong></p>
     <p>Minden API hívás JSON formátumú válasszal tér vissza, kivéve hiba esetén (404, 500, 503 stb. HTTP kódoknál).</p>
 
-    <h4>API kulcs követelmények</h4>
+    <h4 id="api-kulcs">API kulcs követelmények</h4>
     <p><strong>⚠️ Fontos: 2026. április 1-től az API kulcs kötelezővé válik!</strong> Ennek a célja a hibás kérések és a túlterhelés elkerülése.</p>
     <p>Az API kulcs egy egyedi azonosító, amely szükséges az API végpontok eléréséhez. A kulcsot a kérés fejlécében kell megadni.</p>
     
@@ -99,5 +99,32 @@
     {% set example = 'bocsát' %}
     <a href="/api/search/{{ example }}">{{ url('/api/search/' ~ example) }}</a>
         </p>
+
+    <h3>MCP szerver</h3>
+    <p>Az MCP (<a href="https://modelcontextprotocol.io">Model Context Protocol</a>) egy nyílt szabvány, amellyel az AI-kliensek (pl. Claude, ChatGPT és más MCP-t támogató alkalmazások) külső eszközökhöz és adatforrásokhoz férhetnek hozzá. A Szentírás.eu MCP szervere lehetővé teszi, hogy az AI a <strong>pontos, szó szerinti bibliai szöveget</strong> kérje le egy adott magyar fordításból, ahelyett, hogy emlékezetből idézne.</p>
+
+    <h4>Végpont</h4>
+    <p>A szerver a következő címen érhető el:</p>
+    <pre><code>{{ url('/mcp/bible') }}</code></pre>
+    <p>Az URL végére opcionálisan hozzáfűzhető egy fordításrövidítés, amellyel kiválasztható, hogy a szerver alapértelmezetten melyik hagyomány szerinti fordítással válaszoljon. Így minden felhasználó a saját fordítására állíthatja be a kliensét:</p>
+    <ul>
+        <li><a href="{{ url('/mcp/bible/RUF') }}">{{ url('/mcp/bible/RUF') }}</a> – protestáns felhasználóknak (Revideált új fordítás)</li>
+        <li><a href="{{ url('/mcp/bible/SZIT') }}">{{ url('/mcp/bible/SZIT') }}</a> – katolikus felhasználóknak (Szent István Társulati Biblia)</li>
+    </ul>
+    <p>Fordításrövidítés nélkül a szerver a webhely alapértelmezett fordítását használja. A rövidítés nem érzékeny a kis- és nagybetűkre.</p>
+
+    <h4>Elérhető eszközök (tools)</h4>
+    <dl>
+        <dt><code>get-verses</code></dt>
+        <dd>Egy megadott szentírási hely pontos, szó szerinti szövegét adja vissza a beállított fordításban. Paraméterek: <code>reference</code> (kötelező) – a hivatkozás magyar jelöléssel (pl. <code>Jn 3,16</code> vagy <code>1Kor 13,4-7</code>), és <code>translation</code> (opcionális) – a fordítás rövidítése, amellyel az URL-ben megadott hagyomány felülírható.</dd>
+        <dt><code>list-translations</code></dt>
+        <dd>Felsorolja az elérhető magyar fordításokat felekezetenként (katolikus / protestáns), és jelzi, hogy a végpont alapértelmezetten melyikkel válaszol.</dd>
+    </dl>
+    <p>A hivatkozások magyar jelölést használnak: a vessző választja el a fejezetet és a verset (<code>Jn 3,16</code>), a kötőjel jelöl tartományt (<code>1Kor 13,4-7</code>), a pontosvessző pedig könyveket vagy fejezeteket választ el (<code>Jn 1;3</code>).</p>
+
+    <h4>Hitelesítés</h4>
+    <p>Az MCP szerver ugyanazt az API kulcsot igényli, mint a fenti REST API (lásd az <a href="#api-kulcs">API kulcs követelmények</a> szakaszt). Mivel az MCP-kliensekben általában csak egy URL adható meg, a kulcs az <code>api_key</code> query paraméterként is átadható:</p>
+    <pre><code>{{ url('/mcp/bible/RUF') }}?api_key=your_api_key_here</code></pre>
+    <p>Ugyanúgy működik az <code>X-API-Key</code> HTTP fejléc is, és a hívásokra a REST API-nál leírt sebességkorlátozás vonatkozik.</p>
 
 {% endblock %}
