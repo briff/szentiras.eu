@@ -95,6 +95,17 @@ class SmokeTest extends TestCase
         $this->get('/api/idezet/Ter 2,3')->assertStatus(200);
     }
 
+    public function testDeveloperPageDocumentsTheMcpServer()
+    {
+        $response = $this->get('/api');
+
+        $response->assertStatus(200);
+        $response->assertSee('MCP szerver');
+        $response->assertSee(url('/mcp/bible'), false);
+        $response->assertSee('get-verses');
+        $response->assertSee('list-translations');
+    }
+
     public function testBasicApiTranslation()
     {
         $this->get('/api/forditasok/10100100200')->assertStatus(200);
